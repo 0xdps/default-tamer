@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-02-23
+
+### Changed
+
+- First-run setup state is now stored as a file sentinel in Application Support instead of UserDefaults, so it survives app updates and only resets on a full uninstall
+- Diagnostics and routing feedback settings temporarily hidden from Preferences (coming soon)
+
+### Fixed
+
+- Migrates existing `hasCompletedFirstRun` UserDefaults flag to the new file-based sentinel on first launch after update
+
 ## [0.0.1] - 2026-02-22
 
 ### Added

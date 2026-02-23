@@ -1,0 +1,41 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.defaulttamer.app"
+        }
+      ],
+      "destination": "https://defaulttamer.app/$1",
+      "permanent": true
+    },
+    {
+      "source": "/download/DefaultTamer-v:version([0-9.]+).dmg",
+      "destination": "https://github.com/0xdps/default-tamer/releases/download/v:version/DefaultTamer-v:version.dmg",
+      "permanent": false
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ]
+}

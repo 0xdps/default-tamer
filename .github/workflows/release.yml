@@ -138,12 +138,15 @@ jobs:
 // Do not edit manually.
 export const latestRelease = {
   version: "$VERSION",
-  downloadUrl: "https://github.com/0xdps/default-tamer/releases/download/v${VERSION}/DefaultTamer-v${VERSION}.dmg",
+  downloadUrl: "/download/DefaultTamer-v${VERSION}.dmg",
   releaseDate: "$DATE",
-  releaseNotesUrl: "https://github.com/0xdps/default-tamer/releases/tag/v${VERSION}",
+  releaseNotesUrl: "https://defaulttamer.app/changelog#v${VERSION//./-}",
 };
 EOF
-          git add DefaultTamerWeb/src/data/release.ts
+          # Promote [Unreleased] section to versioned entry in CHANGELOG.md
+          perl -i -pe "s/## \[Unreleased\]/## [Unreleased]\n\n## [$VERSION] - $DATE/" CHANGELOG.md
+
+          git add DefaultTamerWeb/src/data/release.ts CHANGELOG.md
           git diff --staged --quiet || git commit -m "chore: update website to v${VERSION} [skip ci]"
           git push origin trunk
         env:

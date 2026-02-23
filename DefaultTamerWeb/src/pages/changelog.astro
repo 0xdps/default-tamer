@@ -4,16 +4,51 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const changelogPath = join(process.cwd(), '..', 'CHANGELOG.md');
-let changelogContent = '';
+let rawChangelog = '';
 try {
-  changelogContent = await readFile(changelogPath, 'utf-8');
+  rawChangelog = await readFile(changelogPath, 'utf-8');
 } catch {
-  changelogContent = 'Changelog not available.';
+  rawChangelog = '';
 }
 
-// Remove the title line since we render our own heading
-const lines = changelogContent.split('\n');
-const withoutTitle = lines.filter((line, i) => !(i === 0 && line.startsWith('# '))).join('\n');
+const { marked } = await import('marked');
+
+interface Release {
+  version: string;
+  date: string | null;
+  isUnreleased: boolean;
+  contentHtml: string;
+  downloadUrl: string | null;
+}
+
+const releases: Release[] = [];
+
+// Collect all version headers with positions
+const headerPattern = /^## \[(.+?)\](?:\s*-\s*(\d{4}-\d{2}-\d{2}))?/gm;
+type HeaderEntry = { version: string; date: string | null; index: number; endIndex: number };
+const headers: HeaderEntry[] = [];
+let m: RegExpExecArray | null;
+while ((m = headerPattern.exec(rawChangelog)) !== null) {
+  headers.push({ version: m[1], date: m[2] ?? null, index: m.index, endIndex: m.index + m[0].length });
+}
+
+for (let i = 0; i < headers.length; i++) {
+  const { version, date, endIndex } = headers[i];
+  const nextStart = i + 1 < headers.length ? headers[i + 1].index : rawChangelog.length;
+  const sectionMarkdown = rawChangelog.slice(endIndex, nextStart).trim();
+  const isUnreleased = version === 'Unreleased';
+
+  // Skip unreleased section if it has no content
+  if (isUnreleased && !sectionMarkdown) continue;
+
+  releases.push({
+    version,
+    date,
+    isUnreleased,
+    contentHtml: await marked.parse(sectionMarkdown),
+    downloadUrl: isUnreleased ? null : `/download/DefaultTamer-v${version}.dmg`,
+  });
+}
 ---
 
 <BaseLayout
@@ -32,11 +67,58 @@ const withoutTitle = lines.filter((line, i) => !(i === 0 && line.startsWith('# '
   </section>
 
   <section class="py-24 bg-white">
-    <div class="docs-wrapper prose">
-      <Fragment set:html={await (async () => {
-        const { marked } = await import('marked');
-        return marked.parse(withoutTitle);
-      })()} />
+    <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+      {releases.length === 0 ? (
+        <p class="text-center text-gray">Changelog not available.</p>
+      ) : (
+        <div class="relative">
+          <!-- Timeline line -->
+          <div class="absolute left-0 top-3 bottom-3 w-0.5 bg-gray-light hidden sm:block"></div>
+
+          <div class="space-y-16">
+            {releases.map((release) => (
+              <div class="sm:pl-10 relative">
+                <!-- Timeline dot -->
+                <div class="hidden sm:flex absolute -left-[9px] top-1 w-[18px] h-[18px] rounded-full border-2 border-primary bg-white items-center justify-center">
+                  <div class="w-2 h-2 rounded-full bg-primary"></div>
+                </div>
+
+                <!-- Version header -->
+                <div class="flex flex-wrap items-center gap-3 mb-6">
+                  {release.isUnreleased ? (
+                    <span class="inline-flex items-center rounded-full border-2 border-gray-light px-4 py-1 text-base font-semibold text-gray font-heading">
+                      Unreleased
+                    </span>
+                  ) : (
+                    <>
+                      <h2 id={`v${release.version.replace(/\./g, '-')}`} class="text-2xl font-bold text-dark font-heading m-0">v{release.version}</h2>
+                      {release.date && (
+                        <time class="text-sm text-gray bg-gray-lighter px-3 py-1 rounded-full">{release.date}</time>
+                      )}
+                      <a
+                        href={release.downloadUrl!}
+                        class="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white hover:bg-primary-dark transition-colors duration-200 no-underline"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                          <polyline points="7 10 12 15 17 10"></polyline>
+                          <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Download .dmg
+                      </a>
+                    </>
+                  )}
+                </div>
+
+                <!-- Release content -->
+                <div class="prose prose-sm max-w-none text-gray leading-relaxed">
+                  <Fragment set:html={release.contentHtml} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   </section>
 </BaseLayout>
