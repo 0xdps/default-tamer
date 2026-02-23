@@ -127,22 +127,22 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           DATE=$(date -u +%Y-%m-%d)
-          cat > DefaultTamerWeb/src/data/release.ts << EOF
-          // Auto-updated by .github/workflows/release.yml on every release.
-          // Do not edit manually.
-          export const latestRelease = {
-            version: "$VERSION",
-            downloadUrl: "https://github.com/0xdps/default-tamer/releases/download/v${VERSION}/DefaultTamer-v${VERSION}.dmg",
-            releaseDate: "$DATE",
-            releaseNotesUrl: "https://github.com/0xdps/default-tamer/releases/tag/v${VERSION}",
-          };
-          EOF
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config --unset-all http.https://github.com/.extraheader || true
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/0xdps/default-tamer.git"
           git fetch origin trunk
           git checkout -f trunk
+          cat > DefaultTamerWeb/src/data/release.ts << EOF
+// Auto-updated by .github/workflows/release.yml on every release.
+// Do not edit manually.
+export const latestRelease = {
+  version: "$VERSION",
+  downloadUrl: "https://github.com/0xdps/default-tamer/releases/download/v${VERSION}/DefaultTamer-v${VERSION}.dmg",
+  releaseDate: "$DATE",
+  releaseNotesUrl: "https://github.com/0xdps/default-tamer/releases/tag/v${VERSION}",
+};
+EOF
           git add DefaultTamerWeb/src/data/release.ts
           git diff --staged --quiet || git commit -m "chore: update website to v${VERSION} [skip ci]"
           git push origin trunk
