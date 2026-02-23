@@ -17,8 +17,8 @@ targets:
       properties:
         CFBundleIdentifier: com.defaulttamer.app
         CFBundleName: $(PRODUCT_NAME)
-        CFBundleShortVersionString: "1.0"
-        CFBundleVersion: "1"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
         LSUIElement: true
         CFBundleSignature: "DfTm"
@@ -52,6 +52,8 @@ targets:
       ENABLE_HARDENED_RUNTIME: YES
       COMBINE_HIDPI_IMAGES: YES
       CODE_SIGN_ENTITLEMENTS: DefaultTamer/DefaultTamer.entitlements
+      MARKETING_VERSION: "0.0.1"
+      CURRENT_PROJECT_VERSION: "1"
     dependencies:
       - package: SQLite
         product: SQLite

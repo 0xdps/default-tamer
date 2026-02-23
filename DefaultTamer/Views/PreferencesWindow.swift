@@ -195,37 +195,7 @@ struct GeneralTab: View {
                     .font(.headline)
             }
             
-            Section {
-                Toggle("Enable diagnostics", isOn: Binding(
-                    get: { appState.settings.diagnosticsEnabled },
-                    set: { _ in appState.toggleDiagnostics() }
-                ))
-
-                if appState.settings.diagnosticsEnabled {
-                    Text("Activity logs will be available in the Activity tab")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            } header: {
-                Text("Diagnostics")
-                    .font(.headline)
-            }
-
-            Section {
-                Toggle("Show routing feedback", isOn: Binding(
-                    get: { appState.settings.showRoutingFeedback },
-                    set: { _ in appState.toggleRoutingFeedback() }
-                ))
-
-                if appState.settings.showRoutingFeedback {
-                    Text("Display brief notifications when URLs are routed to browsers")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            } header: {
-                Text("User Feedback")
-                    .font(.headline)
-            }
+            // Diagnostics and User Feedback sections hidden (coming soon)
         }
         .formStyle(.grouped)
         .padding()

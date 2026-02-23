@@ -73,6 +73,8 @@ jobs:
             -derivedDataPath build/DerivedData \
             -arch arm64 \
             -arch x86_64 \
+            MARKETING_VERSION=${{ steps.version.outputs.version }} \
+            CURRENT_PROJECT_VERSION=${{ steps.version.outputs.version }} \
             build
           
           # Copy app

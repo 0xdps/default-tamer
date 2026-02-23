@@ -17,11 +17,18 @@ class PersistenceManager {
     private let settingsKey = "defaultTamer.settings"
     private let rulesKey = "defaultTamer.rules"
     private let schemaVersionKey = "defaultTamer.schemaVersion"
-    private let hasCompletedFirstRunKey = "defaultTamer.hasCompletedFirstRun"
     
     // Backup keys
     private let settingsBackupKey = "defaultTamer.settings.backup"
     private let rulesBackupKey = "defaultTamer.rules.backup"
+    
+    // File-based first-run sentinel (survives app updates, resets on full uninstall)
+    private var setupCompleteURL: URL {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        let dir = appSupport.appendingPathComponent("DefaultTamer", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.appendingPathComponent(".setup_complete")
+    }
     
     init(userDefaults: UserDefaults = .standard) {
         self.defaults = userDefaults
@@ -215,10 +222,14 @@ class PersistenceManager {
     
     var hasCompletedFirstRun: Bool {
         get {
-            return defaults.bool(forKey: hasCompletedFirstRunKey)
+            return FileManager.default.fileExists(atPath: setupCompleteURL.path)
         }
         set {
-            defaults.set(newValue, forKey: hasCompletedFirstRunKey)
+            if newValue {
+                FileManager.default.createFile(atPath: setupCompleteURL.path, contents: nil)
+            } else {
+                try? FileManager.default.removeItem(at: setupCompleteURL)
+            }
         }
     }
     
@@ -231,6 +242,13 @@ class PersistenceManager {
             // Perform migrations here in future versions
             defaults.set(schemaVersion, forKey: schemaVersionKey)
         }
+        
+        // Migrate hasCompletedFirstRun from UserDefaults to file sentinel (one-time)
+        let legacyKey = "defaultTamer.hasCompletedFirstRun"
+        if defaults.bool(forKey: legacyKey) && !hasCompletedFirstRun {
+            hasCompletedFirstRun = true
+            defaults.removeObject(forKey: legacyKey)
+        }
     }
     
     // MARK: - Reset
@@ -240,6 +258,6 @@ class PersistenceManager {
         defaults.removeObject(forKey: rulesKey)
         defaults.removeObject(forKey: settingsBackupKey)
         defaults.removeObject(forKey: rulesBackupKey)
-        defaults.removeObject(forKey: hasCompletedFirstRunKey)
+        hasCompletedFirstRun = false
     }
 }
