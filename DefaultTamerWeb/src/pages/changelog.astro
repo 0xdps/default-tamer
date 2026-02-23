@@ -1,0 +1,42 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
+const changelogPath = join(process.cwd(), '..', 'CHANGELOG.md');
+let changelogContent = '';
+try {
+  changelogContent = await readFile(changelogPath, 'utf-8');
+} catch {
+  changelogContent = 'Changelog not available.';
+}
+
+// Remove the title line since we render our own heading
+const lines = changelogContent.split('\n');
+const withoutTitle = lines.filter((line, i) => !(i === 0 && line.startsWith('# '))).join('\n');
+---
+
+<BaseLayout
+  title="Changelog - Default Tamer"
+  description="See what's new in each release of Default Tamer."
+>
+  <section class="hero-section">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
+      <div class="text-center relative z-10">
+        <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+          <span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Changelog</span>
+        </h1>
+        <p class="mt-4 text-lg text-gray-300">What's new in each release</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-24 bg-white">
+    <div class="docs-wrapper prose">
+      <Fragment set:html={await (async () => {
+        const { marked } = await import('marked');
+        return marked.parse(withoutTitle);
+      })()} />
+    </div>
+  </section>
+</BaseLayout>

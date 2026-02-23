@@ -1,0 +1,66 @@
+---
+const footerColumns = [
+  {
+    title: 'Product',
+    links: [
+      { href: '/download', label: 'Download' },
+      { href: '/changelog', label: 'Changelog' },
+      { href: 'https://github.com/0xdps/default-tamer/releases', label: 'Releases', external: true },
+    ]
+  },
+  {
+    title: 'Resources',
+    links: [
+      { href: '/docs', label: 'Documentation' },
+      { href: 'https://github.com/0xdps/default-tamer', label: 'GitHub', external: true },
+      { href: 'https://github.com/0xdps/default-tamer/issues', label: 'Support', external: true },
+    ]
+  },
+  {
+    title: 'Community',
+    links: [
+      { href: 'https://github.com/0xdps/default-tamer/blob/trunk/CONTRIBUTING.md', label: 'Contributing', external: true },
+      { href: 'https://github.com/0xdps/default-tamer/blob/trunk/CODE_OF_CONDUCT.md', label: 'Code of Conduct', external: true },
+      { href: 'https://github.com/0xdps/default-tamer/blob/trunk/LICENSE', label: 'License', external: true },
+    ]
+  },
+];
+---
+
+<footer class="bg-dark text-white mt-24">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
+      <div class="lg:col-span-2">
+        <div class="flex items-center gap-2 mb-4">
+          <img src="/images/logo.png" alt="Default Tamer" class="w-8 h-8">
+          <span class="text-xl font-bold">Default Tamer</span>
+        </div>
+        <p class="text-gray-light leading-relaxed">Intelligent browser routing for macOS. Set it as your default browser once — your links open where you want, automatically.</p>
+      </div>
+
+      {footerColumns.map(column => (
+        <div>
+          <h4 class="font-semibold mb-4">{column.title}</h4>
+          <ul class="space-y-3">
+            {column.links.map(link => (
+              <li>
+                <a 
+                  href={link.href}
+                  {...(link.external && { target: '_blank', rel: 'noopener noreferrer' })}
+                  class="text-gray-light hover:text-primary transition-colors duration-200 block"
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+
+    <div class="pt-8 border-t border-dark-light text-center text-gray space-y-2">
+      <p>&copy; 2026 Default Tamer. Released under the MIT License.</p>
+      <p>Built with ❤️ for macOS</p>
+    </div>
+  </div>
+</footer>

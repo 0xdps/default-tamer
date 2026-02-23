@@ -1,0 +1,53 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [trunk, main]
+  pull_request:
+    branches: [trunk, main]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "15.0"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build
+        run: |
+          xcodebuild -project DefaultTamer.xcodeproj \
+            -scheme DefaultTamer \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            build
+
+      - name: Run tests
+        run: |
+          xcodebuild test \
+            -project DefaultTamer.xcodeproj \
+            -scheme DefaultTamer \
+            -destination 'platform=macOS' \
+            -enableCodeCoverage YES
+        continue-on-error: true
+
+      - name: Archive build artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DefaultTamer-Debug
+          path: |
+            ~/Library/Developer/Xcode/DerivedData/**/Build/Products/Debug/DefaultTamer.app
+          retention-days: 7

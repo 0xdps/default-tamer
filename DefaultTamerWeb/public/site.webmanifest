@@ -1,0 +1,93 @@
+{
+  "name": "Default Tamer",
+  "short_name": "Default Tamer",
+  "description": "Intelligent browser routing for macOS. Route links to the right browser based on source app and URL rules.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#f97316",
+  "background_color": "#ffffff",
+  "categories": ["productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "images/screenshots/menu.webp",
+      "sizes": "668x542",
+      "type": "image/webp",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "images/screenshots/rules.webp",
+      "sizes": "1626x1214",
+      "type": "image/webp",
+      "form_factor": "wide"
+    },
+    {
+      "src": "images/screenshots/settings.webp",
+      "sizes": "1616x1216",
+      "type": "image/webp",
+      "form_factor": "wide"
+    }
+  ],
+  "icons": [
+    {
+      "src": "images/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "images/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "images/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "View Features",
+      "short_name": "Features",
+      "description": "View all features of Default Tamer",
+      "url": "/features",
+      "icons": [
+        {
+          "src": "images/icon-512.png",
+          "sizes": "512x512"
+        }
+      ]
+    },
+    {
+      "name": "Setup Rules",
+      "short_name": "Rules",
+      "description": "Learn how to set up routing rules",
+      "url": "/docs/setup-rules",
+      "icons": [
+        {
+          "src": "images/icon-512.png",
+          "sizes": "512x512"
+        }
+      ]
+    },
+    {
+      "name": "Download App",
+      "short_name": "Download",
+      "description": "Download Default Tamer for macOS",
+      "url": "/download",
+      "icons": [
+        {
+          "src": "images/icon-512.png",
+          "sizes": "512x512"
+        }
+      ]
+    }
+  ]
+}

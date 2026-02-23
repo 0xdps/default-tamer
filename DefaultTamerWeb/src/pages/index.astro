@@ -1,0 +1,380 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is it really free?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes! Default Tamer is completely free and open source under the MIT license." }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it collect any data?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. Default Tamer is 100% privacy-first. All processing happens locally on your Mac. There are zero network calls, zero telemetry, and zero data collection." }
+    },
+    {
+      "@type": "Question",
+      "name": "How does it actually work?",
+      "acceptedAnswer": { "@type": "Answer", "text": "You set Default Tamer as your default browser. When any app opens a link, macOS sends it to Default Tamer first. It checks your rules (source app, domain, URL pattern) and instantly routes the link to the right browser. The whole process takes under 1ms." }
+    },
+    {
+      "@type": "Question",
+      "name": "What if I want to uninstall it?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Just change your default browser back in System Settings and delete the app. Default Tamer doesn't install any background services, kernel extensions, or system modifications. It's a clean, sandboxed macOS app." }
+    }
+  ]
+};
+---
+
+<BaseLayout 
+  title="Default Tamer - Intelligent Browser Routing for macOS"
+  description="Set Default Tamer as your default browser once; from then on, your links open where you want. Smart routing based on source app and URL rules. Free & Open Source."
+  jsonLd={jsonLd}
+>
+  <!-- Hero Section -->
+  <section class="hero-section relative min-h-[calc(100vh-4rem)] flex items-center">
+    <!-- Routing flow SVG background -->
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden -mt-16">
+      <img src="/images/routing-flow.svg" alt="" aria-hidden="true" class="w-full h-full object-contain opacity-10" />
+    </div>
+    <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
+      <div class="text-center">
+        <span class="inline-flex items-center rounded-full bg-primary/10 px-4 py-1.5 text-sm font-semibold text-primary ring-1 ring-inset ring-primary/20 mb-8 backdrop-blur-sm">
+          macOS 13.0+
+        </span>
+        <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl lg:text-7xl drop-shadow-lg">
+          Your Links,<br />
+          <span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Your Rules</span>
+        </h1>
+        <p class="mt-6 text-lg leading-8 text-gray-300 max-w-2xl mx-auto drop-shadow-md">
+          Set Default Tamer as your default browser once; from then on, your links open where you want.
+        </p>
+        <div class="mt-10 flex items-center justify-center gap-x-6">
+          <a href="/download" class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark transition-all duration-200 hover:scale-105">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download for macOS
+          </a>
+          <a href="https://github.com/0xdps/default-tamer" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold leading-6 text-white hover:text-primary transition-colors duration-200">
+            View on GitHub <span aria-hidden="true">→</span>
+          </a>
+        </div>
+        <div class="mt-16 flex items-center justify-center gap-x-12">
+          <div class="text-center backdrop-blur-sm bg-dark/30 rounded-xl px-6 py-4">
+            <div class="text-3xl font-bold text-white">100%</div>
+            <div class="mt-1 text-sm text-gray-300">Privacy-First</div>
+          </div>
+          <div class="text-center backdrop-blur-sm bg-dark/30 rounded-xl px-6 py-4">
+            <div class="text-3xl font-bold text-white">0</div>
+            <div class="mt-1 text-sm text-gray-300">Network Calls</div>
+          </div>
+          <div class="text-center backdrop-blur-sm bg-dark/30 rounded-xl px-6 py-4">
+            <div class="text-3xl font-bold text-white">Open</div>
+            <div class="mt-1 text-sm text-gray-300">Source</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="py-24 bg-white">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl font-bold tracking-tight text-dark sm:text-4xl">Powerful Features</h2>
+        <p class="mt-4 text-lg text-gray">Everything you need for intelligent browser routing</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="text-3xl">🎯</div>
+            <h3 class="text-xl font-bold text-primary">Smart Routing</h3>
+          </div>
+          <p class="text-gray leading-relaxed">
+            Route links based on source app. Slack and Cursor links automatically open in Chrome.
+          </p>
+        </div>
+
+        <div class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="text-3xl">🌐</div>
+            <h3 class="text-xl font-bold text-primary">Domain Rules</h3>
+          </div>
+          <p class="text-gray leading-relaxed">
+            Send specific domains to specific browsers. Exact, suffix, or contains matching.
+          </p>
+        </div>
+
+        <div class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="text-3xl">⌥</div>
+            <h3 class="text-xl font-bold text-primary">Override Chooser</h3>
+          </div>
+          <p class="text-gray leading-relaxed">
+            Hold Option key while clicking any link to choose browser on the fly.
+          </p>
+        </div>
+
+        <div class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="text-3xl">🔄</div>
+            <h3 class="text-xl font-bold text-primary">Fallback Browser</h3>
+          </div>
+          <p class="text-gray leading-relaxed">
+            Configurable default browser for links that don't match any rules.
+          </p>
+        </div>
+
+        <div class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="text-3xl">🚀</div>
+            <h3 class="text-xl font-bold text-primary">Launch at Login</h3>
+          </div>
+          <p class="text-gray leading-relaxed">
+            Optionally start at system login for seamless routing.
+          </p>
+        </div>
+
+        <div class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="text-3xl">📊</div>
+            <h3 class="text-xl font-bold text-primary">Diagnostics</h3>
+          </div>
+          <p class="text-gray leading-relaxed">
+            Track recent routes for debugging and optimization.
+          </p>
+        </div>
+
+        <div class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="text-3xl">🔒</div>
+            <h3 class="text-xl font-bold text-primary">Privacy First</h3>
+          </div>
+          <p class="text-gray leading-relaxed">
+            All processing is local. No network calls, no tracking, no data collection.
+          </p>
+        </div>
+
+        <div class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="text-3xl">✨</div>
+            <h3 class="text-xl font-bold text-primary">Menu Bar App</h3>
+          </div>
+          <p class="text-gray leading-relaxed">
+            Clean, minimal interface that stays out of your way.
+          </p>
+        </div>
+      </div>
+
+
+    </div>
+  </section>
+
+  <!-- How It Works Section -->
+  <section id="how-it-works" class="py-24 bg-gray-lighter">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl font-bold tracking-tight text-dark sm:text-4xl">How It Works</h2>
+        <p class="mt-4 text-lg text-gray">Get started in under 3 minutes</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="relative">
+          <div class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-full text-white text-2xl font-bold mb-6">
+            1
+          </div>
+          <h3 class="text-xl font-bold text-dark mb-3">Download & Install</h3>
+          <p class="text-gray leading-relaxed">
+            Download Default Tamer and move it to your Applications folder.
+          </p>
+        </div>
+
+        <div class="relative">
+          <div class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-full text-white text-2xl font-bold mb-6">
+            2
+          </div>
+          <h3 class="text-xl font-bold text-dark mb-3">Set as Default Browser</h3>
+          <p class="text-gray leading-relaxed">
+            Open System Settings and set Default Tamer as your default web browser.
+          </p>
+        </div>
+
+        <div class="relative">
+          <div class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-full text-white text-2xl font-bold mb-6">
+            3
+          </div>
+          <h3 class="text-xl font-bold text-dark mb-3">Configure Rules</h3>
+          <p class="text-gray leading-relaxed">
+            Choose your fallback browser and customize routing rules to your workflow.
+          </p>
+        </div>
+
+        <div class="relative">
+          <div class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-full text-white text-2xl font-bold mb-6">
+            4
+          </div>
+          <h3 class="text-xl font-bold text-dark mb-3">Done!</h3>
+          <p class="text-gray leading-relaxed">
+            Links now automatically open in the right browser. Hold ⌥ Option to override.
+          </p>
+        </div>
+      </div>
+
+      <div class="text-center mt-12">
+        <a href="/docs" class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-dark transition-all duration-200">
+          Full Setup Guide <span aria-hidden="true">→</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Use Cases Section -->
+  <section class="py-24 bg-white">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl font-bold tracking-tight text-dark sm:text-4xl">Perfect For</h2>
+        <p class="mt-4 text-lg text-gray">Who benefits from Default Tamer?</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="text-3xl">👨‍💻</div>
+            <h3 class="text-xl font-bold text-primary">Developers</h3>
+          </div>
+          <p class="text-gray leading-relaxed">
+            Work links in Chrome, personal browsing in Safari, testing in Firefox.
+          </p>
+        </div>
+
+        <div class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="text-3xl">📱</div>
+            <h3 class="text-xl font-bold text-primary">Product Managers</h3>
+          </div>
+          <p class="text-gray leading-relaxed">
+            Jira in Chrome, Figma in Arc, documentation in Safari.
+          </p>
+        </div>
+
+        <div class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="text-3xl">🎨</div>
+            <h3 class="text-xl font-bold text-primary">Designers</h3>
+          </div>
+          <p class="text-gray leading-relaxed">
+            Design tools in Arc, client links in Chrome, research in Safari.
+          </p>
+        </div>
+
+        <div class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="text-3xl">💼</div>
+            <h3 class="text-xl font-bold text-primary">Knowledge Workers</h3>
+          </div>
+          <p class="text-gray leading-relaxed">
+            Slack links in Chrome, email links in Safari, calendar in default browser.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-24 bg-gradient-to-br from-gray-lighter to-white">
+    <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+      <div class="rounded-2xl bg-white p-12 shadow-xl text-center border-2 border-gray-light">
+        <h2 class="text-3xl font-bold tracking-tight text-dark sm:text-4xl mb-4">Ready to Take Control?</h2>
+        <p class="text-lg text-gray mb-8">
+          Download Default Tamer and start routing your links intelligently.
+        </p>
+
+        <a href="/download" class="inline-flex items-center gap-2 rounded-lg bg-primary px-8 py-4 text-base font-semibold text-white hover:bg-primary-dark transition-all duration-200 hover:scale-105 shadow-lg">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download for macOS
+        </a>
+
+        <div class="mt-8 text-sm text-gray space-y-1">
+          <p><strong class="text-dark">Requirements:</strong> macOS 13.0 or later</p>
+          <p><strong class="text-dark">License:</strong> MIT (Free & Open Source)</p>
+          <p><strong class="text-dark">Size:</strong> ~5MB</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="py-24 bg-white">
+    <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl font-bold tracking-tight text-dark sm:text-4xl">Frequently Asked Questions</h2>
+      </div>
+
+      <div class="space-y-4">
+        <el-disclosure>
+        <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
+          <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
+            <span class="group-open:text-primary transition-colors duration-300">Is it really free?</span>
+            <span class="text-primary text-2xl group-open:rotate-45 transition-transform duration-300">+</span>
+          </summary>
+          <div class="px-6 pb-6 text-gray leading-relaxed">
+            Yes! Default Tamer is completely free and open source under the MIT license.
+          </div>
+        </details>
+        </el-disclosure>
+
+        <el-disclosure>
+        <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
+          <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
+            <span class="group-open:text-primary transition-colors duration-300">Does it collect any data?</span>
+            <span class="text-primary text-2xl group-open:rotate-45 transition-transform duration-300">+</span>
+          </summary>
+          <div class="px-6 pb-6 text-gray leading-relaxed">
+            No. Default Tamer is 100% privacy-first. All processing happens locally on your Mac.
+            There are zero network calls, zero telemetry, and zero data collection. You can verify this yourself — the code is fully open source.
+          </div>
+        </details>
+        </el-disclosure>
+
+        <el-disclosure>
+        <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
+          <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
+            <span class="group-open:text-primary transition-colors duration-300">How does it actually work?</span>
+            <span class="text-primary text-2xl group-open:rotate-45 transition-transform duration-300">+</span>
+          </summary>
+          <div class="px-6 pb-6 text-gray leading-relaxed">
+            You set Default Tamer as your default browser. When any app opens a link, macOS sends it to Default Tamer first.
+            It checks your rules (source app, domain, URL pattern) and instantly routes the link to the right browser. The whole process takes under 1ms.
+          </div>
+        </details>
+        </el-disclosure>
+
+        <el-disclosure>
+        <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
+          <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
+            <span class="group-open:text-primary transition-colors duration-300">What if I want to uninstall it?</span>
+            <span class="text-primary text-2xl group-open:rotate-45 transition-transform duration-300">+</span>
+          </summary>
+          <div class="px-6 pb-6 text-gray leading-relaxed">
+            Just change your default browser back in System Settings and delete the app. Default Tamer doesn't install any
+            background services, kernel extensions, or system modifications. It's a clean, sandboxed macOS app.
+          </div>
+        </details>
+        </el-disclosure>
+      </div>
+
+
+    </div>
+  </section>
+</BaseLayout>

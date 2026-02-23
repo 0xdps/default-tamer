@@ -1,0 +1,209 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { latestRelease } from '../data/release';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Default Tamer",
+  "operatingSystem": "macOS 13.0+",
+  "applicationCategory": "UtilitiesApplication",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "license": "https://opensource.org/licenses/MIT",
+  "url": "https://defaulttamer.app/download"
+};
+---
+
+<BaseLayout 
+  title="Download - Default Tamer"
+  description="Download Default Tamer for macOS. Free, open source, and privacy-first browser routing."
+  jsonLd={jsonLd}
+>
+  <!-- Hero -->
+  <section class="hero-section">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
+      <div class="text-center relative z-10">
+        <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+          Download <span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Default Tamer</span>
+        </h1>
+        <p class="mt-4 text-lg text-gray-300">Free & Open Source Browser Routing for macOS</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-24 bg-white">
+    <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+      <!-- Download Card -->
+      <div class="rounded-2xl bg-white p-8 sm:p-12 shadow-xl border-2 border-gray-light mb-16">
+        <div class="flex items-center gap-6 mb-8">
+          <img src="/images/icon-512.png" alt="Default Tamer Icon" class="w-20 h-20 rounded-2xl shadow-soft">
+          <div>
+            <h2 class="text-2xl font-bold text-dark">Default Tamer</h2>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="inline-flex items-center rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-white">v{latestRelease.version}</span>
+              <p class="text-gray text-sm">Latest stable release · {latestRelease.releaseDate}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-4 mb-8">
+          <a
+            href={latestRelease.downloadUrl}
+            class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark transition-all duration-200 hover:scale-105"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download DMG
+          </a>
+          <a
+            href={latestRelease.releaseNotesUrl}
+            class="inline-flex items-center gap-2 rounded-lg border-2 border-gray px-6 py-3 text-sm font-semibold text-dark hover:border-primary hover:text-primary transition-all duration-200"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View All Releases
+          </a>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="text-sm"><strong class="text-dark">Size:</strong> <span class="text-gray">~5MB</span></div>
+          <div class="text-sm"><strong class="text-dark">Requirements:</strong> <span class="text-gray">macOS 13.0+</span></div>
+          <div class="text-sm"><strong class="text-dark">License:</strong> <span class="text-gray">MIT</span></div>
+          <div class="text-sm"><strong class="text-dark">License:</strong> <span class="text-gray">MIT (Open Source)</span></div>
+        </div>
+      </div>
+
+      <!-- Installation Guide -->
+      <div class="mb-16">
+        <h2 class="text-2xl font-bold text-dark mb-8">Installation Guide</h2>
+        
+        <div class="space-y-6">
+          <div class="flex gap-6 items-start">
+            <div class="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full text-white text-sm font-bold flex-shrink-0">1</div>
+            <div>
+              <h3 class="text-lg font-bold text-dark mb-1">Download & Open</h3>
+              <p class="text-gray leading-relaxed">Download the DMG file and double-click to open it.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-6 items-start">
+            <div class="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full text-white text-sm font-bold flex-shrink-0">2</div>
+            <div>
+              <h3 class="text-lg font-bold text-dark mb-1">Drag to Applications</h3>
+              <p class="text-gray leading-relaxed">Drag Default Tamer to your Applications folder.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-6 items-start">
+            <div class="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full text-white text-sm font-bold flex-shrink-0">3</div>
+            <div>
+              <h3 class="text-lg font-bold text-dark mb-1">Launch the App</h3>
+              <p class="text-gray leading-relaxed">Open Default Tamer from Applications or Spotlight (⌘ + Space).</p>
+            </div>
+          </div>
+
+          <div class="flex gap-6 items-start">
+            <div class="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full text-white text-sm font-bold flex-shrink-0">4</div>
+            <div>
+              <h3 class="text-lg font-bold text-dark mb-1">Set as Default Browser</h3>
+              <p class="text-gray leading-relaxed">
+                Click "Open System Settings" in the first-run window. 
+                In System Settings → Desktop & Dock → Default web browser, select "Default Tamer".
+              </p>
+            </div>
+          </div>
+
+          <div class="flex gap-6 items-start">
+            <div class="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full text-white text-sm font-bold flex-shrink-0">5</div>
+            <div>
+              <h3 class="text-lg font-bold text-dark mb-1">Configure & Enjoy</h3>
+              <p class="text-gray leading-relaxed">
+                Choose your fallback browser, and you're done! 
+                Slack and Cursor links will automatically open in Chrome.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Requirements -->
+      <div class="mb-16">
+        <h2 class="text-2xl font-bold text-dark mb-8">System Requirements</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary transition-all duration-300">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="text-2xl">✅</div>
+              <h3 class="text-base font-bold text-primary">macOS Version</h3>
+            </div>
+            <p class="text-gray text-sm">macOS 13.0 (Ventura) or later</p>
+          </div>
+          <div class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary transition-all duration-300">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="text-2xl">💾</div>
+              <h3 class="text-base font-bold text-primary">Disk Space</h3>
+            </div>
+            <p class="text-gray text-sm">~10MB available space</p>
+          </div>
+          <div class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary transition-all duration-300">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="text-2xl">🖥️</div>
+              <h3 class="text-base font-bold text-primary">Architecture</h3>
+            </div>
+            <p class="text-gray text-sm">Apple Silicon & Intel supported</p>
+          </div>
+          <div class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary transition-all duration-300">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="text-2xl">🔐</div>
+              <h3 class="text-base font-bold text-primary">Permissions</h3>
+            </div>
+            <p class="text-gray text-sm">No special permissions required</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Verification -->
+      <div class="mb-16">
+        <h2 class="text-2xl font-bold text-dark mb-4">Verifying the Download</h2>
+        <p class="text-gray leading-relaxed mb-4">
+          Default Tamer is code-signed and notarized by Apple. 
+          Your Mac will verify the app automatically when you first open it.
+        </p>
+        <div class="callout-info">
+          <strong>Note:</strong> If you see a security prompt, right-click the app 
+          and select "Open" to confirm you want to run it.
+        </div>
+      </div>
+
+      <!-- What's Next -->
+      <div>
+        <h2 class="text-2xl font-bold text-dark mb-8">What's Next?</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <a href="/docs" class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary hover:-translate-y-2 transition-all duration-300 hover:shadow-xl no-underline">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="text-2xl">📖</div>
+              <h3 class="text-base font-bold text-primary">Documentation</h3>
+            </div>
+            <p class="text-gray text-sm">Setup, rules, troubleshooting, and FAQ</p>
+          </a>
+          <a href="https://github.com/0xdps/default-tamer" target="_blank" rel="noopener noreferrer" class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary hover:-translate-y-2 transition-all duration-300 hover:shadow-xl no-underline">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="text-2xl">💻</div>
+              <h3 class="text-base font-bold text-primary">GitHub</h3>
+            </div>
+            <p class="text-gray text-sm">Source code, issues, and discussions</p>
+          </a>
+          <a href="/changelog" class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary hover:-translate-y-2 transition-all duration-300 hover:shadow-xl no-underline">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="text-2xl">📋</div>
+              <h3 class="text-base font-bold text-primary">Changelog</h3>
+            </div>
+            <p class="text-gray text-sm">What's new in each release</p>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

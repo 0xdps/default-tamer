@@ -1,0 +1,109 @@
+# macOS
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Xcode
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+*.xcworkspace/*
+!*.xcworkspace/contents.xcworkspacedata
+!*.xcworkspace/xcshareddata/
+
+# Build artifacts
+build/
+DerivedData/
+*.build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Packages/
+Package.pins
+Package.resolved
+*.xcodeproj
+
+# CocoaPods
+Pods/
+*.podspec
+Podfile.lock
+
+# Carthage
+Carthage/Build/
+Carthage/Checkouts/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Code coverage
+*.gcda
+*.gcno
+*.profdata
+*.coverage
+
+# User-specific files
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# App packaging
+*.app
+*.dmg
+*.pkg
+
+# Temporary files
+*.tmp
+*.temp
+.tmp-icons/
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+
+# Archives
+*.zip
+*.tar.gz
+
+# XcodeGen
+# Keep project.yml but ignore generated project
+DefaultTamer.xcodeproj/
+
+# Build settings (contains sensitive credentials)
+scripts/build-settings.sh
+
+# Distribution artifacts
+dist/
+*.dmg
+*.pkg
+*.sha256
+
+# Root clutter
+out-not
+node_modules/
+package-lock.json
+
+# Moved to private submodule (private/)
+scripts/
+docs/
+assets/

@@ -1,0 +1,71 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  image?: string;
+  type?: string;
+  jsonLd?: Record<string, unknown>;
+}
+
+const { 
+  title, 
+  description, 
+  image,
+  type = 'website',
+  jsonLd,
+} = Astro.props;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') || 'https://defaulttamer.app';
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const ogImage = image || '/images/icon-512.png';
+---
+
+<!-- Primary Meta Tags -->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="title" content={title} />
+<meta name="description" content={description} />
+<meta name="keywords" content="macOS, browser routing, URL router, menu bar app, productivity, Slack to Chrome, link routing, intelligent browser, default browser, open source" />
+<meta name="author" content="Default Tamer" />
+<meta name="creator" content="0xdps" />
+<meta name="publisher" content="Default Tamer" />
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+<meta name="language" content="English" />
+<meta name="theme-color" content="#f97316" />
+
+<!-- Canonical URL -->
+<link rel="canonical" href={canonicalURL} />
+
+<!-- Open Graph / Social Media -->
+<meta property="og:type" content={type} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:site_name" content="Default Tamer" />
+<meta property="og:image" content={new URL(ogImage, siteUrl)} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:type" content="image/png" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:site" content="@defaulttamer" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={new URL(ogImage, siteUrl)} />
+
+<!-- Favicons -->
+<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/images/icon-512.png">
+<link rel="manifest" href="/site.webmanifest">
+
+<!-- Preconnect -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+<!-- JSON-LD Structured Data -->
+{jsonLd && (
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+)}

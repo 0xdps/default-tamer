@@ -1,0 +1,156 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: macos-latest
+    
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          token: ${{ secrets.SCRIPTS_DEPLOY_TOKEN }}
+      
+      - name: Read version from VERSION.txt
+        id: version
+        run: |
+          VERSION=$(cat VERSION.txt | tr -d '[:space:]')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Tag version: v$VERSION"
+      
+      - name: Setup certificate
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # Create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          
+          # Decode certificate from base64
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode --output $CERTIFICATE_PATH
+          
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security default-keychain -s $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          
+          # Import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+          
+          # Allow codesign to use the keychain
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+      
+      - name: Install XcodeGen and generate project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Build and sign
+        env:
+          DEVELOPER_ID_NAME: ${{ secrets.DEVELOPER_ID_NAME }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+        run: |
+          # Set Xcode version
+          sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+          
+          # Create build directory
+          mkdir -p build dist
+          
+          # Build
+          xcodebuild -scheme DefaultTamer \
+            -configuration Release \
+            -derivedDataPath build/DerivedData \
+            -arch arm64 \
+            -arch x86_64 \
+            build
+          
+          # Copy app
+          cp -r build/DerivedData/Build/Products/Release/DefaultTamer.app build/DefaultTamer.app
+          
+          # Code sign with hardened runtime (required for notarization)
+          codesign --deep --force --verify --verbose \
+            --sign "$DEVELOPER_ID_NAME" \
+            --entitlements DefaultTamer/DefaultTamer.entitlements \
+            --options runtime \
+            build/DefaultTamer.app
+          
+          # Verify
+          codesign -v build/DefaultTamer.app
+      
+      - name: Create DMG
+        run: |
+          bash private/scripts/create-dmg.sh build/DefaultTamer.app dist/DefaultTamer-v${{ steps.version.outputs.version }}.dmg
+      
+      - name: Notarize app
+        env:
+          APPLE_ID_USER: ${{ secrets.APPLE_ID_USER }}
+          APPLE_ID_TEAM: ${{ secrets.APPLE_ID_TEAM }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+        run: |
+          xcrun notarytool submit dist/DefaultTamer-v${{ steps.version.outputs.version }}.dmg \
+            --apple-id "$APPLE_ID_USER" \
+            --team-id "$APPLE_ID_TEAM" \
+            --password "$APPLE_ID_PASSWORD" \
+            --wait
+
+          # Staple the notarization ticket to the DMG
+          xcrun stapler staple dist/DefaultTamer-v${{ steps.version.outputs.version }}.dmg
+      
+      - name: Verify notarization
+        run: |
+          xcrun stapler validate dist/DefaultTamer-v${{ steps.version.outputs.version }}.dmg
+      
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/DefaultTamer-v${{ steps.version.outputs.version }}.dmg
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update website release data
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          DATE=$(date -u +%Y-%m-%d)
+          cat > DefaultTamerWeb/src/data/release.ts << EOF
+          // Auto-updated by .github/workflows/release.yml on every release.
+          // Do not edit manually.
+          export const latestRelease = {
+            version: "$VERSION",
+            downloadUrl: "https://github.com/0xdps/default-tamer/releases/download/v${VERSION}/DefaultTamer-v${VERSION}.dmg",
+            releaseDate: "$DATE",
+            releaseNotesUrl: "https://github.com/0xdps/default-tamer/releases/tag/v${VERSION}",
+          };
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --unset-all http.https://github.com/.extraheader || true
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/0xdps/default-tamer.git"
+          git fetch origin trunk
+          git checkout -f trunk
+          git add DefaultTamerWeb/src/data/release.ts
+          git diff --staged --quiet || git commit -m "chore: update website to v${VERSION} [skip ci]"
+          git push origin trunk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Clean keychain
+        if: always()
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          security delete-keychain $KEYCHAIN_PATH || true

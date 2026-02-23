@@ -1,0 +1,95 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import SEO from '../components/SEO.astro';
+import SearchPalette from '../components/SearchPalette.astro';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  image?: string;
+  type?: string;
+  jsonLd?: Record<string, unknown>;
+}
+
+const { title, description, image, type, jsonLd } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <SEO 
+      title={title}
+      description={description}
+      image={image}
+      type={type}
+      jsonLd={jsonLd}
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
+    <script is:inline src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
+    <link rel="alternate" type="application/rss+xml" title="Default Tamer" href="/rss.xml" />
+    <!-- Analytics: uncomment when ready to enable privacy-friendly analytics
+    <script defer data-domain="defaulttamer.app" src="https://plausible.io/js/script.js"></script>
+    -->
+  </head>
+  <body>
+    <div>
+      <Header />
+      <main>
+        <slot />
+      </main>
+      <Footer />
+    </div>
+
+    <SearchPalette />
+
+    <!-- Back to top button -->
+    <button
+      id="back-to-top"
+      class="fixed bottom-6 right-6 z-50 hidden rounded-full bg-primary p-3 text-white shadow-lg hover:bg-primary-dark transition-all duration-200 hover:scale-110"
+      aria-label="Back to top"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="18 15 12 9 6 15"></polyline>
+      </svg>
+    </button>
+    
+    <script>
+      // Navbar scroll effect
+      const navbar = document.querySelector('nav');
+      const backToTop = document.getElementById('back-to-top');
+
+      window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        if (currentScroll > 50) {
+          navbar?.classList.add('shadow-lg');
+        } else {
+          navbar?.classList.remove('shadow-lg');
+        }
+        if (currentScroll > 400) {
+          backToTop?.classList.remove('hidden');
+        } else {
+          backToTop?.classList.add('hidden');
+        }
+      });
+
+      backToTop?.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    </script>
+  </body>
+</html>

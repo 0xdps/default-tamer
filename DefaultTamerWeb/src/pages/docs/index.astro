@@ -1,0 +1,174 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Documentation - Default Tamer"
+  description="Everything you need to set up and use Default Tamer for intelligent browser routing on macOS."
+>
+  <div class="docs-wrapper prose">
+
+    <h1 class="text-4xl text-primary mb-2">Documentation</h1>
+    <p class="text-xl text-gray mb-12">Everything you need to set up and use Default Tamer.</p>
+
+    <!-- Setup -->
+    <h2 id="setup">Setup</h2>
+
+    <ol>
+      <li><strong>Download & install</strong> — Download the DMG from the <a href="/download">Download page</a>, open it, and drag Default Tamer to your Applications folder.</li>
+      <li><strong>Launch the app</strong> — Open Default Tamer from Applications or Spotlight (<kbd>⌘ Space</kbd>). It lives in your menu bar.</li>
+      <li><strong>Set as default browser</strong> — Click the menu bar icon → "Open System Settings". In System Settings → Desktop & Dock → Default web browser, select <strong>Default Tamer</strong>.</li>
+      <li><strong>Choose a fallback browser</strong> — Click the menu bar icon and pick the browser you want for links that don't match any rule (usually Safari or Chrome).</li>
+    </ol>
+
+    <div class="callout-success">
+      That's it. Links now route automatically. Hold <kbd>⌥ Option</kbd> while clicking any link to manually pick a browser on the fly.
+    </div>
+
+    <!-- Rules -->
+    <h2 id="rules">Rules</h2>
+
+    <p>Rules are evaluated top-to-bottom. The <strong>first match wins</strong>; unmatched links go to your fallback browser. Create and reorder rules from <strong>Manage Rules</strong> in the menu bar.</p>
+
+    <div class="overflow-x-auto my-6">
+      <table class="w-full bg-white text-sm" style="border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th class="bg-primary text-white font-semibold p-4 text-left" style="border: 1px solid #e2e8f0;">Rule Type</th>
+            <th class="bg-primary text-white font-semibold p-4 text-left" style="border: 1px solid #e2e8f0;">What it matches</th>
+            <th class="bg-primary text-white font-semibold p-4 text-left" style="border: 1px solid #e2e8f0;">Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="p-4 font-semibold text-dark" style="border: 1px solid #e2e8f0;">Source App</td>
+            <td class="p-4 text-gray" style="border: 1px solid #e2e8f0;">Links opened from a specific app</td>
+            <td class="p-4 font-mono text-sm text-dark" style="border: 1px solid #e2e8f0;">Slack → Chrome</td>
+          </tr>
+          <tr class="bg-gray-lighter">
+            <td class="p-4 font-semibold text-dark" style="border: 1px solid #e2e8f0;">Domain — Exact</td>
+            <td class="p-4 text-gray" style="border: 1px solid #e2e8f0;">Exact domain match</td>
+            <td class="p-4 font-mono text-sm text-dark" style="border: 1px solid #e2e8f0;">github.com → Firefox</td>
+          </tr>
+          <tr>
+            <td class="p-4 font-semibold text-dark" style="border: 1px solid #e2e8f0;">Domain — Suffix</td>
+            <td class="p-4 text-gray" style="border: 1px solid #e2e8f0;">Domain + all subdomains</td>
+            <td class="p-4 font-mono text-sm text-dark" style="border: 1px solid #e2e8f0;">*.atlassian.net → Chrome</td>
+          </tr>
+          <tr class="bg-gray-lighter">
+            <td class="p-4 font-semibold text-dark" style="border: 1px solid #e2e8f0;">Domain — Contains</td>
+            <td class="p-4 text-gray" style="border: 1px solid #e2e8f0;">Any domain containing a string</td>
+            <td class="p-4 font-mono text-sm text-dark" style="border: 1px solid #e2e8f0;">jira → Chrome</td>
+          </tr>
+          <tr>
+            <td class="p-4 font-semibold text-dark" style="border: 1px solid #e2e8f0;">URL — Contains</td>
+            <td class="p-4 text-gray" style="border: 1px solid #e2e8f0;">Full URL containing a string</td>
+            <td class="p-4 font-mono text-sm text-dark" style="border: 1px solid #e2e8f0;">/admin → Safari</td>
+          </tr>
+          <tr class="bg-gray-lighter">
+            <td class="p-4 font-semibold text-dark" style="border: 1px solid #e2e8f0;">URL — Regex</td>
+            <td class="p-4 text-gray" style="border: 1px solid #e2e8f0;">Full URL matching a regex pattern</td>
+            <td class="p-4 font-mono text-sm text-dark" style="border: 1px solid #e2e8f0;">/pull/\d+ → Chrome</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><strong>Ordering tip:</strong> Put specific rules above general ones. A <code>mail.google.com</code> rule must come before <code>*.google.com</code> or it will never be reached.</p>
+
+    <!-- Troubleshooting -->
+    <h2 id="troubleshooting">Troubleshooting</h2>
+
+    <h3>Links aren't routing through Default Tamer</h3>
+    <p>Check that Default Tamer is still set as your default browser: System Settings → Desktop & Dock → Default web browser. macOS occasionally resets this after system updates.</p>
+
+    <h3>Link opened in the wrong browser</h3>
+    <p>Open <strong>Recent Routes</strong> from the menu bar to see exactly which rule matched (or if the fallback was used). Rule ordering is the most common culprit — a broader rule above a narrower one will match first.</p>
+
+    <h3>Source app shows as "Unknown"</h3>
+    <p>Some apps don't pass source information to macOS (common with Terminal, scripts, and some Electron apps). Use domain or URL rules instead — they work regardless of source detection.</p>
+
+    <h3>Menu bar icon is missing</h3>
+    <p>macOS hides icons when the menu bar is full. Hold <kbd>⌘</kbd> and drag other icons to make space. If the app isn't running, relaunch from Applications.</p>
+
+    <h3>Resetting to factory defaults</h3>
+    <p>Quit the app, then run in Terminal:</p>
+    <div class="relative">
+      <el-copyable id="reset-cmd">
+        <pre class="not-prose bg-dark text-white p-4 rounded-lg overflow-x-auto my-4 text-sm font-mono">rm -rf ~/Library/Application\ Support/Default\ Tamer/
+rm -f ~/Library/Preferences/com.defaulttamer.app.plist</pre>
+      </el-copyable>
+      <button command="--copy" commandfor="reset-cmd" class="absolute top-3 right-3 rounded-md bg-white/10 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-white/20 transition-colors">
+        <span class="in-data-copied:hidden">Copy</span>
+        <span class="not-in-data-copied:hidden">Copied!</span>
+      </button>
+    </div>
+
+    <!-- FAQ -->
+    <h2 id="faq">FAQ</h2>
+
+    <div class="space-y-4 not-prose">
+      <el-disclosure>
+        <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
+          <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
+            <span class="group-open:text-primary transition-colors duration-300">Why does it need to be set as the default browser?</span>
+            <span class="text-primary text-2xl group-open:rotate-45 transition-transform duration-300">+</span>
+          </summary>
+          <div class="px-6 pb-6 text-gray leading-relaxed">
+            macOS only allows the default browser to intercept links from other apps. Setting Default Tamer as default lets it receive every link before passing it to the right browser.
+          </div>
+        </details>
+      </el-disclosure>
+
+      <el-disclosure>
+        <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
+          <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
+            <span class="group-open:text-primary transition-colors duration-300">Which browsers are supported?</span>
+            <span class="text-primary text-2xl group-open:rotate-45 transition-transform duration-300">+</span>
+          </summary>
+          <div class="px-6 pb-6 text-gray leading-relaxed">
+            Any browser installed on your Mac — Safari, Chrome, Firefox, Arc, Brave, Edge, Vivaldi, Opera, and more. Default Tamer auto-detects all installed browsers.
+          </div>
+        </details>
+      </el-disclosure>
+
+      <el-disclosure>
+        <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
+          <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
+            <span class="group-open:text-primary transition-colors duration-300">Does it collect any data?</span>
+            <span class="text-primary text-2xl group-open:rotate-45 transition-transform duration-300">+</span>
+          </summary>
+          <div class="px-6 pb-6 text-gray leading-relaxed">
+            No. All processing is local. There are zero network calls, zero telemetry, and zero data collection. Activity logging is opt-in, and URLs are sanitized before storage. You can verify this — it's fully open source.
+          </div>
+        </details>
+      </el-disclosure>
+
+      <el-disclosure>
+        <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
+          <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
+            <span class="group-open:text-primary transition-colors duration-300">How do I uninstall it?</span>
+            <span class="text-primary text-2xl group-open:rotate-45 transition-transform duration-300">+</span>
+          </summary>
+          <div class="px-6 pb-6 text-gray leading-relaxed">
+            Change your default browser back in System Settings → Desktop & Dock, then quit and delete the app. No background services, no kernel extensions — it's a clean sandboxed app.
+          </div>
+        </details>
+      </el-disclosure>
+    </div>
+
+    <!-- Help -->
+    <div class="mt-16 p-8 bg-gray-lighter rounded-xl text-center not-prose">
+      <p class="text-gray mb-4">Have a question or found a bug?</p>
+      <div class="flex gap-4 justify-center flex-wrap">
+        <a href="https://github.com/0xdps/default-tamer/issues/new" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark transition-all duration-200">
+          Report an Issue
+        </a>
+        <a href="https://github.com/0xdps/default-tamer/discussions" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-lg border-2 border-gray px-5 py-2.5 text-sm font-semibold text-dark hover:border-primary hover:text-primary transition-all duration-200">
+          GitHub Discussions
+        </a>
+      </div>
+    </div>
+
+  </div>
+</BaseLayout>
