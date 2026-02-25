@@ -77,8 +77,8 @@ jobs:
             CURRENT_PROJECT_VERSION=${{ steps.version.outputs.version }} \
             build
           
-          # Copy app
-          cp -r build/DerivedData/Build/Products/Release/DefaultTamer.app build/DefaultTamer.app
+          # Copy app — use ditto (not cp -r) to preserve symlinks and bundle structure
+          ditto build/DerivedData/Build/Products/Release/DefaultTamer.app build/DefaultTamer.app
           
           # Code sign with hardened runtime (required for notarization).
           # Do NOT use --deep; Sparkle.framework contains nested XPC services
