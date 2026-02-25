@@ -47,6 +47,13 @@ jobs:
           # Import certificate to keychain
           security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
+
+          # Import Apple intermediate certificates required to build the full
+          # Developer ID signing chain. Without these, codesign produces a
+          # chain-less signature that Apple notarization rejects as "invalid".
+          curl -fsSL https://www.apple.com/certificateauthority/DeveloperIDCA.cer \
+            -o $RUNNER_TEMP/DeveloperIDCA.cer
+          security import $RUNNER_TEMP/DeveloperIDCA.cer -k $KEYCHAIN_PATH -T /usr/bin/codesign || true
           
           # Allow codesign to use the keychain
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
@@ -54,8 +61,6 @@ jobs:
           # Diagnostic: list available signing identities
           echo "--- Available codesigning identities ---"
           security find-identity -v -p codesigning $KEYCHAIN_PATH || true
-          echo "--- All keychains ---"
-          security list-keychain || true
       
       - name: Install XcodeGen and generate project
         run: |
