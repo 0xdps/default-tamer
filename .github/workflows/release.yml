@@ -102,11 +102,13 @@ jobs:
               "$helper"
           done
 
-          # 3. Sign Sparkle.framework itself
+          # 3. Sign the versioned Sparkle bundle directly (Versions/B).
+          # Signing the top-level Sparkle.framework symlink causes
+          # "bundle format is ambiguous" — always sign the versioned path.
           codesign --force --verify --verbose \
             --sign "$DEVELOPER_ID_NAME" \
             --options runtime \
-            build/DefaultTamer.app/Contents/Frameworks/Sparkle.framework
+            "$SPARKLE"
 
           # 4. Sign the main app
           codesign --force --verify --verbose \
