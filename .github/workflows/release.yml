@@ -130,14 +130,32 @@ jobs:
           APPLE_ID_TEAM: ${{ secrets.APPLE_ID_TEAM }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
         run: |
-          xcrun notarytool submit dist/DefaultTamer-v${{ steps.version.outputs.version }}.dmg \
+          DMG="dist/DefaultTamer-v${{ steps.version.outputs.version }}.dmg"
+
+          # Submit and capture output to extract submission ID for log fetching
+          NOTARY_OUTPUT=$(xcrun notarytool submit "$DMG" \
             --apple-id "$APPLE_ID_USER" \
             --team-id "$APPLE_ID_TEAM" \
             --password "$APPLE_ID_PASSWORD" \
-            --wait
+            --wait 2>&1)
+          echo "$NOTARY_OUTPUT"
+
+          SUBMISSION_ID=$(echo "$NOTARY_OUTPUT" | grep -E "^\s+id:" | head -1 | awk '{print $2}')
+
+          # If notarization was rejected, fetch and print Apple's detailed log
+          if echo "$NOTARY_OUTPUT" | grep -q "status: Invalid"; then
+            echo "::error::Notarization rejected — fetching Apple's rejection log..."
+            if [ -n "$SUBMISSION_ID" ]; then
+              xcrun notarytool log "$SUBMISSION_ID" \
+                --apple-id "$APPLE_ID_USER" \
+                --team-id "$APPLE_ID_TEAM" \
+                --password "$APPLE_ID_PASSWORD" 2>&1 || true
+            fi
+            exit 1
+          fi
 
           # Staple the notarization ticket to the DMG
-          xcrun stapler staple dist/DefaultTamer-v${{ steps.version.outputs.version }}.dmg
+          xcrun stapler staple "$DMG"
       
       - name: Verify notarization
         run: |
