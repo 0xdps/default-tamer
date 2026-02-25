@@ -50,6 +50,12 @@ jobs:
           
           # Allow codesign to use the keychain
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # Diagnostic: list available signing identities
+          echo "--- Available codesigning identities ---"
+          security find-identity -v -p codesigning $KEYCHAIN_PATH || true
+          echo "--- All keychains ---"
+          security list-keychain || true
       
       - name: Install XcodeGen and generate project
         run: |
@@ -108,6 +114,12 @@ jobs:
           # Verify
           codesign --verify --deep --strict "$APP"
           echo "Code signing OK"
+
+          # Diagnostic: show what cert was actually used to sign
+          echo "--- Signing identity used for main binary ---"
+          codesign -dv "$APP/Contents/MacOS/DefaultTamer" 2>&1 | grep -E "Authority|Timestamp|TeamIdentifier|Identifier" || true
+          echo "--- Signing identity used for Sparkle dylib ---"
+          codesign -dv "$APP/Contents/Frameworks/Sparkle.framework/Sparkle" 2>&1 | grep -E "Authority|Timestamp|TeamIdentifier" || true
       
       - name: Create DMG
         run: |
