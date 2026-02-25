@@ -80,7 +80,7 @@ jobs:
           # Copy app — use ditto (not cp -r) to preserve symlinks and bundle structure
           ditto build/DerivedData/Build/Products/Release/DefaultTamer.app build/DefaultTamer.app
           
-          # Code sign with hardened runtime (required for notarization).
+          # Code sign with hardened runtime + secure timestamp (both required for notarization).
           # Do NOT use --deep; Sparkle.framework contains nested XPC services
           # and helper apps that must be signed individually and in order.
 
@@ -91,6 +91,7 @@ jobs:
             [ -e "$xpc" ] && codesign --force --verify --verbose \
               --sign "$DEVELOPER_ID_NAME" \
               --options runtime \
+              --timestamp \
               "$xpc"
           done
 
@@ -99,6 +100,7 @@ jobs:
             [ -e "$helper" ] && codesign --force --verify --verbose \
               --sign "$DEVELOPER_ID_NAME" \
               --options runtime \
+              --timestamp \
               "$helper"
           done
 
@@ -108,6 +110,7 @@ jobs:
           codesign --force --verify --verbose \
             --sign "$DEVELOPER_ID_NAME" \
             --options runtime \
+            --timestamp \
             "$SPARKLE"
 
           # 4. Sign the main app
@@ -115,6 +118,7 @@ jobs:
             --sign "$DEVELOPER_ID_NAME" \
             --entitlements DefaultTamer/DefaultTamer.entitlements \
             --options runtime \
+            --timestamp \
             build/DefaultTamer.app
 
           # Verify
