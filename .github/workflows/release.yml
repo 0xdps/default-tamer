@@ -145,7 +145,7 @@ jobs:
           codesign -dv --verbose=4 "/tmp/notarize-verify/DefaultTamer.app/Contents/Frameworks/Sparkle.framework/Versions/B/Sparkle" 2>&1 | grep -E "Authority|Timestamp|TeamIdentifier|Identifier|Format" || true
           hdiutil detach /tmp/notarize-verify
 
-
+      - name: Notarize app
         env:
           APPLE_ID_USER: ${{ secrets.APPLE_ID_USER }}
           APPLE_ID_TEAM: ${{ secrets.APPLE_ID_TEAM }}
