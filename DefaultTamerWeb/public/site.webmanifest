@@ -54,10 +54,10 @@
   ],
   "shortcuts": [
     {
-      "name": "View Features",
-      "short_name": "Features",
-      "description": "View all features of Default Tamer",
-      "url": "/features",
+      "name": "Download App",
+      "short_name": "Download",
+      "description": "Download Default Tamer for macOS",
+      "url": "/download",
       "icons": [
         {
           "src": "images/icon-512.png",
@@ -78,10 +78,10 @@
       ]
     },
     {
-      "name": "Download App",
-      "short_name": "Download",
-      "description": "Download Default Tamer for macOS",
-      "url": "/download",
+      "name": "Documentation",
+      "short_name": "Docs",
+      "description": "Browse Default Tamer documentation",
+      "url": "/docs",
       "icons": [
         {
           "src": "images/icon-512.png",

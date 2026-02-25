@@ -1,22 +1,8 @@
 User-agent: *
 Allow: /
-Allow: /sitemap.xml
-Allow: /sitemap.html
-Disallow: /admin/
-Disallow: /private/
+Disallow: /api/
 
-# Crawl delay to be respectful
-Crawl-delay: 1
-
-# Specific crawlers
-User-agent: Googlebot
-Disallow: 
-
-User-agent: Bingbot
-Disallow: 
-
-# Sitemap locations
-Sitemap: https://defaulttamer.app/sitemap.xml
-Sitemap: https://defaulttamer.app/sitemap.html
+# Sitemap
+Sitemap: https://defaulttamer.app/sitemap-index.xml
 
 
