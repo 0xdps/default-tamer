@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-02-25
+
 ### Changed
 
 - Replaced custom GitHub-based update checker with [Sparkle](https://sparkle-project.org/) (`SPUStandardUpdaterController`) — automatic background update checks, delta updates, and native macOS update UI are now handled by the Sparkle framework
