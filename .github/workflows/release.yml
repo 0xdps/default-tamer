@@ -233,7 +233,16 @@ jobs:
           # Promote [Unreleased] section to versioned entry in CHANGELOG.md
           perl -i -pe "s/## \[Unreleased\]/## [Unreleased]\n\n## [$VERSION] - $DATE/" CHANGELOG.md
 
-          git add DefaultTamerWeb/src/data/release.json CHANGELOG.md
+          # Promote the user-facing changelog entry from "upcoming" to released:
+          # - Replace the 9.9.9 placeholder version with the real version
+          # - Remove the isUnreleased: true flag
+          CONTENT_CHANGELOG="DefaultTamerWeb/src/content/changelog/${VERSION}.md"
+          if [ -f "$CONTENT_CHANGELOG" ]; then
+            perl -i -pe "s/^version: \"9\.9\.9\"/version: \"${VERSION}\"/" "$CONTENT_CHANGELOG"
+            perl -i -ne "print unless /^isUnreleased: true/" "$CONTENT_CHANGELOG"
+          fi
+
+          git add DefaultTamerWeb/src/data/release.json CHANGELOG.md ${CONTENT_CHANGELOG:-}
           git diff --staged --quiet || git commit -m "chore: update website to v${VERSION} [skip ci]"
           git push origin trunk
         env:
