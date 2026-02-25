@@ -3,6 +3,6 @@ Allow: /
 Disallow: /api/
 
 # Sitemap
-Sitemap: https://defaulttamer.app/sitemap-index.xml
+Sitemap: https://defaulttamer.app/sitemap.xml
 
 
