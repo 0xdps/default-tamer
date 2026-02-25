@@ -3,6 +3,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import latestRelease from '../data/release.json';
 import { getCollection } from 'astro:content';
 
+const dmgSize = latestRelease.size
+  ? `~${(latestRelease.size / (1024 * 1024)).toFixed(1)} MB`
+  : '~2 MB';
+
 // Fetch changelog entry for the current release
 const allEntries = await getCollection('changelog');
 const currentEntry = allEntries.find(e => e.data.version === latestRelease.version && !e.data.isUnreleased);
@@ -104,7 +108,7 @@ const jsonLd = {
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div class="text-sm"><strong class="text-dark">Size:</strong> <span class="text-gray">~5MB</span></div>
+          <div class="text-sm"><strong class="text-dark">Size:</strong> <span class="text-gray">{dmgSize}</span></div>
           <div class="text-sm"><strong class="text-dark">Requirements:</strong> <span class="text-gray">macOS 13.0+</span></div>
           <div class="text-sm"><strong class="text-dark">License:</strong> <span class="text-gray">MIT (Open Source)</span></div>
         </div>

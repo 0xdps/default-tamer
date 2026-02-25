@@ -1,5 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import latestRelease from '../data/release.json';
+
+const dmgSize = latestRelease.size
+  ? `~${(latestRelease.size / (1024 * 1024)).toFixed(1)} MB`
+  : '~2 MB';
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -303,7 +308,7 @@ const jsonLd = {
         <div class="mt-8 text-sm text-gray space-y-1">
           <p><strong class="text-dark">Requirements:</strong> macOS 13.0 or later</p>
           <p><strong class="text-dark">License:</strong> MIT Open Source</p>
-          <p><strong class="text-dark">Size:</strong> ~5MB</p>
+          <p><strong class="text-dark">Size:</strong> {dmgSize}</p>
         </div>
       </div>
     </div>
