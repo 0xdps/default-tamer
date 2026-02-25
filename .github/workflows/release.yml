@@ -89,6 +89,10 @@ jobs:
             -arch x86_64 \
             MARKETING_VERSION=${{ steps.version.outputs.version }} \
             CURRENT_PROJECT_VERSION=${{ steps.version.outputs.version }} \
+            ONLY_ACTIVE_ARCH=NO \
+            DEPLOYMENT_POSTPROCESSING=YES \
+            STRIP_INSTALLED_PRODUCT=YES \
+            DEAD_CODE_STRIPPING=YES \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_ALLOWED=NO \
@@ -129,8 +133,19 @@ jobs:
       - name: Create DMG
         run: |
           bash private/scripts/create-dmg.sh build/DefaultTamer.app dist/DefaultTamer-v${{ steps.version.outputs.version }}.dmg
-      
-      - name: Notarize app
+
+      - name: Verify DMG signatures before notarization
+        run: |
+          DMG="dist/DefaultTamer-v${{ steps.version.outputs.version }}.dmg"
+          hdiutil attach "$DMG" -mountpoint /tmp/notarize-verify -nobrowse -readonly
+          echo "--- Verifying app signatures inside DMG ---"
+          codesign --verify --deep --strict "/tmp/notarize-verify/DefaultTamer.app" && echo "✅ DMG signatures valid" || echo "❌ DMG signatures BROKEN"
+          codesign -dv --verbose=4 "/tmp/notarize-verify/DefaultTamer.app/Contents/MacOS/DefaultTamer" 2>&1 | grep -E "Authority|Timestamp|TeamIdentifier|Identifier|Format" || true
+          echo "--- Sparkle ---"
+          codesign -dv --verbose=4 "/tmp/notarize-verify/DefaultTamer.app/Contents/Frameworks/Sparkle.framework/Versions/B/Sparkle" 2>&1 | grep -E "Authority|Timestamp|TeamIdentifier|Identifier|Format" || true
+          hdiutil detach /tmp/notarize-verify
+
+
         env:
           APPLE_ID_USER: ${{ secrets.APPLE_ID_USER }}
           APPLE_ID_TEAM: ${{ secrets.APPLE_ID_TEAM }}
