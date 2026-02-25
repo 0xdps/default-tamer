@@ -80,13 +80,41 @@ jobs:
           # Copy app
           cp -r build/DerivedData/Build/Products/Release/DefaultTamer.app build/DefaultTamer.app
           
-          # Code sign with hardened runtime (required for notarization)
-          codesign --deep --force --verify --verbose \
+          # Code sign with hardened runtime (required for notarization).
+          # Do NOT use --deep; Sparkle.framework contains nested XPC services
+          # and helper apps that must be signed individually and in order.
+
+          SPARKLE="build/DefaultTamer.app/Contents/Frameworks/Sparkle.framework/Versions/B"
+
+          # 1. Sign Sparkle XPC services
+          for xpc in "$SPARKLE/XPCServices/"*.xpc; do
+            [ -e "$xpc" ] && codesign --force --verify --verbose \
+              --sign "$DEVELOPER_ID_NAME" \
+              --options runtime \
+              "$xpc"
+          done
+
+          # 2. Sign Sparkle helper apps / tools
+          for helper in "$SPARKLE/Updater.app" "$SPARKLE/Autoupdate"; do
+            [ -e "$helper" ] && codesign --force --verify --verbose \
+              --sign "$DEVELOPER_ID_NAME" \
+              --options runtime \
+              "$helper"
+          done
+
+          # 3. Sign Sparkle.framework itself
+          codesign --force --verify --verbose \
+            --sign "$DEVELOPER_ID_NAME" \
+            --options runtime \
+            build/DefaultTamer.app/Contents/Frameworks/Sparkle.framework
+
+          # 4. Sign the main app
+          codesign --force --verify --verbose \
             --sign "$DEVELOPER_ID_NAME" \
             --entitlements DefaultTamer/DefaultTamer.entitlements \
             --options runtime \
             build/DefaultTamer.app
-          
+
           # Verify
           codesign -v build/DefaultTamer.app
       
