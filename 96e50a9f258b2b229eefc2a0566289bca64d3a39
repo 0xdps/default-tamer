@@ -1,0 +1,23 @@
+.github/workflows/release.yml
+  4a5b01db658de342 83-106,108-112,117
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.5",
+  "base_commit_sha": "96e50a9f258b2b229eefc2a0566289bca64d3a39",
+  "prompts": {
+    "4a5b01db658de342": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "beee256c-d6f5-491d-af3e-de9d47f4a012",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 31,
+      "total_deletions": 3,
+      "accepted_lines": 31,
+      "overriden_lines": 0
+    }
+  }
+}
