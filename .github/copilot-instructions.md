@@ -215,8 +215,98 @@ BaseLayout.astro
 
 ## Content Collections
 
+- **Changelog:** `src/content/changelog/*.md` — frontmatter: `version`, `date`, `isUnreleased` (optional, defaults false)
 - **Guides:** `src/content/guides/*.md` — frontmatter: `title`, `description`, `category`, `order`, `featured`
-- **Blog:** `src/content/blog/*.md` — defined but empty
+
+---
+
+## Changelog Workflow
+
+The project uses a **two-track changelog** system:
+
+| Track | File | Audience | Updated when |
+|-------|------|----------|--------------|
+| Developer log | `CHANGELOG.md` (repo root) | Contributors, git history | Every meaningful commit |
+| User-facing | `DefaultTamerWeb/src/content/changelog/*.md` | End users on the website | Every release |
+
+### ❗ NEVER read `CHANGELOG.md` for the website
+
+The website `/changelog` page reads exclusively from `src/content/changelog/`. Do **not** modify `changelog.astro` to read `CHANGELOG.md` again.
+
+---
+
+### When to update `CHANGELOG.md` (developer log)
+
+Update after **any** commit that changes behaviour, fixes a bug, adds a feature, or changes the build/release process. Use [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) categories:
+
+- `### Added` — new features
+- `### Changed` — changes to existing behaviour
+- `### Fixed` — bug fixes
+- `### Removed` — removed features
+- `### Deprecated` — soon-to-be removed features
+- `### Security` — security fixes
+
+Entries go under `## [Unreleased]` until a version is tagged.
+
+**Tone:** technical and implementation-level. This is a developer log.
+
+---
+
+### When to create a user-facing changelog entry
+
+Create a new file in `src/content/changelog/` when a **new version is released** (i.e. when `[Unreleased]` is promoted to a version in `CHANGELOG.md`). Do **not** create entries for unreleased work.
+
+### How to create a user-facing entry
+
+**Filename:** `src/content/changelog/{version}.md` — e.g. `0.1.0.md`
+
+**Template:**
+
+```md
+---
+version: "0.1.0"
+date: "YYYY-MM-DD"
+---
+
+### Added
+
+- Plain-language description of what users can now do. Focus on the benefit.
+
+### Fixed
+
+- What was broken and what the user experience is now.
+```
+
+**Allowed `### ` headings** (these are styled as coloured badges on the website):
+`Added`, `Fixed`, `Changed`, `Improved`, `Updated`, `Removed`, `Security`
+
+**Tone rules — MUST follow:**
+
+- ✅ Write for a non-technical user: "Default Tamer now checks for updates automatically" not "Replaced custom UpdateManager with Sparkle SPUStandardUpdaterController"
+- ✅ Focus on what the user can do or what changed for them
+- ✅ One bullet per distinct user-visible change
+- ❌ Never mention internal class names, framework names, file names, or implementation details
+- ❌ Never copy-paste entries from `CHANGELOG.md` verbatim
+- ❌ Never create an entry for internal refactors that have no user-visible effect
+- ❌ Never include an entry for website-only changes (styling, copy, docs updates)
+
+**Examples:**
+
+| ❌ Developer log (wrong for website) | ✅ User-facing (correct) |
+|--------------------------------------|-------------------------|
+| Replaced custom GitHub-based update checker with Sparkle | Default Tamer now checks for updates automatically in the background |
+| Migrates `hasCompletedFirstRun` UserDefaults flag to file sentinel | First-run setup wizard no longer reappears after updating the app |
+| Removed `UpdateNotificationView` struct | *(no entry — not user-visible)* |
+
+### Sorting
+
+Entries are sorted **newest first** automatically by `changelog.astro` using semantic version comparison. No manual ordering needed.
+
+For unreleased entries, use a version number higher than the current latest release (e.g. `9.9.9`) to ensure it always sorts to the top — the version is never shown to users on the card, only used internally for ordering.
+
+### 10-release cap
+
+Only the 10 most recent entries are shown on the website. Older releases automatically get a "View full changelog on GitHub" CTA pointing to `CHANGELOG.md`. No action needed when adding new entries.
 
 ---
 
@@ -231,3 +321,6 @@ BaseLayout.astro
 - ❌ Don't add `font-family` declarations — use `font-heading` or `font-sans` tokens
 - ❌ Don't use absolute positioning for dropdowns/popovers — use `el-menu`/`el-popover` with `anchor`
 - ❌ Don't implement copy-to-clipboard manually — use `<el-copyable>`
+- ❌ Don't read `CHANGELOG.md` from the website — the website uses `src/content/changelog/*.md` only
+- ❌ Don't copy developer log entries to user-facing changelog files verbatim — rewrite for end users
+- ❌ Don't create a user-facing changelog entry for internal refactors, website-only changes, or unreleased work

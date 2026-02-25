@@ -8,12 +8,15 @@
 import Cocoa
 import Combine
 import SwiftUI
+import Sparkle
 
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
     var statusItem: NSStatusItem!
     var menu: NSMenu!
     let appState = AppState() // Single shared instance
+    /// Holds Sparkle's controller for the app's lifetime.
+    let updateManager = UpdateManager()
     var firstRunWindow: NSWindow?
     var preferencesWindow: NSWindow?
     var chooserWindow: NSWindow?
@@ -166,6 +169,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
         let prefsView = PreferencesWindow()
             .environmentObject(appState)
+            .environmentObject(updateManager)
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 640, height: 400),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],

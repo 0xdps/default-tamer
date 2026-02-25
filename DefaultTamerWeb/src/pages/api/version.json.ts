@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { latestRelease } from '../../data/release';
+import latestRelease from '../../data/release.json';
 
 export const GET: APIRoute = () => {
   const payload = {

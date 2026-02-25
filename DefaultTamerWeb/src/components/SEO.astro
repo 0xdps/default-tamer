@@ -67,5 +67,5 @@ const ogImage = image || '/images/icon-512.png';
 
 <!-- JSON-LD Structured Data -->
 {jsonLd && (
-  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 )}

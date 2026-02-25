@@ -127,30 +127,49 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           DATE=$(date -u +%Y-%m-%d)
+          DMG_PATH="dist/DefaultTamer-v${VERSION}.dmg"
+
+          # Sign the DMG for Sparkle using the EdDSA private key (base64-encoded)
+          # stored in the SPARKLE_PRIVATE_KEY repository secret.
+          ED_SIGNATURE="PLACEHOLDER"
+          DMG_SIZE=0
+          if [ -f "$DMG_PATH" ]; then
+            DMG_SIZE=$(stat -f%z "$DMG_PATH")
+            SPARKLE_SIGN_TOOL=$(find ~/Library/Developer/Xcode/DerivedData -name "sign_update" 2>/dev/null | head -1 || true)
+            if [ -z "$SPARKLE_SIGN_TOOL" ]; then
+              SPARKLE_SIGN_TOOL=$(find "$HOME/.spm/checkouts/Sparkle" -name "sign_update" 2>/dev/null | head -1 || true)
+            fi
+            if [ -n "$SPARKLE_SIGN_TOOL" ] && [ -n "$SPARKLE_PRIVATE_KEY" ]; then
+              echo "$SPARKLE_PRIVATE_KEY" | base64 --decode > /tmp/sparkle_private_key
+              ED_SIGNATURE=$("$SPARKLE_SIGN_TOOL" --ed-key-file /tmp/sparkle_private_key "$DMG_PATH" | grep -oE '[A-Za-z0-9+/=]{88,}' | head -1)
+              rm -f /tmp/sparkle_private_key
+            fi
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config --unset-all http.https://github.com/.extraheader || true
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/0xdps/default-tamer.git"
           git fetch origin trunk
           git checkout -f trunk
-          cat > DefaultTamerWeb/src/data/release.ts << EOF
-// Auto-updated by .github/workflows/release.yml on every release.
-// Do not edit manually.
-export const latestRelease = {
-  version: "$VERSION",
-  downloadUrl: "/download/DefaultTamer-v${VERSION}.dmg",
-  releaseDate: "$DATE",
-  releaseNotesUrl: "https://defaulttamer.app/changelog#v${VERSION//./-}",
-};
-EOF
+          jq -n \
+            --arg version "${VERSION}" \
+            --arg downloadUrl "/download/DefaultTamer-v${VERSION}.dmg" \
+            --arg releaseDate "${DATE}" \
+            --arg releaseNotesUrl "https://defaulttamer.app/changelog" \
+            --arg edSignature "${ED_SIGNATURE}" \
+            --argjson size "${DMG_SIZE}" \
+            '{version: $version, downloadUrl: $downloadUrl, releaseDate: $releaseDate, releaseNotesUrl: $releaseNotesUrl, edSignature: $edSignature, size: $size}' \
+            > DefaultTamerWeb/src/data/release.json
           # Promote [Unreleased] section to versioned entry in CHANGELOG.md
           perl -i -pe "s/## \[Unreleased\]/## [Unreleased]\n\n## [$VERSION] - $DATE/" CHANGELOG.md
 
-          git add DefaultTamerWeb/src/data/release.ts CHANGELOG.md
+          git add DefaultTamerWeb/src/data/release.json CHANGELOG.md
           git diff --staged --quiet || git commit -m "chore: update website to v${VERSION} [skip ci]"
           git push origin trunk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
 
       - name: Clean keychain
         if: always()

@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import Sparkle
 
 struct PreferencesWindow: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var updateManager: UpdateManager
     @State private var selectedTab: PreferenceTab = .general
     @StateObject private var toastManager = ToastManager.shared
     
@@ -46,6 +48,7 @@ struct PreferencesWindow: View {
                 case .about:
                     AboutTab()
                         .environmentObject(appState)
+                        .environmentObject(updateManager)
                 }
             }
         }
@@ -128,6 +131,7 @@ enum PreferenceTab: Int {
 
 struct GeneralTab: View {
     @EnvironmentObject var appState: AppState
+    @State private var showResetConfirmation = false
     
     var body: some View {
         Form {
@@ -196,9 +200,40 @@ struct GeneralTab: View {
             }
             
             // Diagnostics and User Feedback sections hidden (coming soon)
+
+            Section {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Reset to Factory Defaults")
+                            .font(.subheadline)
+                        Text("Removes all rules, settings, and preferences. This cannot be undone.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+
+                    Spacer()
+
+                    Button(role: .destructive, action: { showResetConfirmation = true }) {
+                        Text("Reset")
+                    }
+                    .buttonStyle(.bordered)
+                }
+            } header: {
+                Text("Danger Zone")
+                    .font(.headline)
+                    .foregroundColor(.red)
+            }
         }
         .formStyle(.grouped)
         .padding()
+        .alert("Reset to Factory Defaults?", isPresented: $showResetConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Reset Everything", role: .destructive) {
+                appState.resetToDefaults()
+            }
+        } message: {
+            Text("This will delete all your rules, settings, and preferences. The app will return to its first-run state. This cannot be undone.")
+        }
     }
 }
 
@@ -978,10 +1013,8 @@ class ActivityViewModel: ObservableObject {
 
 struct AboutTab: View {
     @EnvironmentObject var appState: AppState
-    @State private var showUpdateAlert = false
-    @State private var updateAlertTitle = ""
-    @State private var updateAlertMessage = ""
-    @State private var updateDownloadURL: URL?
+    @EnvironmentObject var updateManager: UpdateManager
+    @StateObject private var checkForUpdatesViewModel = CheckForUpdatesViewModel()
     @State private var isIconHovered = false
     
     var body: some View {
@@ -1010,8 +1043,10 @@ struct AboutTab: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
-                    Button(action: checkForUpdates) {
-                        if appState.updateManager.isChecking {
+                    Button(action: {
+                        updateManager.checkForUpdates(forced: true)
+                    }) {
+                        if updateManager.isChecking {
                             ProgressView()
                                 .scaleEffect(0.7, anchor: .center)
                         } else {
@@ -1020,7 +1055,7 @@ struct AboutTab: View {
                         }
                     }
                     .buttonStyle(.plain)
-                    .disabled(appState.updateManager.isChecking)
+                    .disabled(!checkForUpdatesViewModel.canCheckForUpdates)
                     .help("Check for updates")
                 }
             }
@@ -1058,42 +1093,8 @@ struct AboutTab: View {
         }
         .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .alert(updateAlertTitle, isPresented: $showUpdateAlert) {
-            if let downloadURL = updateDownloadURL {
-                Button("Download") {
-                    NSWorkspace.shared.open(downloadURL)
-                }
-                Button("Later", role: .cancel) { }
-            } else {
-                Button("OK", role: .cancel) { }
-            }
-        } message: {
-            Text(updateAlertMessage)
-        }
-    }
-    
-    private func checkForUpdates() {
-        Task {
-            // Use forced=true for manual checks to bypass rate limiting
-            await appState.updateManager.checkForUpdates(forced: true)
-            
-            // Show result in alert
-            if let update = appState.updateManager.latestRelease {
-                updateAlertTitle = "Update Available"
-                updateAlertMessage = "Version \(update.version) is available.\n\n\(update.name)"
-                updateDownloadURL = update.dmgURL ?? URL(string: "https://github.com/0xdps/default-tamer/releases/latest")
-                showUpdateAlert = true
-            } else if let errorMsg = appState.updateManager.errorMessage {
-                updateAlertTitle = "Update Check Failed"
-                updateAlertMessage = errorMsg
-                updateDownloadURL = nil
-                showUpdateAlert = true
-            } else {
-                updateAlertTitle = "You're Up to Date"
-                updateAlertMessage = "You're running the latest version (\(AppVersion.current))."
-                updateDownloadURL = nil
-                showUpdateAlert = true
-            }
+        .onAppear {
+            checkForUpdatesViewModel.updater = updateManager.updater
         }
     }
 }

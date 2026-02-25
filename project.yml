@@ -7,6 +7,9 @@ packages:
   SQLite:
     url: https://github.com/stephencelis/SQLite.swift
     from: 0.15.3
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.6.0
 targets:
   DefaultTamer:
     type: application
@@ -25,6 +28,9 @@ targets:
         NSUserActivityTypes:
           - NSUserActivityTypeBrowsingWeb
         NSHighResolutionCapable: true
+        SUFeedURL: https://defaulttamer.app/appcast.xml
+        SUEnableAutomaticChecks: true
+        SUPublicEDKey: 9W8teKdnj8NLMfjgwZIy1jv/cR4SytXzdLyY8hRA5sY=
         CFBundleDocumentTypes:
           - CFBundleTypeName: HTML Document
             CFBundleTypeRole: Viewer
@@ -57,6 +63,8 @@ targets:
     dependencies:
       - package: SQLite
         product: SQLite
+      - package: Sparkle
+        product: Sparkle
   DefaultTamerTests:
     type: bundle.unit-test
     platform: macOS

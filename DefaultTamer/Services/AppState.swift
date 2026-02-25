@@ -14,7 +14,6 @@ class AppState: ObservableObject {
     // Managers
     let browserManager = BrowserManager()
     let diagnosticsManager = DiagnosticsManager()
-    let updateManager = UpdateManager()
     let persistence = PersistenceManager.shared
     let toastManager = ToastManager.shared
     
@@ -62,6 +61,16 @@ class AppState: ObservableObject {
     func toggleRoutingFeedback() {
         settings.showRoutingFeedback.toggle()
         persistence.saveSettings(settings)
+    }
+
+    // MARK: - Reset
+
+    func resetToDefaults() {
+        persistence.resetToDefaults()
+        settings = Settings.default
+        rules = []
+        showFirstRun = true
+        toastManager.success("Reset to factory defaults")
     }
 
     // MARK: - Rules Management

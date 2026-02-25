@@ -1,6 +1,26 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { latestRelease } from '../data/release';
+import latestRelease from '../data/release.json';
+import { getCollection } from 'astro:content';
+
+// Fetch changelog entry for the current release
+const allEntries = await getCollection('changelog');
+const currentEntry = allEntries.find(e => e.data.version === latestRelease.version && !e.data.isUnreleased);
+
+let releaseHtml = '';
+if (currentEntry?.body) {
+  const { marked } = await import('marked');
+  const catClasses: Record<string, string> = {
+    Added: 'changelog-cat-added', Changed: 'changelog-cat-changed',
+    Updated: 'changelog-cat-changed', Improved: 'changelog-cat-changed',
+    Fixed: 'changelog-cat-fixed', Removed: 'changelog-cat-removed',
+    Security: 'changelog-cat-security',
+  };
+  releaseHtml = (await marked.parse(currentEntry.body)).replace(
+    /<h3>(Added|Changed|Updated|Improved|Fixed|Removed|Security)<\/h3>/g,
+    (_, cat: string) => `<div class="changelog-category ${catClasses[cat] ?? 'changelog-cat-default'}">${cat}</div>`
+  );
+}
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -8,7 +28,6 @@ const jsonLd = {
   "name": "Default Tamer",
   "operatingSystem": "macOS 13.0+",
   "applicationCategory": "UtilitiesApplication",
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "license": "https://opensource.org/licenses/MIT",
   "url": "https://defaulttamer.app/download"
 };
@@ -16,25 +35,43 @@ const jsonLd = {
 
 <BaseLayout 
   title="Download - Default Tamer"
-  description="Download Default Tamer for macOS. Free, open source, and privacy-first browser routing."
+  description="Download Default Tamer for macOS. Open source, privacy-first browser routing."
   jsonLd={jsonLd}
 >
   <!-- Hero -->
-  <section class="hero-section">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
-      <div class="text-center relative z-10">
-        <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-          Download <span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Default Tamer</span>
-        </h1>
-        <p class="mt-4 text-lg text-gray-300">Free & Open Source Browser Routing for macOS</p>
-      </div>
+  <div class="hero-section py-16">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+      <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+        Download <span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Default Tamer</span>
+      </h1>
+      <p class="mt-3 text-lg text-gray-300">Open Source Browser Routing for macOS</p>
     </div>
-  </section>
+  </div>
 
-  <section class="py-24 bg-white">
-    <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+  <div class="bg-white">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
+      <div class="lg:grid lg:grid-cols-[220px_1fr] lg:gap-16">
+
+        <!-- Sticky sidebar TOC -->
+        <aside class="hidden lg:block">
+          <div class="sticky top-28 space-y-1">
+            <p class="text-xs font-bold uppercase tracking-widest text-gray mb-4">On this page</p>
+            <nav class="flex flex-col gap-0.5">
+              <a href="#download" class="toc-link">Download</a>
+              <a href="#installation" class="toc-link">Installation</a>
+              <a href="#requirements" class="toc-link">Requirements</a>
+              <a href="#verification" class="toc-link">Verification</a>
+              <a href="#whats-next" class="toc-link">What's Next</a>
+            </nav>
+          </div>
+        </aside>
+
+        <!-- Main content -->
+        <div class="min-w-0 space-y-20">
+
       <!-- Download Card -->
-      <div class="rounded-2xl bg-white p-8 sm:p-12 shadow-xl border-2 border-gray-light mb-16">
+      <section id="download">
+      <div class="rounded-2xl bg-white p-8 sm:p-12 shadow-xl border-2 border-gray-light">
         <div class="flex items-center gap-6 mb-8">
           <img src="/images/icon-512.png" alt="Default Tamer Icon" class="w-20 h-20 rounded-2xl shadow-soft">
           <div>
@@ -66,71 +103,74 @@ const jsonLd = {
           </a>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
           <div class="text-sm"><strong class="text-dark">Size:</strong> <span class="text-gray">~5MB</span></div>
           <div class="text-sm"><strong class="text-dark">Requirements:</strong> <span class="text-gray">macOS 13.0+</span></div>
-          <div class="text-sm"><strong class="text-dark">License:</strong> <span class="text-gray">MIT</span></div>
           <div class="text-sm"><strong class="text-dark">License:</strong> <span class="text-gray">MIT (Open Source)</span></div>
         </div>
+
+        {releaseHtml && (
+          <div class="mt-8 pt-8 border-t-2 border-gray-light">
+            <h3 class="text-sm font-bold uppercase tracking-widest text-gray mb-4">What's in this release</h3>
+            <div class="changelog-content">
+              <Fragment set:html={releaseHtml} />
+            </div>
+          </div>
+        )}
       </div>
+      </section>
 
       <!-- Installation Guide -->
-      <div class="mb-16">
-        <h2 class="text-2xl font-bold text-dark mb-8">Installation Guide</h2>
+      <section id="installation">
+        <h2 class="docs-section-heading">Installation Guide</h2>
         
-        <div class="space-y-6">
-          <div class="flex gap-6 items-start">
-            <div class="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full text-white text-sm font-bold flex-shrink-0">1</div>
+        <div class="mt-8 space-y-4">
+          <div class="docs-step">
+            <div class="docs-step-number">1</div>
             <div>
-              <h3 class="text-lg font-bold text-dark mb-1">Download & Open</h3>
-              <p class="text-gray leading-relaxed">Download the DMG file and double-click to open it.</p>
+              <p class="font-semibold text-dark mb-1">Download & Open</p>
+              <p class="text-gray text-sm leading-relaxed">Download the DMG file and double-click to open it.</p>
             </div>
           </div>
 
-          <div class="flex gap-6 items-start">
-            <div class="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full text-white text-sm font-bold flex-shrink-0">2</div>
+          <div class="docs-step">
+            <div class="docs-step-number">2</div>
             <div>
-              <h3 class="text-lg font-bold text-dark mb-1">Drag to Applications</h3>
-              <p class="text-gray leading-relaxed">Drag Default Tamer to your Applications folder.</p>
+              <p class="font-semibold text-dark mb-1">Drag to Applications</p>
+              <p class="text-gray text-sm leading-relaxed">Drag Default Tamer to your Applications folder.</p>
             </div>
           </div>
 
-          <div class="flex gap-6 items-start">
-            <div class="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full text-white text-sm font-bold flex-shrink-0">3</div>
+          <div class="docs-step">
+            <div class="docs-step-number">3</div>
             <div>
-              <h3 class="text-lg font-bold text-dark mb-1">Launch the App</h3>
-              <p class="text-gray leading-relaxed">Open Default Tamer from Applications or Spotlight (⌘ + Space).</p>
+              <p class="font-semibold text-dark mb-1">Launch the App</p>
+              <p class="text-gray text-sm leading-relaxed">Open Default Tamer from Applications or Spotlight (<kbd class="kbd">⌘ Space</kbd>).</p>
             </div>
           </div>
 
-          <div class="flex gap-6 items-start">
-            <div class="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full text-white text-sm font-bold flex-shrink-0">4</div>
+          <div class="docs-step">
+            <div class="docs-step-number">4</div>
             <div>
-              <h3 class="text-lg font-bold text-dark mb-1">Set as Default Browser</h3>
-              <p class="text-gray leading-relaxed">
-                Click "Open System Settings" in the first-run window. 
-                In System Settings → Desktop & Dock → Default web browser, select "Default Tamer".
-              </p>
+              <p class="font-semibold text-dark mb-1">Set as Default Browser</p>
+              <p class="text-gray text-sm leading-relaxed">Click "Open System Settings" in the first-run window. In System Settings → Desktop & Dock → Default web browser, select <strong class="text-dark">Default Tamer</strong>.</p>
             </div>
           </div>
 
-          <div class="flex gap-6 items-start">
-            <div class="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full text-white text-sm font-bold flex-shrink-0">5</div>
+          <div class="docs-step">
+            <div class="docs-step-number">5</div>
             <div>
-              <h3 class="text-lg font-bold text-dark mb-1">Configure & Enjoy</h3>
-              <p class="text-gray leading-relaxed">
-                Choose your fallback browser, and you're done! 
-                Slack and Cursor links will automatically open in Chrome.
-              </p>
+              <p class="font-semibold text-dark mb-1">Configure & Enjoy</p>
+              <p class="text-gray text-sm leading-relaxed">Choose your fallback browser, and you're done! Slack and Cursor links will automatically open in Chrome.</p>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- System Requirements -->
-      <div class="mb-16">
-        <h2 class="text-2xl font-bold text-dark mb-8">System Requirements</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section id="requirements">
+        <h2 class="docs-section-heading">System Requirements</h2>
+        <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary transition-all duration-300">
             <div class="flex items-center gap-3 mb-3">
               <div class="text-2xl">✅</div>
@@ -160,25 +200,25 @@ const jsonLd = {
             <p class="text-gray text-sm">No special permissions required</p>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- Verification -->
-      <div class="mb-16">
-        <h2 class="text-2xl font-bold text-dark mb-4">Verifying the Download</h2>
-        <p class="text-gray leading-relaxed mb-4">
+      <section id="verification">
+        <h2 class="docs-section-heading">Verifying the Download</h2>
+        <p class="mt-4 text-gray leading-relaxed">
           Default Tamer is code-signed and notarized by Apple. 
           Your Mac will verify the app automatically when you first open it.
         </p>
-        <div class="callout-info">
+        <div class="callout-info mt-6">
           <strong>Note:</strong> If you see a security prompt, right-click the app 
           and select "Open" to confirm you want to run it.
         </div>
-      </div>
+      </section>
 
       <!-- What's Next -->
-      <div>
-        <h2 class="text-2xl font-bold text-dark mb-8">What's Next?</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <section id="whats-next">
+        <h2 class="docs-section-heading">What's Next?</h2>
+        <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <a href="/docs" class="card-animated p-6 bg-white border-2 border-gray-light rounded-xl hover:border-primary hover:-translate-y-2 transition-all duration-300 hover:shadow-xl no-underline">
             <div class="flex items-center gap-3 mb-3">
               <div class="text-2xl">📖</div>
@@ -201,7 +241,10 @@ const jsonLd = {
             <p class="text-gray text-sm">What's new in each release</p>
           </a>
         </div>
+      </section>
+
+        </div>
       </div>
     </div>
-  </section>
+  </div>
 </BaseLayout>

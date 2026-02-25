@@ -107,3 +107,6 @@ package-lock.json
 scripts/
 docs/
 assets/
+
+# Astro build cache
+.astro/

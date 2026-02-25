@@ -12,6 +12,11 @@
     @apply font-heading font-bold tracking-tight;
   }
 
+  /* Offset anchored sections to clear the sticky header */
+  [id] {
+    scroll-margin-top: 6rem;
+  }
+
   /* Tailwind Plus Elements: custom elements must be block-level */
   el-disclosure,
   el-dialog,
@@ -93,29 +98,111 @@
     @apply pt-32 pb-16 max-w-[900px] mx-auto px-4 sm:px-6 lg:px-8;
   }
 
-  /* Inline code */
-  .prose code {
-    @apply bg-gray-lighter px-1.5 py-0.5 rounded text-sm font-mono;
+  /* ── Docs wrapper typography ─────────────────────────────────────────────
+     .prose has no @tailwindcss/typography plugin — all typographic rules
+     must be explicit here. These apply to ALL content inside .docs-wrapper
+     unless overridden by a not-prose block.
+  ── */
+
+  .docs-wrapper h2 {
+    @apply text-2xl font-heading font-bold text-dark mt-14 mb-5 pb-3 border-b-2 border-gray-light;
   }
+
+  /* First h2 has no top gap */
+  .docs-wrapper h2:first-of-type {
+    @apply mt-0;
+  }
+
+  /* h3 — troubleshooting sub-questions, etc. */
+  .docs-wrapper h3 {
+    @apply text-base font-heading font-semibold text-primary mt-8 mb-2;
+  }
+
+  .docs-wrapper p {
+    @apply text-gray leading-relaxed mb-5;
+  }
+
+  /* Ordered & unordered lists */
+  .docs-wrapper ol {
+    @apply list-decimal pl-6 mb-6 space-y-2;
+  }
+  .docs-wrapper ul {
+    @apply list-disc pl-6 mb-6 space-y-2;
+  }
+  .docs-wrapper li {
+    @apply text-gray leading-relaxed;
+  }
+  .docs-wrapper li strong {
+    @apply text-dark font-semibold;
+  }
+  .docs-wrapper strong {
+    @apply text-dark font-semibold;
+  }
+
+  /* Links */
+  .docs-wrapper a:not([class]) {
+    @apply text-primary no-underline hover:underline;
+  }
+
+  /* Inline code */
+  .docs-wrapper code,
+  .prose code {
+    @apply bg-gray-lighter px-1.5 py-0.5 rounded text-sm font-mono text-dark;
+  }
+  .docs-wrapper kbd,
   .prose kbd {
     @apply bg-dark text-white px-1.5 py-0.5 rounded text-sm font-mono shadow-sm inline-block min-w-[1.5rem] text-center;
   }
+  .docs-wrapper pre,
   .prose pre {
     @apply bg-dark text-white p-4 rounded-lg overflow-x-auto my-6;
   }
+  .docs-wrapper pre code,
   .prose pre code {
-    @apply bg-transparent p-0;
+    @apply bg-transparent p-0 text-white;
   }
+  .docs-wrapper blockquote,
   .prose blockquote {
     @apply border-l-4 border-primary pl-4 my-6 text-gray italic;
   }
-  .prose a:not([class]) {
-    @apply text-primary no-underline hover:underline;
+
+  /* Docs table — used in docs/index.astro rule types table */
+  .docs-table {
+    @apply w-full bg-white text-sm;
+    border-collapse: collapse;
+  }
+  .docs-table th {
+    @apply bg-primary text-white font-semibold p-4 text-left;
+    border: 1px solid theme('colors.gray.light');
+  }
+  .docs-table td {
+    @apply p-4 text-gray;
+    border: 1px solid theme('colors.gray.light');
+  }
+  .docs-table tbody tr:nth-child(even) {
+    @apply bg-gray-lighter;
   }
 
   /* Docs page layout (troubleshooting, advanced-usage) */
   .docs-page {
     @apply pt-32 pb-16;
+  }
+
+  /* Docs index — sidebar layout components */
+  .docs-section-heading {
+    @apply text-2xl font-bold text-dark font-heading border-b-2 border-gray-light pb-3;
+  }
+  .toc-link {
+    @apply block rounded-lg px-3 py-2 text-sm text-gray hover:bg-gray-lighter hover:text-primary transition-colors duration-150;
+  }
+  .docs-step {
+    @apply flex gap-4 items-start p-5 bg-white rounded-xl border-2 border-gray-light hover:border-primary transition-colors duration-200;
+  }
+  .docs-step-number {
+    @apply flex-shrink-0 w-9 h-9 rounded-full bg-primary text-white text-sm font-bold flex items-center justify-center;
+  }
+  .docs-trouble-item {
+    @apply p-5 rounded-xl border-l-4 border-primary bg-gray-lighter;
   }
 
   .docs-content {
@@ -478,6 +565,37 @@
 
   .guide-content li {
     @apply mb-2;
+  }
+
+  /* ── Changelog page ─────────────────────────────────────────────────────── */
+
+  /* Category badge headings (replace raw <h3> from markdown) */
+  .changelog-content .changelog-category {
+    @apply inline-flex items-center text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-3 mt-5;
+  }
+  .changelog-content .changelog-category:first-child {
+    @apply mt-0;
+  }
+  .changelog-cat-added    { @apply bg-green-100 text-green-700; }
+  .changelog-cat-changed  { @apply bg-orange-100 text-orange-700; }
+  .changelog-cat-fixed    { @apply bg-red-100 text-red-700; }
+  .changelog-cat-removed  { @apply bg-gray-200 text-gray-600; }
+  .changelog-cat-security { @apply bg-blue-100 text-blue-700; }
+  .changelog-cat-default  { @apply bg-gray-lighter text-gray; }
+
+  /* List items */
+  .changelog-content ul {
+    @apply list-disc pl-5 mb-5 mt-1;
+    margin-top: 0.25rem;
+  }
+  .changelog-content li {
+    @apply text-sm text-dark leading-relaxed mb-1.5;
+  }
+  .changelog-content p {
+    @apply text-sm text-gray leading-relaxed mb-4;
+  }
+  .changelog-content code {
+    @apply bg-gray-lighter text-dark px-1.5 py-0.5 rounded text-xs font-mono;
   }
 }
 
