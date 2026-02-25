@@ -88,19 +88,20 @@ jobs:
 
           APP="build/DefaultTamer.app"
           SFB="$APP/Contents/Frameworks/Sparkle.framework/Versions/B"
-          SIGN_FLAGS="--force --sign $DEVELOPER_ID_NAME --options runtime --timestamp"
+          # Use an array so the identity string with spaces is passed as a single argument
+          SIGN_FLAGS=(--force --sign "$DEVELOPER_ID_NAME" --options runtime --timestamp)
 
           # Sign Sparkle content inner-to-outer (required order)
           for xpc in "$SFB/XPCServices/"*.xpc; do
-            [ -d "$xpc" ] && codesign $SIGN_FLAGS "$xpc"
+            [ -d "$xpc" ] && codesign "${SIGN_FLAGS[@]}" "$xpc"
           done
           for helper in "$SFB/Autoupdate" "$SFB/Updater.app"; do
-            [ -e "$helper" ] && codesign $SIGN_FLAGS "$helper"
+            [ -e "$helper" ] && codesign "${SIGN_FLAGS[@]}" "$helper"
           done
-          codesign $SIGN_FLAGS "$SFB"
+          codesign "${SIGN_FLAGS[@]}" "$SFB"
 
           # Sign the main app (with entitlements)
-          codesign $SIGN_FLAGS \
+          codesign "${SIGN_FLAGS[@]}" \
             --entitlements DefaultTamer/DefaultTamer.entitlements \
             "$APP"
 
