@@ -63,16 +63,14 @@ jobs:
         run: |
           # Set Xcode version
           sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
-          
+
           # Create build directory
           mkdir -p build dist
-          
-          # Build AND sign in one xcodebuild invocation.
-          # Passing CODE_SIGN_IDENTITY + CODE_SIGN_STYLE=Manual lets Xcode sign
-          # all nested content (Sparkle XPC services, helpers, framework, main
-          # binary) in the correct inner-to-outer order with the Developer ID
-          # cert, hardened runtime, and a secure timestamp — exactly what Apple
-          # requires for notarization. No manual codesign calls needed.
+
+          # Build without code signing — we sign all binaries manually below so
+          # that OTHER_CODE_SIGN_FLAGS (--timestamp) is applied uniformly to
+          # every binary including Sparkle's nested helpers, which xcodebuild
+          # would sign in its own phase without propagating our flags.
           xcodebuild -scheme DefaultTamer \
             -configuration Release \
             -derivedDataPath build/DerivedData \
@@ -80,17 +78,35 @@ jobs:
             -arch x86_64 \
             MARKETING_VERSION=${{ steps.version.outputs.version }} \
             CURRENT_PROJECT_VERSION=${{ steps.version.outputs.version }} \
-            CODE_SIGN_IDENTITY="$DEVELOPER_ID_NAME" \
-            CODE_SIGN_STYLE=Manual \
-            DEVELOPMENT_TEAM="$TEAM_ID" \
-            OTHER_CODE_SIGN_FLAGS="--timestamp" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_ALLOWED=NO \
             build
-          
-          # Copy app — use ditto (not cp -r) to preserve symlinks and bundle structure
+
+          # Use ditto (not cp -r) to preserve symlinks and macOS bundle structure
           ditto build/DerivedData/Build/Products/Release/DefaultTamer.app build/DefaultTamer.app
 
-          # Verify the signature is intact after copy
-          codesign -v --deep build/DefaultTamer.app
+          APP="build/DefaultTamer.app"
+          SFB="$APP/Contents/Frameworks/Sparkle.framework/Versions/B"
+          SIGN_FLAGS="--force --sign $DEVELOPER_ID_NAME --options runtime --timestamp"
+
+          # Sign Sparkle content inner-to-outer (required order)
+          for xpc in "$SFB/XPCServices/"*.xpc; do
+            [ -d "$xpc" ] && codesign $SIGN_FLAGS "$xpc"
+          done
+          for helper in "$SFB/Autoupdate" "$SFB/Updater.app"; do
+            [ -e "$helper" ] && codesign $SIGN_FLAGS "$helper"
+          done
+          codesign $SIGN_FLAGS "$SFB"
+
+          # Sign the main app (with entitlements)
+          codesign $SIGN_FLAGS \
+            --entitlements DefaultTamer/DefaultTamer.entitlements \
+            "$APP"
+
+          # Verify
+          codesign --verify --deep --strict "$APP"
+          echo "Code signing OK"
       
       - name: Create DMG
         run: |
