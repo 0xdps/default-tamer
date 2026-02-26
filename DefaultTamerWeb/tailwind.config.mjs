@@ -22,7 +22,7 @@ export default {
           lighter: '#475569',
         },
         gray: {
-          DEFAULT: '#64748b',
+          DEFAULT: '#475569',
           light: '#cbd5e1',
           lighter: '#f1f5f9',
         },

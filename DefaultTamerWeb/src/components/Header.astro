@@ -7,7 +7,10 @@ const isActive = (href: string) => href === '/' ? currentPath === '/' : currentP
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="flex h-16 items-center justify-between">
       <a href="/" class="flex items-center gap-2 group">
-        <img src="/images/logo.png" alt="Default Tamer" class="w-8 h-8 transition-transform group-hover:scale-110">
+        <picture>
+          <source srcset="/images/logo.webp" type="image/webp" />
+          <img src="/images/logo.png" alt="Default Tamer" width="32" height="32" class="w-8 h-8 transition-transform group-hover:scale-110">
+        </picture>
         <span class="text-xl font-bold text-dark">Default Tamer</span>
       </a>
       <div class="hidden sm:flex items-center gap-6">

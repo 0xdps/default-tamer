@@ -81,7 +81,7 @@ const jsonLd = {
           <div>
             <h2 class="text-2xl font-bold text-dark">Default Tamer</h2>
             <div class="flex items-center gap-2 mt-1">
-              <span class="inline-flex items-center rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-white">v{latestRelease.version}</span>
+              <span class="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary ring-1 ring-inset ring-primary/20">v{latestRelease.version}</span>
               <p class="text-gray text-sm">Latest stable release · {latestRelease.releaseDate}</p>
             </div>
           </div>
@@ -90,7 +90,7 @@ const jsonLd = {
         <div class="flex flex-wrap gap-4 mb-8">
           <a
             href={latestRelease.downloadUrl}
-            class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark transition-all duration-200 hover:scale-105"
+            class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-dark shadow-sm hover:bg-primary-dark transition-all duration-200 hover:scale-105"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>

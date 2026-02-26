@@ -31,7 +31,10 @@ const footerColumns = [
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
       <div class="lg:col-span-2">
         <div class="flex items-center gap-2 mb-4">
-          <img src="/images/logo.png" alt="Default Tamer" class="w-8 h-8">
+          <picture>
+            <source srcset="/images/logo.webp" type="image/webp" />
+            <img src="/images/logo.png" alt="Default Tamer" width="32" height="32" class="w-8 h-8">
+          </picture>
           <span class="text-xl font-bold">Default Tamer</span>
         </div>
         <p class="text-gray-light leading-relaxed">Intelligent browser routing for macOS. Set it as your default browser once — your links open where you want, automatically.</p>
@@ -39,7 +42,7 @@ const footerColumns = [
 
       {footerColumns.map(column => (
         <div>
-          <h4 class="font-semibold mb-4">{column.title}</h4>
+          <h3 class="font-semibold mb-4">{column.title}</h3>
           <ul class="space-y-3">
             {column.links.map(link => (
               <li>
@@ -57,7 +60,7 @@ const footerColumns = [
       ))}
     </div>
 
-    <div class="pt-8 border-t border-dark-light text-center text-gray space-y-2">
+    <div class="pt-8 border-t border-dark-light text-center text-gray-light space-y-2">
       <p>&copy; 2026 Default Tamer. Released under the MIT License.</p>
       <p>Built with ❤️ for macOS</p>
     </div>

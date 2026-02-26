@@ -153,7 +153,7 @@ Use for terminal commands in docs pages:
 | `secondary` | `#10b981` | Gradient accent (rarely alone) |
 | `dark` | `#1e293b` | Text, dark backgrounds |
 | `dark-light` | `#334155` | Hover for dark elements |
-| `gray` | `#64748b` | Body text, secondary text |
+| `gray` | `#475569` | Body text, secondary text |
 | `gray-light` | `#e2e8f0` | Borders, dividers |
 | `gray-lighter` | `#f8fafc` | Background surfaces |
 
@@ -174,7 +174,7 @@ Use for terminal commands in docs pages:
 | Success callout | `callout-success` |
 | Docs wrapper (prose pages) | `docs-wrapper prose` |
 | Docs page (sidebar layout) | `docs-page` + `docs-content` (used in troubleshooting, advanced-usage) |
-| Primary button | `rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-dark transition-all duration-200` |
+| Primary button | `rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-dark hover:bg-primary-dark transition-all duration-200` |
 | Ghost link | `text-primary font-semibold hover:text-primary-dark transition-colors duration-200` |
 
 ---

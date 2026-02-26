@@ -3,12 +3,36 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.defaulttamer.app" }],
+      "destination": "https://defaulttamer.app/:path*",
+      "permanent": true
+    },
+    {
       "source": "/download/DefaultTamer-v:version([0-9.]+).dmg",
       "destination": "https://github.com/0xdps/default-tamer/releases/download/v:version/DefaultTamer-v:version.dmg",
       "permanent": false
     }
   ],
   "headers": [
+    {
+      "source": "/_astro/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/images/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
+        }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [
