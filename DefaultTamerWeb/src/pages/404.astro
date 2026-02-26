@@ -13,10 +13,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <p class="text-lg text-gray mb-10">The page you're looking for doesn't exist or has been moved.</p>
 
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-        <a href="/" class="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-dark hover:bg-primary-dark transition-all duration-200">
+        <a href="/" data-umami-event="404 Recovery" data-umami-event-destination="home" class="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-dark hover:bg-primary-dark transition-all duration-200">
           Go Home
         </a>
-        <a href="/docs" class="rounded-lg border-2 border-gray-light px-6 py-3 text-sm font-semibold text-dark hover:border-primary hover:text-primary transition-all duration-200">
+        <a href="/docs" data-umami-event="404 Recovery" data-umami-event-destination="docs" class="rounded-lg border-2 border-gray-light px-6 py-3 text-sm font-semibold text-dark hover:border-primary hover:text-primary transition-all duration-200">
           Browse Docs
         </a>
       </div>
@@ -24,10 +24,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <div class="text-left rounded-xl bg-gray-lighter p-6 border border-gray-light">
         <p class="text-sm font-semibold text-dark mb-3">Looking for something?</p>
         <ul class="space-y-2 text-sm text-gray">
-          <li><a href="/features" class="text-primary font-semibold hover:text-primary-dark transition-colors duration-200">Features</a> — See what Default Tamer can do</li>
-          <li><a href="/docs/getting-started" class="text-primary font-semibold hover:text-primary-dark transition-colors duration-200">Getting Started</a> — Installation & setup guide</li>
-          <li><a href="/docs/setup-rules" class="text-primary font-semibold hover:text-primary-dark transition-colors duration-200">Setup Rules</a> — Configure routing rules</li>
-          <li><a href="/download" class="text-primary font-semibold hover:text-primary-dark transition-colors duration-200">Download</a> — Get the latest version</li>
+          <li><a href="/features" data-umami-event="404 Recovery" data-umami-event-destination="features" class="text-primary font-semibold hover:text-primary-dark transition-colors duration-200">Features</a> — See what Default Tamer can do</li>
+          <li><a href="/docs/getting-started" data-umami-event="404 Recovery" data-umami-event-destination="getting-started" class="text-primary font-semibold hover:text-primary-dark transition-colors duration-200">Getting Started</a> — Installation & setup guide</li>
+          <li><a href="/docs/setup-rules" data-umami-event="404 Recovery" data-umami-event-destination="setup-rules" class="text-primary font-semibold hover:text-primary-dark transition-colors duration-200">Setup Rules</a> — Configure routing rules</li>
+          <li><a href="/download" data-umami-event="404 Recovery" data-umami-event-destination="download" class="text-primary font-semibold hover:text-primary-dark transition-colors duration-200">Download</a> — Get the latest version</li>
         </ul>
       </div>
     </div>

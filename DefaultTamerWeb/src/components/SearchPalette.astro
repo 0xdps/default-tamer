@@ -65,6 +65,7 @@ const sections = Object.entries(grouped);
       const dialog = document.getElementById('search-palette') as HTMLDialogElement;
       if (dialog && !dialog.open) {
         dialog.showModal();
+        (window as any).umami?.track('Search Opened');
         const searchInput = document.getElementById('search-input') as HTMLInputElement;
         if (searchInput) {
           searchInput.focus();

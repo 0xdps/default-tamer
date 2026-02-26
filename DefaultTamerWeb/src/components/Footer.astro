@@ -1,9 +1,16 @@
 ---
-const footerColumns = [
+interface FooterLink {
+  href: string;
+  label: string;
+  external?: boolean;
+  umamiEvent?: string;
+}
+
+const footerColumns: { title: string; links: FooterLink[] }[] = [
   {
     title: 'Product',
     links: [
-      { href: '/download', label: 'Download' },
+      { href: '/download', label: 'Download', umamiEvent: 'Footer Download Click' },
       { href: '/changelog', label: 'Changelog' },
     ]
   },
@@ -11,16 +18,16 @@ const footerColumns = [
     title: 'Resources',
     links: [
       { href: '/docs', label: 'Documentation' },
-      { href: 'https://github.com/0xdps/default-tamer', label: 'GitHub', external: true },
-      { href: 'https://github.com/0xdps/default-tamer/issues', label: 'Support', external: true },
+      { href: 'https://github.com/0xdps/default-tamer', label: 'GitHub', external: true, umamiEvent: 'GitHub Click' },
+      { href: 'https://github.com/0xdps/default-tamer/issues', label: 'Support', external: true, umamiEvent: 'Support Click' },
     ]
   },
   {
     title: 'Community',
     links: [
-      { href: 'https://github.com/0xdps/default-tamer/blob/trunk/CONTRIBUTING.md', label: 'Contributing', external: true },
-      { href: 'https://github.com/0xdps/default-tamer/blob/trunk/CODE_OF_CONDUCT.md', label: 'Code of Conduct', external: true },
-      { href: 'https://github.com/0xdps/default-tamer/blob/trunk/LICENSE', label: 'License', external: true },
+      { href: 'https://github.com/0xdps/default-tamer/blob/trunk/CONTRIBUTING.md', label: 'Contributing', external: true, umamiEvent: 'GitHub Click' },
+      { href: 'https://github.com/0xdps/default-tamer/blob/trunk/CODE_OF_CONDUCT.md', label: 'Code of Conduct', external: true, umamiEvent: 'GitHub Click' },
+      { href: 'https://github.com/0xdps/default-tamer/blob/trunk/LICENSE', label: 'License', external: true, umamiEvent: 'GitHub Click' },
     ]
   },
 ];
@@ -49,6 +56,7 @@ const footerColumns = [
                 <a 
                   href={link.href}
                   {...(link.external && { target: '_blank', rel: 'noopener noreferrer' })}
+                  {...(link.umamiEvent && { 'data-umami-event': link.umamiEvent, 'data-umami-event-source': 'footer' })}
                   class="text-gray-light hover:text-primary transition-colors duration-200 block"
                 >
                   {link.label}

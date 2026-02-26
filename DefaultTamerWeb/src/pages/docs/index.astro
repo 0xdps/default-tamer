@@ -162,7 +162,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                       <pre class="bg-dark text-white p-4 rounded-lg overflow-x-auto text-sm font-mono">rm -rf ~/Library/Application\ Support/Default\ Tamer/
 rm -f ~/Library/Preferences/com.defaulttamer.app.plist</pre>
                     </el-copyable>
-                    <button command="--copy" commandfor="reset-cmd" class="absolute top-3 right-3 rounded-md bg-white/10 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-white/20 transition-colors">
+                    <button command="--copy" commandfor="reset-cmd" data-umami-event="Copy Command" data-umami-event-snippet="reset" class="absolute top-3 right-3 rounded-md bg-white/10 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-white/20 transition-colors">
                       <span class="in-data-copied:hidden">Copy</span>
                       <span class="not-in-data-copied:hidden">Copied!</span>
                     </button>
