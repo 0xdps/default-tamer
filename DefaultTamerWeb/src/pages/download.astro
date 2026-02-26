@@ -90,6 +90,9 @@ const jsonLd = {
         <div class="flex flex-wrap gap-4 mb-8">
           <a
             href={latestRelease.downloadUrl}
+            data-umami-event="Download App"
+            data-umami-event-version={latestRelease.version}
+            data-umami-event-source="download-page"
             class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-dark shadow-sm hover:bg-primary-dark transition-all duration-200 hover:scale-105"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

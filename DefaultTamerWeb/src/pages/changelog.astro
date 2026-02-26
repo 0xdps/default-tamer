@@ -131,6 +131,9 @@ const GITHUB_CHANGELOG_URL = 'https://github.com/0xdps/default-tamer/blob/trunk/
                         )}
                         <a
                           href={release.downloadUrl!}
+                          data-umami-event="Download App"
+                          data-umami-event-version={release.version}
+                          data-umami-event-source="changelog"
                           class="ml-auto inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-dark hover:bg-primary-dark transition-colors duration-200 no-underline"
                         >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
