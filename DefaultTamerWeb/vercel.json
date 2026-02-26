@@ -3,12 +3,6 @@
   "trailingSlash": false,
   "redirects": [
     {
-      "source": "/:path*",
-      "has": [{ "type": "host", "value": "www.defaulttamer.app" }],
-      "destination": "https://defaulttamer.app/:path*",
-      "permanent": true
-    },
-    {
       "source": "/download/DefaultTamer-v:version([0-9.]+).dmg",
       "destination": "https://github.com/0xdps/default-tamer/releases/download/v:version/DefaultTamer-v:version.dmg",
       "permanent": false
