@@ -26,20 +26,54 @@ if (currentEntry?.body) {
   );
 }
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "Default Tamer",
-  "operatingSystem": "macOS 13.0+",
-  "applicationCategory": "UtilitiesApplication",
-  "license": "https://opensource.org/licenses/MIT",
-  "url": "https://defaulttamer.app/download"
-};
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Default Tamer",
+    "description": "Free, open source macOS menu bar app that routes URLs to specific browsers based on rules. No data collection, no subscription.",
+    "url": "https://defaulttamer.app/download",
+    "downloadUrl": `https://defaulttamer.app/download/DefaultTamer-v${latestRelease.version}.dmg`,
+    "softwareVersion": latestRelease.version,
+    "fileSize": latestRelease.size ? `${(latestRelease.size / (1024 * 1024)).toFixed(1)} MB` : undefined,
+    "operatingSystem": "macOS 13.0 Ventura or later",
+    "applicationCategory": "UtilitiesApplication",
+    "applicationSubCategory": "Productivity",
+    "license": "https://opensource.org/licenses/MIT",
+    "isAccessibleForFree": true,
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "featureList": [
+      "Route URLs to specific browsers based on rules",
+      "Match by source app, domain, URL pattern, or regex",
+      "Menu bar app — no dock icon",
+      "100% local — zero data collection",
+      "Open source under MIT license"
+    ],
+    "screenshot": "https://defaulttamer.app/images/icon-512.png",
+    "author": {
+      "@type": "Person",
+      "name": "0xdps",
+      "url": "https://github.com/0xdps"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://defaulttamer.app" },
+      { "@type": "ListItem", "position": 2, "name": "Download", "item": "https://defaulttamer.app/download" }
+    ]
+  }
+];
 ---
 
 <BaseLayout 
-  title="Download - Default Tamer"
-  description="Download Default Tamer for macOS. Open source, privacy-first browser routing."
+  title={`Download Default Tamer – Free macOS Browser Router | v${latestRelease.version}`}
+  description="Download Default Tamer for macOS free. Route links from Slack to Chrome, work URLs to Firefox, and more. Open source, privacy-first, no subscription."
   jsonLd={jsonLd}
 >
   <!-- Hero -->

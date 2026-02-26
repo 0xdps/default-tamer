@@ -3,8 +3,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout
-  title="Documentation - Default Tamer"
-  description="Everything you need to set up and use Default Tamer for intelligent browser routing on macOS."
+  title="Default Tamer Documentation – Setup, Rules & Troubleshooting"
+  description="Complete guide to Default Tamer: installation, setting up browser routing rules, regex patterns, troubleshooting, and FAQ. Get the most out of your macOS browser router."
+  jsonLd={{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://defaulttamer.app" },
+      { "@type": "ListItem", "position": 2, "name": "Documentation", "item": "https://defaulttamer.app/docs" }
+    ]
+  }}
 >
   <!-- Page header -->
   <div class="hero-section py-16">

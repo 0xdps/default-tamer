@@ -6,32 +6,89 @@ const dmgSize = latestRelease.size
   ? `~${(latestRelease.size / (1024 * 1024)).toFixed(1)} MB`
   : '~2 MB';
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {
-      "@type": "Question",
-      "name": "Does it collect any data?",
-      "acceptedAnswer": { "@type": "Answer", "text": "No. Default Tamer is 100% privacy-first. All processing happens locally on your Mac. There are zero network calls, zero telemetry, and zero data collection." }
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Default Tamer",
+    "headline": "Intelligent Browser Routing for macOS",
+    "description": "Set Default Tamer as your default browser once. Links from Slack open in Chrome, work URLs open in Firefox, personal links open in Safari — automatically, based on rules you define.",
+    "url": "https://defaulttamer.app",
+    "downloadUrl": `https://defaulttamer.app/download/DefaultTamer-v${latestRelease.version}.dmg`,
+    "softwareVersion": latestRelease.version,
+    "operatingSystem": "macOS 13.0 Ventura or later",
+    "applicationCategory": "UtilitiesApplication",
+    "applicationSubCategory": "Productivity",
+    "keywords": "macOS browser routing, URL router, default browser manager, open links in specific browser, Slack Chrome Firefox Safari routing, menu bar app",
+    "license": "https://opensource.org/licenses/MIT",
+    "isAccessibleForFree": true,
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
     },
-    {
-      "@type": "Question",
-      "name": "How does it actually work?",
-      "acceptedAnswer": { "@type": "Answer", "text": "You set Default Tamer as your default browser. When any app opens a link, macOS sends it to Default Tamer first. It checks your rules (source app, domain, URL pattern) and instantly routes the link to the right browser. The whole process takes under 1ms." }
+    "featureList": [
+      "Route URLs to specific browsers based on rules",
+      "Match by source app, domain, URL pattern, or regex",
+      "Menu bar app — no dock icon",
+      "100% local — zero data collection",
+      "Open source under MIT license",
+      "Supports Chrome, Firefox, Safari, Arc, Brave, Edge and more"
+    ],
+    "screenshot": "https://defaulttamer.app/images/icon-512.png",
+    "author": {
+      "@type": "Person",
+      "name": "0xdps",
+      "url": "https://github.com/0xdps"
     },
-    {
-      "@type": "Question",
-      "name": "What if I want to uninstall it?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Just change your default browser back in System Settings and delete the app. Default Tamer doesn't install any background services, kernel extensions, or system modifications. It's a clean, sandboxed macOS app." }
+    "publisher": {
+      "@type": "Organization",
+      "name": "Default Tamer",
+      "url": "https://defaulttamer.app"
     }
-  ]
-};
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Default Tamer",
+    "url": "https://defaulttamer.app",
+    "description": "Intelligent browser routing for macOS. Open source, privacy-first.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://defaulttamer.app/docs?q={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Does it collect any data?",
+        "acceptedAnswer": { "@type": "Answer", "text": "No. Default Tamer is 100% privacy-first. All processing happens locally on your Mac. There are zero network calls, zero telemetry, and zero data collection." }
+      },
+      {
+        "@type": "Question",
+        "name": "How does it actually work?",
+        "acceptedAnswer": { "@type": "Answer", "text": "You set Default Tamer as your default browser. When any app opens a link, macOS sends it to Default Tamer first. It checks your rules (source app, domain, URL pattern) and instantly routes the link to the right browser. The whole process takes under 1ms." }
+      },
+      {
+        "@type": "Question",
+        "name": "What if I want to uninstall it?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Just change your default browser back in System Settings and delete the app. Default Tamer doesn't install any background services, kernel extensions, or system modifications. It's a clean, sandboxed macOS app." }
+      }
+    ]
+  }
+];
 ---
 
 <BaseLayout 
-  title="Default Tamer - Intelligent Browser Routing for macOS"
-  description="Set Default Tamer as your default browser once; from then on, your links open where you want. Smart routing based on source app and URL rules."
+  title="Default Tamer – macOS Browser Routing App. Free & Open Source."
+  description="Set Default Tamer as your default browser once. Links from Slack open in Chrome, work URLs in Firefox, personal links in Safari — automatically. Free, open source, zero data collection."
   jsonLd={jsonLd}
 >
   <!-- Hero Section -->

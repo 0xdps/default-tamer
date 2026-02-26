@@ -10,11 +10,12 @@
     "astro": "astro"
   },
   "dependencies": {
-    "marked": "^17.0.2",
     "@astrojs/check": "^0.9.6",
     "@astrojs/rss": "^4.0.15",
     "@astrojs/sitemap": "^3.7.0",
+    "@resvg/resvg-js": "^2.6.2",
     "astro": "^5.17.2",
+    "marked": "^17.0.2",
     "typescript": "^5.9.3"
   },
   "devDependencies": {

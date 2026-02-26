@@ -61,8 +61,16 @@ const GITHUB_CHANGELOG_URL = 'https://github.com/0xdps/default-tamer/blob/trunk/
 ---
 
 <BaseLayout
-  title="Changelog - Default Tamer"
-  description="See what's new in each release of Default Tamer."
+  title="Changelog – Default Tamer Release History"
+  description="Every release of Default Tamer for macOS. See what's new, what's fixed, and download any version."
+  jsonLd={{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://defaulttamer.app" },
+      { "@type": "ListItem", "position": 2, "name": "Changelog", "item": "https://defaulttamer.app/changelog" }
+    ]
+  }}
 >
   <div class="hero-section py-16">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
