@@ -204,14 +204,25 @@ jobs:
           DMG_SIZE=0
           if [ -f "$DMG_PATH" ]; then
             DMG_SIZE=$(stat -f%z "$DMG_PATH")
-            SPARKLE_SIGN_TOOL=$(find ~/Library/Developer/Xcode/DerivedData -name "sign_update" 2>/dev/null | head -1 || true)
+            # sign_update is in SPM artifacts resolved during the build step
+            SPARKLE_SIGN_TOOL=$(find build/DerivedData/SourcePackages/artifacts -name "sign_update" -not -path "*/old_dsa_scripts/*" 2>/dev/null | head -1 || true)
             if [ -z "$SPARKLE_SIGN_TOOL" ]; then
-              SPARKLE_SIGN_TOOL=$(find "$HOME/.spm/checkouts/Sparkle" -name "sign_update" 2>/dev/null | head -1 || true)
+              SPARKLE_SIGN_TOOL=$(find ~/Library/Developer/Xcode/DerivedData -name "sign_update" -not -path "*/old_dsa_scripts/*" 2>/dev/null | head -1 || true)
             fi
+            echo "sign_update tool: ${SPARKLE_SIGN_TOOL:-NOT FOUND}"
             if [ -n "$SPARKLE_SIGN_TOOL" ] && [ -n "$SPARKLE_PRIVATE_KEY" ]; then
               echo "$SPARKLE_PRIVATE_KEY" | base64 --decode > /tmp/sparkle_private_key
-              ED_SIGNATURE=$("$SPARKLE_SIGN_TOOL" --ed-key-file /tmp/sparkle_private_key "$DMG_PATH" | grep -oE '[A-Za-z0-9+/=]{88,}' | head -1)
+              SIGN_OUTPUT=$("$SPARKLE_SIGN_TOOL" --ed-key-file /tmp/sparkle_private_key "$DMG_PATH" 2>&1)
+              echo "sign_update output: $SIGN_OUTPUT"
+              ED_SIGNATURE=$(echo "$SIGN_OUTPUT" | grep -oE 'sparkle:edSignature="[^"]+"' | sed 's/sparkle:edSignature="//;s/"//' || true)
+              if [ -z "$ED_SIGNATURE" ]; then
+                # Fallback: try matching a long base64 string
+                ED_SIGNATURE=$(echo "$SIGN_OUTPUT" | grep -oE '[A-Za-z0-9+/=]{80,}' | head -1 || true)
+              fi
               rm -f /tmp/sparkle_private_key
+              echo "EdDSA signature: ${ED_SIGNATURE:-FAILED}"
+            else
+              echo "::warning::Sparkle signing skipped — sign_update or SPARKLE_PRIVATE_KEY not available"
             fi
           fi
 
@@ -225,7 +236,7 @@ jobs:
             --arg version "${VERSION}" \
             --arg downloadUrl "/download/DefaultTamer-v${VERSION}.dmg" \
             --arg releaseDate "${DATE}" \
-            --arg releaseNotesUrl "https://defaulttamer.app/changelog" \
+            --arg releaseNotesUrl "https://defaulttamer.app/release-notes" \
             --arg edSignature "${ED_SIGNATURE}" \
             --argjson size "${DMG_SIZE}" \
             '{version: $version, downloadUrl: $downloadUrl, releaseDate: $releaseDate, releaseNotesUrl: $releaseNotesUrl, edSignature: $edSignature, size: $size}' \
