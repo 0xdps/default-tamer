@@ -13,7 +13,7 @@ export const GET: APIRoute = () => {
   const version = latestRelease.version;
   const releaseDate = latestRelease.releaseDate;
   const downloadUrl = `https://defaulttamer.app${latestRelease.downloadUrl}`;
-  const releaseNotesUrl = `https://defaulttamer.app/changelog`;
+  const releaseNotesUrl = `https://defaulttamer.app/release-notes`;
   const edSignature = latestRelease.edSignature;
   const size = latestRelease.size;
 

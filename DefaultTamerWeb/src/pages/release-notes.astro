@@ -1,0 +1,58 @@
+---
+import { getCollection } from 'astro:content';
+import latestRelease from '../data/release.json';
+
+const version = latestRelease.version;
+
+const entries = await getCollection('changelog');
+const entry = entries.find((e) => e.data.version === version);
+
+let contentHtml = '<p>No release notes available for this version.</p>';
+
+if (entry && entry.body) {
+  const { marked } = await import('marked');
+  const rawHtml = await marked.parse(entry.body);
+
+  const catColors: Record<string, string> = {
+    Added: '#16a34a',
+    Changed: '#f97316',
+    Updated: '#f97316',
+    Improved: '#f97316',
+    Fixed: '#6366f1',
+    Removed: '#ef4444',
+    Security: '#dc2626',
+  };
+
+  contentHtml = rawHtml.replace(
+    /<h3>(Added|Changed|Updated|Improved|Fixed|Removed|Security)<\/h3>/g,
+    (_: string, cat: string) => {
+      const color = catColors[cat] ?? '#6b7280';
+      return `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:13px;font-weight:600;color:#fff;background:${color};margin:16px 0 8px;">${cat}</span>`;
+    }
+  );
+}
+---
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #1e293b;
+        padding: 16px;
+        margin: 0;
+      }
+      h2 { font-size: 18px; font-weight: 700; margin: 0 0 12px; }
+      ul { padding-left: 20px; margin: 4px 0 12px; }
+      li { margin-bottom: 4px; }
+      a { color: #f97316; }
+    </style>
+  </head>
+  <body>
+    <h2>Version {version}</h2>
+    <Fragment set:html={contentHtml} />
+  </body>
+</html>
