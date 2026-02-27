@@ -39,16 +39,23 @@ if (entry && entry.body) {
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
-        font-size: 14px;
-        line-height: 1.6;
-        color: #1e293b;
-        padding: 16px;
+        font-size: 15px;
+        line-height: 1.7;
+        color: #0f172a;
+        background: #ffffff;
+        padding: 20px 24px;
         margin: 0;
+        -webkit-font-smoothing: antialiased;
       }
-      h2 { font-size: 18px; font-weight: 700; margin: 0 0 12px; }
-      ul { padding-left: 20px; margin: 4px 0 12px; }
-      li { margin-bottom: 4px; }
+      h2 { font-size: 20px; font-weight: 700; margin: 0 0 16px; color: #0f172a; }
+      ul { padding-left: 22px; margin: 6px 0 14px; }
+      li { margin-bottom: 6px; color: #334155; }
       a { color: #f97316; }
+      @media (prefers-color-scheme: dark) {
+        body { background: #1e293b; color: #e2e8f0; }
+        h2 { color: #f1f5f9; }
+        li { color: #cbd5e1; }
+      }
     </style>
   </head>
   <body>
