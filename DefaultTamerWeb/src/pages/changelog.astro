@@ -26,13 +26,19 @@ function styleCategoryHeadings(html: string): string {
     Removed:  'changelog-cat-removed',
     Security: 'changelog-cat-security',
   };
-  return html.replace(
+  let result = html.replace(
     /<h3>(Added|Changed|Updated|Improved|Fixed|Removed|Security)<\/h3>/g,
     (_, cat: string) => {
       const cls = catClasses[cat] ?? 'changelog-cat-default';
       return `<div class="changelog-category ${cls}">${cat}</div>`;
     }
   );
+  // Style "Also in this update" sub-section heading
+  result = result.replace(
+    /<h3>(Also in this update[^<]*)<\/h3>/g,
+    (_, text: string) => `<div class="changelog-category changelog-cat-default">${text}</div>`
+  );
+  return result;
 }
 
 const releases: Release[] = await Promise.all(

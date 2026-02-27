@@ -30,6 +30,13 @@ if (entry && entry.body) {
       return `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:13px;font-weight:600;color:#fff;background:${color};margin:16px 0 8px;">${cat}</span>`;
     }
   );
+
+  // Style "Also in this update" sub-section heading
+  contentHtml = contentHtml.replace(
+    /<h3>(Also in this update[^<]*)<\/h3>/g,
+    (_: string, text: string) =>
+      `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:13px;font-weight:600;color:#fff;background:#64748b;margin:16px 0 8px;">${text}</span>`
+  );
 }
 ---
 
