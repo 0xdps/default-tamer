@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.5] - 2026-02-27
+
+### Added
+
+- Dedicated `/release-notes` page serving only the current version's changelog as lightweight HTML — Sparkle update dialog no longer loads the full website
+- Sparkle EdDSA signing step in `release.sh` (local builds) — signs the DMG and prints the `edSignature` + `size` for `release.json`
+- `SPARKLE_PRIVATE_KEY` GitHub Actions secret for CI Sparkle signing
+
+### Fixed
+
+- Sparkle updates failed after download because `edSignature` in `release.json` was `"PLACEHOLDER"` — CI now signs the DMG with `sign_update` using the EdDSA private key
+- CI `sign_update` discovery used incorrect search paths that missed the SPM artifacts directory; now searches `build/DerivedData/SourcePackages/artifacts/` first
+- Appcast `releaseNotesLink` pointed to `/changelog` (full website); now points to `/release-notes` (clean, minimal page)
+
 ## [0.0.4] - 2026-02-27
 
 ### Added
