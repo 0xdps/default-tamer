@@ -10,9 +10,11 @@ import SwiftUI
 struct MenuHeaderView: View {
     @EnvironmentObject var appState: AppState
     var isDefaultBrowser: Bool = true
+    @State private var isToggleHovering = false
+    @State private var isIconHovered = false
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 0) {
             // App info row (always shown)
             HStack {
                 if let appIcon = NSImage(named: "AppIcon") {
@@ -22,6 +24,12 @@ struct MenuHeaderView: View {
                         .frame(width: 32, height: 32)
                         .grayscale(isDefaultBrowser ? 0.0 : 1.0)
                         .opacity(isDefaultBrowser ? 1.0 : 0.6)
+                        .scaleEffect(isIconHovered ? 1.15 : 1.0)
+                        .shadow(color: isIconHovered ? Color.accentColor.opacity(0.3) : Color.clear, radius: isIconHovered ? 8 : 0)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isIconHovered)
+                        .onHover { hovering in
+                            isIconHovered = hovering
+                        }
                 } else {
                     Image(systemName: "link.circle.fill")
                         .font(.title)
@@ -36,21 +44,29 @@ struct MenuHeaderView: View {
                 }
                 Spacer()
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
 
             if isDefaultBrowser {
                 // Normal state: routing toggle
-                HStack {
+                HStack(alignment: .center, spacing: 12) {
                     Image(systemName: appState.settings.enabled ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 14))
+                        .frame(width: 16, alignment: .center)
                         .foregroundColor(appState.settings.enabled ? .green : .secondary)
                     Text(appState.settings.enabled ? "Routing Active" : "Routing Paused")
                         .font(.subheadline)
                     Spacer()
-                    Toggle("", isOn: Binding(
-                        get: { appState.settings.enabled },
-                        set: { _ in appState.toggleEnabled() }
-                    ))
-                    .labelsHidden()
-                    .toggleStyle(ActiveSwitchStyle())
+                    routingToggle
+                }
+                .frame(height: 32)
+                .contentShape(Rectangle())
+                .padding(.horizontal, 16)
+                .frame(width: UIConstants.menuBarPopoverWidth)
+                .background(isToggleHovering ? Color.accentColor.opacity(0.15) : Color.clear)
+                .onHover { hovering in
+                    isToggleHovering = hovering
                 }
             } else {
                 // Warning state: not default browser
@@ -80,9 +96,10 @@ struct MenuHeaderView: View {
                     }
                     .buttonStyle(.borderedProminent)
                 }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
             }
         }
-        .padding()
     }
 
     private var statusText: String {
@@ -93,30 +110,23 @@ struct MenuHeaderView: View {
             return "\(rulesCount) rule\(rulesCount == 1 ? "" : "s")"
         }
     }
-}
 
-// MARK: - Custom toggle that always renders with accent color
-// The native .switch style uses AppKit's NSSwitch which renders grey
-// inside NSMenu (non-key window). This custom style draws directly
-// in SwiftUI so it always shows the correct color.
-
-private struct ActiveSwitchStyle: ToggleStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        let isOn = configuration.isOn
-        Capsule()
+    private var routingToggle: some View {
+        let isOn = appState.settings.enabled
+        return Capsule()
             .fill(isOn ? Color.accentColor : Color.gray.opacity(0.3))
-            .frame(width: 46, height: 26)
+            .frame(width: 36, height: 20)
             .overlay(
                 Circle()
                     .fill(.white)
                     .shadow(color: .black.opacity(0.2), radius: 1, y: 1)
-                    .frame(width: 22, height: 22)
-                    .offset(x: isOn ? 10 : -10),
+                    .frame(width: 16, height: 16)
+                    .offset(x: isOn ? 8 : -8),
                 alignment: .center
             )
             .animation(.easeInOut(duration: 0.15), value: isOn)
             .onTapGesture {
-                configuration.isOn.toggle()
+                appState.toggleEnabled()
             }
     }
 }

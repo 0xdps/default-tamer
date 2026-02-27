@@ -199,7 +199,25 @@ struct GeneralTab: View {
                     .font(.headline)
             }
             
-            // Diagnostics and User Feedback sections hidden (coming soon)
+            // Diagnostics and User Feedback
+
+            Section {
+                Toggle(isOn: Binding(
+                    get: { appState.settings.diagnosticsEnabled },
+                    set: { _ in appState.toggleDiagnostics() }
+                )) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Activity Log")
+                        Text("Record routing decisions. Adds an Activity tab to view recent routes.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+            } header: {
+                Text("Diagnostics")
+                    .font(.headline)
+            }
 
             Section {
                 HStack {
@@ -1065,6 +1083,19 @@ struct AboutTab: View {
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
             
+            HStack(spacing: 4) {
+                Text("Made by")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Link("0xdps", destination: URL(string: ExternalLinks.developerWebsite)!)
+                    .font(.caption)
+                Text("·")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Link("defaulttamer.app", destination: URL(string: ExternalLinks.website)!)
+                    .font(.caption)
+            }
+            
             Spacer()
             
             // Centered links
@@ -1072,16 +1103,24 @@ struct AboutTab: View {
                 HStack(spacing: 16) {
                     Spacer()
                     
-                    Link(destination: URL(string: "https://github.com/0xdps/default-tamer")!) {
+                    Link(destination: URL(string: ExternalLinks.github)!) {
                         Label("View on GitHub", systemImage: "link")
                     }
                     
                     Divider()
                         .frame(height: 20)
                     
-                    Link(destination: URL(string: "https://github.com/0xdps/default-tamer/issues")!) {
+                    Link(destination: URL(string: ExternalLinks.issues)!) {
                         Label("Report an Issue", systemImage: "exclamationmark.bubble")
                     }
+                    
+                    Divider()
+                        .frame(height: 20)
+                    
+                    Link(destination: URL(string: ExternalLinks.buyMeACoffee)!) {
+                        Label("Buy Me a Coffee", systemImage: "cup.and.saucer.fill")
+                    }
+                    .foregroundColor(.orange)
                     
                     Spacer()
                 }

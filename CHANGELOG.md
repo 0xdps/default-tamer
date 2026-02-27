@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `ExternalLinks` constants struct centralising GitHub, Issues, Buy Me a Coffee, website, and developer website URLs (`Constants.swift`)
+- "Buy Me a Coffee" link in the About tab alongside GitHub and Report an Issue links
+- Developer credit ("Made by 0xdps") with links to `dps.codes` and `defaulttamer.app` in the About tab
+- Activity Log toggle in Preferences → General → Diagnostics (previously hidden as "coming soon")
+- App icon hover effect in `MenuHeaderView` — spring scale animation with accent color glow
+- Hover highlight on the routing toggle row in `MenuHeaderView`
+- "Buy Me a Coffee" link in website footer Community column
+- Buy Me a Coffee CTA banner on the website Download page ("What's Next" section)
+- Buy Me a Coffee floating widget (BMC-Widget) in `BaseLayout.astro` with Umami analytics tracking
+
+### Changed
+
+- Replaced `Toggle` + custom `ActiveSwitchStyle` in `MenuHeaderView` with a direct Capsule-based toggle view (36×20 with 16px knob) to fix vertical alignment issues inside NSMenu-hosted SwiftUI views
+- Routing toggle row in `MenuHeaderView` is now full-width with edge-to-edge hover highlight
+- About tab links (GitHub, Report an Issue) now use `ExternalLinks` constants instead of hardcoded strings
+- `Info.plist` version strings now use `$(MARKETING_VERSION)` / `$(CURRENT_PROJECT_VERSION)` build settings instead of hardcoded values
+
+### Removed
+
+- `showRoutingFeedback` property from `Settings` model — routing toast notifications were never visible to users because they only rendered inside the popover/preferences window, which is closed when URLs are routed
+- `toggleRoutingFeedback()` method from `AppState`
+- All toast notification calls from `executeRouteAction()` and `openURLFromChooser()` in `AppState`
+- `ActiveSwitchStyle` custom `ToggleStyle` from `MenuHeaderView`
+
+### Fixed
+
+- Deploy script (`quick-deploy.sh`) now preserves sandbox entitlements during ad-hoc re-signing — previously `codesign --force --deep --sign -` stripped entitlements, causing the app to read UserDefaults from the wrong location and lose all rules
+
 ## [0.0.3] - 2026-02-25
 
 ### Changed

@@ -58,10 +58,7 @@ class AppState: ObservableObject {
         persistence.saveSettings(settings)
     }
 
-    func toggleRoutingFeedback() {
-        settings.showRoutingFeedback.toggle()
-        persistence.saveSettings(settings)
-    }
+
 
     // MARK: - Reset
 
@@ -202,16 +199,7 @@ class AppState: ObservableObject {
             browserManager.openURLWithFallback(url, targetBrowserId: bundleId, fallbackBrowserId: settings.fallbackBrowserId, privateMode: privateMode)
             browserName = browserManager.availableBrowsers.first(where: { $0.id == bundleId })?.displayName ?? "Unknown"
 
-            // Show toast feedback if enabled
-            if settings.showRoutingFeedback {
-                if let rule = matchedRule {
-                    let ruleDesc = rule.description(browsers: browserManager.availableBrowsers)
-                    let modeInfo = privateMode ? " (private)" : ""
-                    toastManager.success("Opened in \(browserName)\(modeInfo)\nMatched: \(ruleDesc)", duration: 2.5)
-                } else {
-                    toastManager.success("Opened in \(browserName)", duration: 2.0)
-                }
-            }
+
 
             // Log if diagnostics enabled
             if settings.diagnosticsEnabled {
@@ -230,19 +218,13 @@ class AppState: ObservableObject {
             chooserSourceApp = sourceApp
             showChooser = true
 
-            // Show toast feedback if enabled
-            if settings.showRoutingFeedback {
-                toastManager.info("Choose a browser", duration: 1.5)
-            }
+
 
         case .openInFallback:
             browserManager.openURL(url, inBrowser: settings.fallbackBrowserId)
             browserName = browserManager.availableBrowsers.first(where: { $0.id == settings.fallbackBrowserId })?.displayName ?? "Unknown"
 
-            // Show toast feedback if enabled
-            if settings.showRoutingFeedback {
-                toastManager.info("Opened in \(browserName) (fallback)", duration: 2.0)
-            }
+
 
             // Log if diagnostics enabled
             if settings.diagnosticsEnabled {
@@ -267,10 +249,7 @@ class AppState: ObservableObject {
         chooserURL = nil
         chooserSourceApp = nil
 
-        // Show toast feedback if enabled
-        if settings.showRoutingFeedback {
-            toastManager.success("Opened in \(browserName) (manual)", duration: 2.0)
-        }
+
 
         // Log if diagnostics enabled
         if settings.diagnosticsEnabled {
