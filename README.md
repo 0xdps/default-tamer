@@ -23,7 +23,7 @@
 
 ## Installation
 
-Download **[DefaultTamer-v0.0.4.dmg](https://github.com/0xdps/default-tamer/releases/download/v0.0.4/DefaultTamer-v0.0.4.dmg)** — or browse all releases on the [Releases page](https://github.com/0xdps/default-tamer/releases).
+Download **[DefaultTamer-v0.0.5.dmg](https://github.com/0xdps/default-tamer/releases/download/v0.0.5/DefaultTamer-v0.0.5.dmg)** — or browse all releases on the [Releases page](https://github.com/0xdps/default-tamer/releases).
 
 Once downloaded, open the DMG and drag Default Tamer to Applications, then:
 

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.5] - 2026-02-27
 
+## [0.0.5] - 2026-02-27
+
 ### Added
 
 - Dedicated `/release-notes` page serving only the current version's changelog as lightweight HTML — Sparkle update dialog no longer loads the full website
