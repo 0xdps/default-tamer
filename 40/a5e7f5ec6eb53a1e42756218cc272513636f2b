@@ -1,0 +1,38 @@
+CHANGELOG.md
+  95313a55c14bdb0c 10-23
+DefaultTamerWeb/src/content/changelog/0.0.5.md
+  95313a55c14bdb0c 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.5",
+  "base_commit_sha": "40a5e7f5ec6eb53a1e42756218cc272513636f2b",
+  "prompts": {
+    "75206f15dd3ba98d": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "7be2c1e7-4e17-4f05-a3d1-98570ab00b05",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 28,
+      "overriden_lines": 0
+    },
+    "95313a55c14bdb0c": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f4ec04df-2aea-44a7-b9f2-058d0bc00205",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 30,
+      "total_deletions": 0,
+      "accepted_lines": 30,
+      "overriden_lines": 0
+    }
+  }
+}
