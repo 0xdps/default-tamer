@@ -51,7 +51,7 @@
 
   /* Hero sections */
   .hero-section {
-    @apply relative py-20 px-4 overflow-hidden;
+    @apply relative px-4 overflow-hidden;
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   }
 
