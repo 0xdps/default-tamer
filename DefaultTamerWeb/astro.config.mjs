@@ -3,7 +3,7 @@ import tailwind from '@astrojs/tailwind';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://defaulttamer.app',
+  site: 'https://www.defaulttamer.app',
   output: 'static',
   build: {
     inlineStylesheets: 'auto',

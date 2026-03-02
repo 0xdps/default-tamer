@@ -1,6 +1,6 @@
 import Foundation
 
-/// Response model for https://defaulttamer.app/api/version.json
+/// Response model for https://www.defaulttamer.app/api/version.json
 /// Used only for informational display; actual updates are handled by Sparkle.
 struct WebVersionResponse: Codable {
     let version: String

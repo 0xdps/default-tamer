@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 
-const siteUrl = 'https://defaulttamer.app';
+const siteUrl = 'https://www.defaulttamer.app';
 const today = new Date().toISOString().split('T')[0];
 
 const pages = [

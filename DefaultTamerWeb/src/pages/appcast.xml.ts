@@ -12,8 +12,8 @@ import latestRelease from '../data/release.json';
 export const GET: APIRoute = () => {
   const version = latestRelease.version;
   const releaseDate = latestRelease.releaseDate;
-  const downloadUrl = `https://defaulttamer.app${latestRelease.downloadUrl}`;
-  const releaseNotesUrl = `https://defaulttamer.app/release-notes`;
+  const downloadUrl = `https://www.defaulttamer.app${latestRelease.downloadUrl}`;
+  const releaseNotesUrl = `https://www.defaulttamer.app/release-notes`;
   const edSignature = latestRelease.edSignature;
   const size = latestRelease.size;
 
@@ -23,7 +23,7 @@ export const GET: APIRoute = () => {
     xmlns:dc="http://purl.org/dc/elements/1.1/">
   <channel>
     <title>Default Tamer Updates</title>
-    <link>https://defaulttamer.app/appcast.xml</link>
+    <link>https://www.defaulttamer.app/appcast.xml</link>
     <description>Most recent changes to Default Tamer</description>
     <language>en</language>
     <item>

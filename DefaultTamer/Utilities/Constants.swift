@@ -119,6 +119,6 @@ struct ExternalLinks {
     static let github = "https://github.com/0xdps/default-tamer"
     static let issues = "https://github.com/0xdps/default-tamer/issues"
     static let buyMeACoffee = "https://buymeacoffee.com/0xdps"
-    static let website = "https://defaulttamer.app"
+    static let website = "https://www.defaulttamer.app"
     static let developerWebsite = "https://dps.codes"
 }

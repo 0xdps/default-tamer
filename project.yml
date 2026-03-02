@@ -28,7 +28,7 @@ targets:
         NSUserActivityTypes:
           - NSUserActivityTypeBrowsingWeb
         NSHighResolutionCapable: true
-        SUFeedURL: https://defaulttamer.app/appcast.xml
+        SUFeedURL: https://www.defaulttamer.app/appcast.xml
         SUEnableAutomaticChecks: true
         SUPublicEDKey: 9W8teKdnj8NLMfjgwZIy1jv/cR4SytXzdLyY8hRA5sY=
         CFBundleDocumentTypes:

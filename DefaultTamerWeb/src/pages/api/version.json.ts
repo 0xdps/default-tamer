@@ -5,7 +5,7 @@ export const GET: APIRoute = () => {
   const payload = {
     version: latestRelease.version,
     releaseDate: latestRelease.releaseDate,
-    downloadUrl: `https://defaulttamer.app${latestRelease.downloadUrl}`,
+    downloadUrl: `https://www.defaulttamer.app${latestRelease.downloadUrl}`,
     releaseNotesUrl: latestRelease.releaseNotesUrl,
   };
 

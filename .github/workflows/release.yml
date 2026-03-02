@@ -236,7 +236,7 @@ jobs:
             --arg version "${VERSION}" \
             --arg downloadUrl "/download/DefaultTamer-v${VERSION}.dmg" \
             --arg releaseDate "${DATE}" \
-            --arg releaseNotesUrl "https://defaulttamer.app/release-notes" \
+            --arg releaseNotesUrl "https://www.defaulttamer.app/release-notes" \
             --arg edSignature "${ED_SIGNATURE}" \
             --argjson size "${DMG_SIZE}" \
             '{version: $version, downloadUrl: $downloadUrl, releaseDate: $releaseDate, releaseNotesUrl: $releaseNotesUrl, edSignature: $edSignature, size: $size}' \
