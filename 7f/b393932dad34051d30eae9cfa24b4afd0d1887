@@ -1,0 +1,25 @@
+DefaultTamerWeb/src/components/Footer.astro
+  95313a55c14bdb0c 44
+DefaultTamerWeb/src/components/Header.astro
+  95313a55c14bdb0c 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.7",
+  "base_commit_sha": "7fb393932dad34051d30eae9cfa24b4afd0d1887",
+  "prompts": {
+    "95313a55c14bdb0c": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f4ec04df-2aea-44a7-b9f2-058d0bc00205",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
