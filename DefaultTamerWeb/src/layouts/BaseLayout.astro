@@ -44,21 +44,34 @@ const { title, description, image, type, jsonLd } = Astro.props;
     <script is:inline src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
     <link rel="alternate" type="application/rss+xml" title="Default Tamer" href="/rss.xml" />
     <script defer src="https://manage.anately.sh/script.js" data-website-id="babc74c5-5c94-4f0b-9a47-6b0b0fa12384"></script>
-    <script is:inline data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="0xdps" data-description="Support me on Buy me a coffee!" data-message="" data-color="#FF813F" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
     <script is:inline>
       (function () {
-        var attempts = 0;
-        var interval = setInterval(function () {
-          var btn = document.getElementById('bmc-wbtn');
-          if (btn) {
-            clearInterval(interval);
-            btn.addEventListener('click', function () {
-              window.umami && window.umami.track('Buy Me a Coffee Click', { source: 'floating-widget' });
-            });
-          } else if (++attempts > 40) {
-            clearInterval(interval);
-          }
-        }, 250);
+        function loadBMC() {
+          var s = document.createElement('script');
+          s.src = 'https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js';
+          s.dataset.name = 'BMC-Widget';
+          s.dataset.id = '0xdps';
+          s.dataset.description = 'Support me on Buy me a coffee!';
+          s.dataset.message = '';
+          s.dataset.color = '#FF813F';
+          s.dataset.position = 'Right';
+          s.dataset.x_margin = '18';
+          s.dataset.y_margin = '18';
+          s.onload = function () {
+            var btn = document.getElementById('bmc-wbtn');
+            if (btn && window.umami) {
+              btn.addEventListener('click', function () {
+                window.umami.track('Buy Me a Coffee Click', { source: 'floating-widget' });
+              });
+            }
+          };
+          document.body.appendChild(s);
+        }
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(loadBMC, { timeout: 5000 });
+        } else {
+          setTimeout(loadBMC, 3000);
+        }
       })();
     </script>
   </head>
