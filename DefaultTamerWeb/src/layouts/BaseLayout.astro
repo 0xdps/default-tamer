@@ -68,9 +68,9 @@ const { title, description, image, type, jsonLd } = Astro.props;
           document.body.appendChild(s);
         }
         if ('requestIdleCallback' in window) {
-          requestIdleCallback(loadBMC, { timeout: 5000 });
+          requestIdleCallback(loadBMC, { timeout: 1500 });
         } else {
-          setTimeout(loadBMC, 3000);
+          setTimeout(loadBMC, 1000);
         }
       })();
     </script>
