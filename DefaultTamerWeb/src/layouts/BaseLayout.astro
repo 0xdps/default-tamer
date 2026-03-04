@@ -28,19 +28,15 @@ const { title, description, image, type, jsonLd } = Astro.props;
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="dns-prefetch" href="https://manage.anately.sh" />
     <!-- Non-blocking font load: render with system fonts immediately, swap in web fonts when ready -->
     <link
       rel="preload"
       as="style"
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Plus+Jakarta+Sans:wght@400;600&display=swap"
       onload="this.onload=null;this.rel='stylesheet'"
     />
-    <noscript>
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
-      />
-    </noscript>
     <script is:inline src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
     <link rel="alternate" type="application/rss+xml" title="Default Tamer" href="/rss.xml" />
     <script defer src="https://manage.anately.sh/script.js" data-website-id="babc74c5-5c94-4f0b-9a47-6b0b0fa12384"></script>
@@ -68,21 +64,28 @@ const { title, description, image, type, jsonLd } = Astro.props;
     </button>
     
     <script>
-      // Navbar scroll effect
+      // Navbar scroll effect — uses rAF to batch DOM writes and avoid forced reflows
       const navbar = document.querySelector('nav');
       const backToTop = document.getElementById('back-to-top');
+      let ticking = false;
 
       window.addEventListener('scroll', () => {
-        const currentScroll = window.pageYOffset;
-        if (currentScroll > 50) {
-          navbar?.classList.add('shadow-lg');
-        } else {
-          navbar?.classList.remove('shadow-lg');
-        }
-        if (currentScroll > 400) {
-          backToTop?.classList.remove('hidden');
-        } else {
-          backToTop?.classList.add('hidden');
+        if (!ticking) {
+          requestAnimationFrame(() => {
+            const currentScroll = window.pageYOffset;
+            if (currentScroll > 50) {
+              navbar?.classList.add('shadow-lg');
+            } else {
+              navbar?.classList.remove('shadow-lg');
+            }
+            if (currentScroll > 400) {
+              backToTop?.classList.remove('hidden');
+            } else {
+              backToTop?.classList.add('hidden');
+            }
+            ticking = false;
+          });
+          ticking = true;
         }
       });
 

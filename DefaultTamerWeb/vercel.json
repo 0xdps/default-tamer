@@ -5,7 +5,7 @@
     {
       "source": "/download/DefaultTamer-v:version([0-9.]+).dmg",
       "destination": "https://github.com/0xdps/default-tamer/releases/download/v:version/DefaultTamer-v:version.dmg",
-      "permanent": false
+      "permanent": true
     }
   ],
   "headers": [
@@ -50,6 +50,10 @@
         {
           "key": "Referrer-Policy",
           "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800"
         }
       ]
     }
