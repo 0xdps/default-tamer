@@ -1,0 +1,27 @@
+DefaultTamerWeb/src/layouts/BaseLayout.astro
+  8d71a1590a9d9561 29-31
+DefaultTamerWeb/src/styles/global.css
+  8d71a1590a9d9561 5-23
+DefaultTamerWeb/vercel.json
+  8d71a1590a9d9561 40-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "fe510f2f507969b49d2678fe01808fd9ac3d6aac",
+  "prompts": {
+    "8d71a1590a9d9561": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "71b5e217-7e45-48f7-b117-3623e0b434ac",
+        "model": "copilot/auto"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 31,
+      "total_deletions": 10,
+      "accepted_lines": 31,
+      "overriden_lines": 0
+    }
+  }
+}
