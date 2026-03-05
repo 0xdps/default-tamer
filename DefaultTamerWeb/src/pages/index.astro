@@ -92,10 +92,9 @@ const jsonLd = [
   jsonLd={jsonLd}
 >
   <!-- Hero Section -->
-  <section class="hero-section relative flex items-center">
-    <!-- Routing flow SVG background -->
-    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
-      <img src="/images/routing-flow.svg" alt="" aria-hidden="true" width="900" height="480" class="w-full h-full object-contain opacity-10" loading="lazy" decoding="async" />
+  <section class="hero-section relative flex items-center" style="--hero-bg: url('/images/routing-flow.svg')">
+    <!-- Routing flow SVG background via CSS so it doesn't register as LCP image -->
+    <div class="absolute inset-0 pointer-events-none z-0 overflow-hidden opacity-10 bg-center bg-no-repeat bg-contain" style="background-image: var(--hero-bg)"></div>
     </div>
     <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
       <div class="text-center">

@@ -103,10 +103,5 @@ out-not
 node_modules/
 package-lock.json
 
-# Moved to private submodule (private/)
-scripts/
-docs/
-assets/
-
 # Astro build cache
 .astro/

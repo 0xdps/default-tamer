@@ -17,7 +17,7 @@ const {
 
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') || 'https://www.defaulttamer.app';
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
-const ogImage = image || '/og-image.png';
+const ogImage = image || '/images/og-image.png';
 ---
 
 <!-- Primary Meta Tags -->

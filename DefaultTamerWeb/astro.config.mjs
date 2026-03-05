@@ -6,7 +6,7 @@ export default defineConfig({
   site: 'https://www.defaulttamer.app',
   output: 'static',
   build: {
-    inlineStylesheets: 'always',
+    inlineStylesheets: 'auto',
   },
   integrations: [tailwind()],
 });

@@ -28,8 +28,6 @@ const { title, description, image, type, jsonLd } = Astro.props;
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-    <link rel="dns-prefetch" href="https://manage.anately.sh" />
     <!-- Non-blocking font load: render with system fonts immediately, swap in web fonts when ready -->
     <link
       rel="preload"
@@ -37,9 +35,7 @@ const { title, description, image, type, jsonLd } = Astro.props;
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Plus+Jakarta+Sans:wght@400;600&display=swap"
       onload="this.onload=null;this.rel='stylesheet'"
     />
-    <script is:inline src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
     <link rel="alternate" type="application/rss+xml" title="Default Tamer" href="/rss.xml" />
-    <script defer src="https://manage.anately.sh/script.js" data-website-id="babc74c5-5c94-4f0b-9a47-6b0b0fa12384"></script>
   </head>
   <body>
     <div>
@@ -92,6 +88,38 @@ const { title, description, image, type, jsonLd } = Astro.props;
       backToTop?.addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
+    </script>
+
+    <!-- Load third-party scripts after main content is painted -->
+    <script is:inline>
+      // Load @tailwindplus/elements and analytics after first paint
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(function() {
+          var s = document.createElement('script');
+          s.src = '/scripts/tailwindplus-elements.js';
+          s.type = 'module';
+          document.body.appendChild(s);
+          var a = document.createElement('script');
+          a.src = '/scripts/anately.js';
+          a.defer = true;
+          a.dataset.websiteId = 'babc74c5-5c94-4f0b-9a47-6b0b0fa12384';
+          a.dataset.hostUrl = 'https://manage.anately.sh';
+          document.body.appendChild(a);
+        });
+      } else {
+        setTimeout(function() {
+          var s = document.createElement('script');
+          s.src = '/scripts/tailwindplus-elements.js';
+          s.type = 'module';
+          document.body.appendChild(s);
+          var a = document.createElement('script');
+          a.src = '/scripts/anately.js';
+          a.defer = true;
+          a.dataset.websiteId = 'babc74c5-5c94-4f0b-9a47-6b0b0fa12384';
+          a.dataset.hostUrl = 'https://manage.anately.sh';
+          document.body.appendChild(a);
+        }, 2000);
+      }
     </script>
   </body>
 </html>
