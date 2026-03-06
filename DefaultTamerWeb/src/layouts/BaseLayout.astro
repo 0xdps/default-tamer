@@ -29,8 +29,6 @@ const { title, description, image, type, jsonLd } = Astro.props;
     <!-- Preload self-hosted fonts so LCP text renders fast -->
     <link rel="preload" href="/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/plus-jakarta-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
-    <!-- Preload LCP background image so browser discovers it before CSS parse -->
-    <link rel="preload" href="/images/routing-flow.svg" as="image" fetchpriority="high" />
     <link rel="alternate" type="application/rss+xml" title="Default Tamer" href="/rss.xml" />
   </head>
   <body>
