@@ -1,0 +1,23 @@
+DefaultTamerWeb/src/pages/index.astro
+  8d71a1590a9d9561 96-97
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "2f44156b75ec552a72a3681954c3d8b770e5cdec",
+  "prompts": {
+    "8d71a1590a9d9561": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "71b5e217-7e45-48f7-b117-3623e0b434ac",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 5,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
