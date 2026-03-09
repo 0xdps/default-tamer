@@ -32,8 +32,6 @@ const { title, description, image, type, jsonLd } = Astro.props;
     <!-- Preload hero background image for LCP optimization -->
     <link rel="preload" href="/images/routing-flow.svg" as="image" fetchpriority="high" />
     <link rel="alternate" type="application/rss+xml" title="Default Tamer" href="/rss.xml" />
-    <!-- Load Tailwind Plus elements early (module = defer by default, non-blocking) -->
-    <script type="module" src="/scripts/tailwindplus-elements.js"></script>
   </head>
   <body>
     <div>
@@ -88,9 +86,11 @@ const { title, description, image, type, jsonLd } = Astro.props;
       });
     </script>
 
-    <!-- Load third-party scripts after main content is painted -->
+    <!-- Load interactive elements library with async (never blocks critical path) -->
+    <script async src="/scripts/tailwindplus-elements.js"></script>
+
+    <!-- Load analytics + manifest only after page is fully loaded -->
     <script is:inline>
-      // Load analytics + manifest only after page is fully loaded
       function loadDeferred() {
         var a = document.createElement('script');
         a.src = '/scripts/anately.js';
