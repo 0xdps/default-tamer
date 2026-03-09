@@ -1,0 +1,23 @@
+DefaultTamerWeb/src/layouts/BaseLayout.astro
+  4bdabd6b71b08d21 89-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "9d052686e9689a9b3c92d30fcc3164b8888c64be",
+  "prompts": {
+    "4bdabd6b71b08d21": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "51ecf28b-fd83-41e8-afbc-8fc2ee718188",
+        "model": "copilot/auto"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 6,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}
