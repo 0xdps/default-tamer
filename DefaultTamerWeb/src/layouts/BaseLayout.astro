@@ -29,7 +29,11 @@ const { title, description, image, type, jsonLd } = Astro.props;
     <!-- Preload self-hosted fonts so LCP text renders fast -->
     <link rel="preload" href="/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/plus-jakarta-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- Preload hero background image for LCP optimization -->
+    <link rel="preload" href="/images/routing-flow.svg" as="image" fetchpriority="high" />
     <link rel="alternate" type="application/rss+xml" title="Default Tamer" href="/rss.xml" />
+    <!-- Load Tailwind Plus elements early (module = defer by default, non-blocking) -->
+    <script type="module" src="/scripts/tailwindplus-elements.js"></script>
   </head>
   <body>
     <div>
@@ -86,12 +90,8 @@ const { title, description, image, type, jsonLd } = Astro.props;
 
     <!-- Load third-party scripts after main content is painted -->
     <script is:inline>
-      // Load third-party scripts + manifest only after page is fully loaded
+      // Load analytics + manifest only after page is fully loaded
       function loadDeferred() {
-        var s = document.createElement('script');
-        s.src = '/scripts/tailwindplus-elements.js';
-        s.type = 'module';
-        document.body.appendChild(s);
         var a = document.createElement('script');
         a.src = '/scripts/anately.js';
         a.defer = true;

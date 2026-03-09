@@ -93,9 +93,8 @@ const jsonLd = [
 >
   <!-- Hero Section -->
   <section class="hero-section relative flex items-center">
-    <!-- Decorative SVG background — loaded after paint to keep it off the LCP path -->
-    <div id="hero-bg" class="absolute inset-0 pointer-events-none z-0 overflow-hidden opacity-0 bg-center bg-no-repeat bg-contain transition-opacity duration-700"></div>
-    </div>
+    <!-- Decorative SVG background — preloaded for LCP optimization -->
+    <div id="hero-bg" class="absolute inset-0 pointer-events-none z-0 overflow-hidden bg-center bg-no-repeat bg-contain opacity-10" style="background-image: url('/images/routing-flow.svg');"></div>
     <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
       <div class="text-center">
         <div class="inline-flex items-center gap-2 mb-8">
@@ -495,15 +494,4 @@ const jsonLd = [
     </div>
   </section>
 
-  <!-- Load decorative hero SVG after paint so it never becomes LCP -->
-  <script is:inline>
-    requestAnimationFrame(function() {
-      var el = document.getElementById('hero-bg');
-      if (el) {
-        el.style.backgroundImage = "url('/images/routing-flow.svg')";
-        el.classList.remove('opacity-0');
-        el.classList.add('opacity-10');
-      }
-    });
-  </script>
 </BaseLayout>
