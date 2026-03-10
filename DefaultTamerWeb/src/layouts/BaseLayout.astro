@@ -86,8 +86,8 @@ const { title, description, image, type, jsonLd } = Astro.props;
       });
     </script>
 
-    <!-- Load interactive elements library with async (never blocks critical path) -->
-    <script async src="/scripts/tailwindplus-elements.js"></script>
+    <!-- Load custom interactive components (non-blocking) -->
+    <script async src="/scripts/custom-interactions.js"></script>
 
     <!-- Load analytics + manifest only after page is fully loaded -->
     <script is:inline>

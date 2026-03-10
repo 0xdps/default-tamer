@@ -166,13 +166,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
                 <div class="callout-info mt-3">
                   <strong class="text-dark">Advanced:</strong> You can also reset from Terminal if the app won't launch:
                   <div class="relative mt-3">
-                    <el-copyable id="reset-cmd">
-                      <pre class="bg-dark text-white p-4 rounded-lg overflow-x-auto text-sm font-mono">rm -rf ~/Library/Application\ Support/Default\ Tamer/
+                    <pre id="reset-cmd" class="bg-dark text-white p-4 rounded-lg overflow-x-auto text-sm font-mono">rm -rf ~/Library/Application\ Support/Default\ Tamer/
 rm -f ~/Library/Preferences/com.defaulttamer.app.plist</pre>
-                    </el-copyable>
-                    <button command="--copy" commandfor="reset-cmd" data-umami-event="Copy Command" data-umami-event-snippet="reset" class="absolute top-3 right-3 rounded-md bg-white/10 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-white/20 transition-colors">
-                      <span class="in-data-copied:hidden">Copy</span>
-                      <span class="not-in-data-copied:hidden">Copied!</span>
+                    <button data-copy="reset-cmd" data-umami-event="Copy Command" data-umami-event-snippet="reset" class="absolute top-3 right-3 rounded-md bg-white/10 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-white/20 transition-colors">
+                      Copy
                     </button>
                   </div>
                 </div>
@@ -185,7 +182,7 @@ rm -f ~/Library/Preferences/com.defaulttamer.app.plist</pre>
             <h2 class="docs-section-heading">FAQ</h2>
 
             <div class="mt-8 space-y-4">
-              <el-disclosure>
+              
                 <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
                   <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
                     <span class="group-open:text-primary transition-colors duration-300">Why does it need to be set as the default browser?</span>
@@ -195,9 +192,9 @@ rm -f ~/Library/Preferences/com.defaulttamer.app.plist</pre>
                     macOS only allows the default browser to intercept links from other apps. Setting Default Tamer as default lets it receive every link before passing it to the right browser.
                   </div>
                 </details>
-              </el-disclosure>
+              
 
-              <el-disclosure>
+              
                 <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
                   <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
                     <span class="group-open:text-primary transition-colors duration-300">Which browsers are supported?</span>
@@ -207,9 +204,9 @@ rm -f ~/Library/Preferences/com.defaulttamer.app.plist</pre>
                     Any browser installed on your Mac — Safari, Chrome, Firefox, Arc, Brave, Edge, Vivaldi, Opera, and more. Default Tamer auto-detects all installed browsers.
                   </div>
                 </details>
-              </el-disclosure>
+              
 
-              <el-disclosure>
+              
                 <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
                   <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
                     <span class="group-open:text-primary transition-colors duration-300">Does it collect any data?</span>
@@ -219,9 +216,9 @@ rm -f ~/Library/Preferences/com.defaulttamer.app.plist</pre>
                     No. All processing is local. There are zero network calls, zero telemetry, and zero data collection. Activity logging is opt-in, and URLs are sanitized before storage. You can verify this — it's fully open source.
                   </div>
                 </details>
-              </el-disclosure>
+              
 
-              <el-disclosure>
+              
                 <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
                   <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
                     <span class="group-open:text-primary transition-colors duration-300">How do I uninstall it?</span>
@@ -231,7 +228,7 @@ rm -f ~/Library/Preferences/com.defaulttamer.app.plist</pre>
                     Change your default browser back in System Settings → Desktop & Dock, then quit and delete the app. No background services, no kernel extensions — it's a clean sandboxed app.
                   </div>
                 </details>
-              </el-disclosure>
+              
             </div>
           </section>
 

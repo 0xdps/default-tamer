@@ -20,43 +20,41 @@ const grouped = pages.reduce<Record<string, PageItem[]>>((acc, page) => {
 const sections = Object.entries(grouped);
 ---
 
-<el-dialog>
-  <dialog id="search-palette" class="fixed inset-0 z-[200] m-0 w-full h-full bg-transparent open:flex items-start justify-center pt-[20vh]">
-    <el-dialog-panel class="w-full max-w-lg bg-white rounded-xl shadow-2xl ring-1 ring-black/10 overflow-hidden">
-      <div class="p-4 border-b border-gray-light">
-        <input
-          type="text"
-          id="search-input"
-          placeholder="Search pages..."
-          autocomplete="off"
-          class="w-full text-lg text-dark placeholder:text-gray/50 outline-none bg-transparent"
-        />
-      </div>
-      <div id="search-results" class="max-h-80 overflow-y-auto p-2">
-        {sections.map(([sectionName, sectionItems]) => (
-          <div class="search-group" data-section={sectionName}>
-            <div class="px-3 py-2 text-xs font-semibold text-gray uppercase tracking-wider">{sectionName}</div>
-            {sectionItems.map((item) => (
-              <a
-                href={item.href}
-                class="search-item block px-3 py-2.5 rounded-lg text-sm text-dark hover:bg-primary/10 hover:text-primary transition-colors duration-150"
-                data-title={item.title.toLowerCase()}
-              >
-                {item.title}
-              </a>
-            ))}
-          </div>
-        ))}
-        <div id="search-empty" class="hidden px-3 py-8 text-center text-gray text-sm">No results found.</div>
-      </div>
-      <div class="px-4 py-3 border-t border-gray-light flex items-center justify-between text-xs text-gray">
-        <span>Navigate with <kbd class="bg-gray-lighter px-1.5 py-0.5 rounded text-xs font-mono">↑↓</kbd></span>
-        <span><kbd class="bg-gray-lighter px-1.5 py-0.5 rounded text-xs font-mono">esc</kbd> to close</span>
-      </div>
-    </el-dialog-panel>
-    <el-dialog-backdrop class="fixed inset-0 bg-black/50"></el-dialog-backdrop>
-  </dialog>
-</el-dialog>
+<dialog id="search-palette" class="fixed inset-0 z-[200] m-0 w-full h-full bg-transparent open:flex items-start justify-center pt-[20vh]">
+  <div class="w-full max-w-lg bg-white rounded-xl shadow-2xl ring-1 ring-black/10 overflow-hidden" data-dialog-close-ignore>
+    <div class="p-4 border-b border-gray-light">
+      <input
+        type="text"
+        id="search-input"
+        placeholder="Search pages..."
+        autocomplete="off"
+        class="w-full text-lg text-dark placeholder:text-gray/50 outline-none bg-transparent"
+      />
+    </div>
+    <div id="search-results" class="max-h-80 overflow-y-auto p-2">
+      {sections.map(([sectionName, sectionItems]) => (
+        <div class="search-group" data-section={sectionName}>
+          <div class="px-3 py-2 text-xs font-semibold text-gray uppercase tracking-wider">{sectionName}</div>
+          {sectionItems.map((item) => (
+            <a
+              href={item.href}
+              class="search-item block px-3 py-2.5 rounded-lg text-sm text-dark hover:bg-primary/10 hover:text-primary transition-colors duration-150"
+              data-title={item.title.toLowerCase()}
+            >
+              {item.title}
+            </a>
+          ))}
+        </div>
+      ))}
+      <div id="search-empty" class="hidden px-3 py-8 text-center text-gray text-sm">No results found.</div>
+    </div>
+    <div class="px-4 py-3 border-t border-gray-light flex items-center justify-between text-xs text-gray">
+      <span>Navigate with <kbd class="bg-gray-lighter px-1.5 py-0.5 rounded text-xs font-mono">↑↓</kbd></span>
+      <span><kbd class="bg-gray-lighter px-1.5 py-0.5 rounded text-xs font-mono">esc</kbd> to close</span>
+    </div>
+  </div>
+  <div class="fixed inset-0 bg-black/50"></div>
+</dialog>
 
 <script>
   document.addEventListener('keydown', (e) => {

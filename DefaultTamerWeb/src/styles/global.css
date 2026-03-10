@@ -36,29 +36,36 @@
     scroll-margin-top: 6rem;
   }
 
-  /* Tailwind Plus Elements: custom elements must be block-level */
-  el-disclosure,
-  el-dialog,
-  el-dialog-panel,
-  el-dialog-backdrop,
-  el-tab-group,
-  el-tab-list,
-  el-tab-panels,
-  el-dropdown,
-  el-popover,
-  el-popover-group,
-  el-select,
-  el-autocomplete,
-  el-command-palette,
-  el-command-list,
-  el-command-group,
-  el-copyable {
-    display: block;
+  /* Native dialog styling */
+  dialog {
+    @apply m-0 p-0 border-none bg-transparent;
+  }
+  dialog::backdrop {
+    @apply bg-black/0;
+  }
+  dialog[open]::backdrop {
+    @apply bg-black/50;
   }
 
-  /* el-dropdown must be inline so anchor positioning calculates from the button, not full row width */
-  el-dropdown {
-    display: inline-block;
+  /* Native details/disclosure styling */
+  details {
+    @apply border-2 border-gray-light rounded-xl overflow-hidden transition-all duration-300;
+  }
+  details[open] {
+    @apply border-primary;
+  }
+  
+  /* Details summary (the clickable header) */
+  details > summary {
+    @apply flex items-center justify-between p-6 cursor-pointer text-lg font-semibold list-none;
+  }
+  details > summary::-webkit-details-marker {
+    @apply hidden;
+  }
+
+  /* Details content */
+  details > :not(summary) {
+    @apply px-6 pb-6 text-gray leading-relaxed;
   }
 }
 
