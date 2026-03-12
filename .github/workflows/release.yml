@@ -159,7 +159,7 @@ jobs:
           codesign --force --sign "$DEVELOPER_ID_NAME" --options runtime --timestamp "$SFB"
 
           # Sign the main app (with entitlements)
-          codesign "${SIGN_FLAGS[@]}" \
+          codesign --force --sign "$DEVELOPER_ID_NAME" --options runtime --timestamp \
             --entitlements DefaultTamer/DefaultTamer.entitlements \
             "$APP"
 
