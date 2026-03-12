@@ -128,17 +128,35 @@ jobs:
 
           APP="build/DefaultTamer.app"
           SFB="$APP/Contents/Frameworks/Sparkle.framework/Versions/B"
-          # Use an array so the identity string with spaces is passed as a single argument
-          SIGN_FLAGS=(--force --sign "$DEVELOPER_ID_NAME" --options runtime --timestamp)
+
+          # Helper: re-sign a Sparkle component while preserving its original
+          # embedded entitlements. Signing with --force without --entitlements
+          # strips critical entitlements (e.g. com.apple.security.parent-application-is-sandboxed
+          # on Installer.xpc), which causes macOS to refuse to launch the XPC service.
+          sign_sparkle_component() {
+            local component="$1"
+            local tmp_ent
+            tmp_ent=$(mktemp /tmp/sparkle-ent.XXXX.plist)
+            codesign -d --entitlements :"${tmp_ent}" "${component}" 2>/dev/null || true
+            if [ -s "${tmp_ent}" ]; then
+              codesign --force --sign "$DEVELOPER_ID_NAME" \
+                --options runtime --timestamp \
+                --entitlements "${tmp_ent}" "${component}"
+            else
+              codesign --force --sign "$DEVELOPER_ID_NAME" \
+                --options runtime --timestamp "${component}"
+            fi
+            rm -f "${tmp_ent}"
+          }
 
           # Sign Sparkle content inner-to-outer (required order)
           for xpc in "$SFB/XPCServices/"*.xpc; do
-            [ -d "$xpc" ] && codesign "${SIGN_FLAGS[@]}" "$xpc"
+            [ -d "$xpc" ] && sign_sparkle_component "$xpc"
           done
           for helper in "$SFB/Autoupdate" "$SFB/Updater.app"; do
-            [ -e "$helper" ] && codesign "${SIGN_FLAGS[@]}" "$helper"
+            [ -e "$helper" ] && sign_sparkle_component "$helper"
           done
-          codesign "${SIGN_FLAGS[@]}" "$SFB"
+          codesign --force --sign "$DEVELOPER_ID_NAME" --options runtime --timestamp "$SFB"
 
           # Sign the main app (with entitlements)
           codesign "${SIGN_FLAGS[@]}" \
