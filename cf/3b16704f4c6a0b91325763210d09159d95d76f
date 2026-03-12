@@ -1,0 +1,29 @@
+DefaultTamer/Views/AddRuleSheet.swift
+  d322ea79993d9001 173,183,185,188-191,196,199,201,666,676,678,681-684,689,692,694
+DefaultTamer/Views/PreferencesWindow.swift
+  d322ea79993d9001 192-195,197,200
+DefaultTamer/Views/FirstRunView.swift
+  d322ea79993d9001 133-136,141,143-144,146
+DefaultTamer/Services/BrowserManager.swift
+  d322ea79993d9001 49,60,99-103,109-113,115,118,125,127-128,146-148,153,160-162,166,194,196,218,220,234,243,296
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "cf3b16704f4c6a0b91325763210d09159d95d76f",
+  "prompts": {
+    "d322ea79993d9001": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "3bf460df-9a14-45e3-a327-974189bad20f",
+        "model": "copilot/auto"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>",
+      "messages": [],
+      "total_additions": 95,
+      "total_deletions": 48,
+      "accepted_lines": 70,
+      "overriden_lines": 0
+    }
+  }
+}
