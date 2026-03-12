@@ -163,7 +163,7 @@ class BrowserManager: ObservableObject {
     }
     
     /// Core browser discovery logic (synchronous)
-    private static func performDiscoverySync() -> [Browser] {
+    private nonisolated static func performDiscoverySync() -> [Browser] {
         var discovered: [Browser] = []
         var seenBundleIds = Set<String>()
         var seenDisplayNames = Set<String>() // Track display names to avoid duplicates
@@ -240,7 +240,7 @@ class BrowserManager: ObservableObject {
     }
     
     /// Check if an app is likely a web browser (not a terminal, text editor, etc.)
-    private static func isBrowserApp(bundleId: String, appURL: URL) -> Bool {
+    private nonisolated static func isBrowserApp(bundleId: String, appURL: URL) -> Bool {
         let lowercasedId = bundleId.lowercased()
         
         // Exclude terminal emulators and command line tools
@@ -293,7 +293,7 @@ class BrowserManager: ObservableObject {
     }
     
     /// Get the human-readable name for an app bundle ID
-    private static func getDisplayName(for bundleId: String) -> String? {
+    private nonisolated static func getDisplayName(for bundleId: String) -> String? {
         // Try to get from bundle
         if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId),
            let bundle = Bundle(url: appURL),
