@@ -1,0 +1,23 @@
+DefaultTamer/Services/BrowserManager.swift
+  d322ea79993d9001 166,243,296
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "e8ac5e48f3d85313db8b64163186cd5fa6e47272",
+  "prompts": {
+    "d322ea79993d9001": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "3bf460df-9a14-45e3-a327-974189bad20f",
+        "model": "copilot/auto"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 3,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
