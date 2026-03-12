@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.0.5] - 2026-02-27
+### Added
+
+- Browser list refresh controls in Add Rule, Edit Rule, First Run, and Preferences so newly installed browsers can be selected without restarting the app
+- Startup browser discovery refresh to keep available browser lists up to date on launch
+
+### Changed
+
+- Release pipeline and app version metadata now consistently use dynamic version/build values from project settings
 
 ## [0.0.5] - 2026-02-27
 
