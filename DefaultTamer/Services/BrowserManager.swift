@@ -46,6 +46,7 @@ enum BrowserError: LocalizedError {
 @MainActor
 class BrowserManager: ObservableObject {
     @Published var availableBrowsers: [Browser] = []
+    @Published private(set) var isRefreshingBrowsers = false
     
     // Cache keys
     private static let cacheKey = "defaultTamer.cachedBrowsers"
@@ -56,6 +57,7 @@ class BrowserManager: ObservableObject {
     
     init() {
         loadCachedBrowsers()
+        refreshBrowsersOnStartup()
     }
     
     /// Load browsers from cache or discover if cache is invalid
@@ -89,34 +91,41 @@ class BrowserManager: ObservableObject {
            !cached.isEmpty {
             availableBrowsers = cached
             debugLog("✅ Loaded \(cached.count) browsers from cache")
-            
-            // Refresh in background (non-blocking)
-            Task.detached(priority: .background) {
-                await self.refreshBrowsersInBackground()
-            }
         } else {
             debugLog("⚠️ Cache invalid, discovering...")
             discoverBrowsers()
         }
     }
+
+    /// Always refresh browser list in background on startup to pick up new installs/uninstalls.
+    private func refreshBrowsersOnStartup() {
+        Task.detached(priority: .background) {
+            await self.refreshBrowsersInBackground()
+        }
+    }
     
     /// Background refresh of browser list (non-blocking)
     private func refreshBrowsersInBackground() async {
+        guard !isRefreshingBrowsers else {
+            return
+        }
+
+        isRefreshingBrowsers = true
         debugLog("🔄 Background browser refresh started")
-        
+
         // Discover browsers off main thread
         let newBrowsers = await performDiscovery()
-        
-        await MainActor.run {
-            // Only update if there are changes
-            if newBrowsers != availableBrowsers {
-                debugLog("✅ Browser list updated (\(availableBrowsers.count) → \(newBrowsers.count))")
-                availableBrowsers = newBrowsers
-                saveBrowserCache()
-            } else {
-                debugLog("✅ Browser list unchanged")
-            }
+
+        // Only update if there are changes
+        if newBrowsers != availableBrowsers {
+            debugLog("✅ Browser list updated (\(availableBrowsers.count) → \(newBrowsers.count))")
+            availableBrowsers = newBrowsers
+            saveBrowserCache()
+        } else {
+            debugLog("✅ Browser list unchanged")
         }
+
+        isRefreshingBrowsers = false
     }
     
     /// Save browser list to cache
@@ -134,23 +143,27 @@ class BrowserManager: ObservableObject {
     /// Manual refresh (for user-initiated actions)
     func refreshBrowsers() {
         debugLog("🔄 Manual browser refresh")
-        discoverBrowsers()
+        Task {
+            await refreshBrowsersInBackground()
+        }
     }
     
     /// Discovers all apps that can handle HTTP/HTTPS URLs (using LaunchServices)
     func discoverBrowsers() {
-        let discovered = performDiscoverySync()
+        let discovered = Self.performDiscoverySync()
         availableBrowsers = discovered
         saveBrowserCache()
     }
     
     /// Async wrapper for browser discovery
     private func performDiscovery() async -> [Browser] {
-        return performDiscoverySync()
+        await Task.detached(priority: .userInitiated) {
+            Self.performDiscoverySync()
+        }.value
     }
     
     /// Core browser discovery logic (synchronous)
-    private func performDiscoverySync() -> [Browser] {
+    private static func performDiscoverySync() -> [Browser] {
         var discovered: [Browser] = []
         var seenBundleIds = Set<String>()
         var seenDisplayNames = Set<String>() // Track display names to avoid duplicates
@@ -178,9 +191,9 @@ class BrowserManager: ObservableObject {
                    !seenBundleIds.contains(bundleId),
                    bundleId != currentBundleId,
                    !excludedBundleIds.contains(bundleId),
-                   isBrowserApp(bundleId: bundleId, appURL: appURL) {
+                   Self.isBrowserApp(bundleId: bundleId, appURL: appURL) {
                     
-                    if let displayName = getDisplayName(for: bundleId) {
+                    if let displayName = Self.getDisplayName(for: bundleId) {
                         // Check for duplicate display names (e.g., multiple Atlas installations)
                         if !seenDisplayNames.contains(displayName) {
                             discovered.append(Browser(bundleId: bundleId, displayName: displayName, isInstalled: true))
@@ -202,9 +215,9 @@ class BrowserManager: ObservableObject {
                    !seenBundleIds.contains(bundleId),
                    bundleId != currentBundleId,
                    !excludedBundleIds.contains(bundleId),
-                   isBrowserApp(bundleId: bundleId, appURL: appURL) {
+                   Self.isBrowserApp(bundleId: bundleId, appURL: appURL) {
                     
-                    if let displayName = getDisplayName(for: bundleId) {
+                    if let displayName = Self.getDisplayName(for: bundleId) {
                         // Check for duplicate display names
                         if !seenDisplayNames.contains(displayName) {
                             discovered.append(Browser(bundleId: bundleId, displayName: displayName, isInstalled: true))
@@ -218,7 +231,7 @@ class BrowserManager: ObservableObject {
         
         // Always ensure Safari is present as fallback
         if !seenBundleIds.contains(BundleIdentifiers.safari),
-           let displayName = getDisplayName(for: BundleIdentifiers.safari) {
+              let displayName = Self.getDisplayName(for: BundleIdentifiers.safari) {
             discovered.append(Browser(bundleId: BundleIdentifiers.safari, displayName: displayName, isInstalled: true))
         }
         
@@ -227,7 +240,7 @@ class BrowserManager: ObservableObject {
     }
     
     /// Check if an app is likely a web browser (not a terminal, text editor, etc.)
-    private func isBrowserApp(bundleId: String, appURL: URL) -> Bool {
+    private static func isBrowserApp(bundleId: String, appURL: URL) -> Bool {
         let lowercasedId = bundleId.lowercased()
         
         // Exclude terminal emulators and command line tools
@@ -280,7 +293,7 @@ class BrowserManager: ObservableObject {
     }
     
     /// Get the human-readable name for an app bundle ID
-    private func getDisplayName(for bundleId: String) -> String? {
+    private static func getDisplayName(for bundleId: String) -> String? {
         // Try to get from bundle
         if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId),
            let bundle = Bundle(url: appURL),

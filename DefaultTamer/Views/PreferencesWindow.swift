@@ -189,9 +189,15 @@ struct GeneralTab: View {
                     Button(action: {
                         appState.browserManager.refreshBrowsers()
                     }) {
-                        Image(systemName: "arrow.clockwise")
+                        if appState.browserManager.isRefreshingBrowsers {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Image(systemName: "arrow.clockwise")
+                        }
                     }
                     .buttonStyle(.borderless)
+                    .disabled(appState.browserManager.isRefreshingBrowsers)
                     .help("Refresh browser list")
                 }
             } header: {

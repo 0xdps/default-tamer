@@ -170,19 +170,35 @@ struct AddRuleSheet: View {
                 }
                 
                 Section("Target Browser") {
-                    Picker("Browser", selection: $targetBrowserId) {
-                        ForEach(appState.browserManager.availableBrowsers) { browser in
-                            Label {
-                                Text(browser.displayName)
-                            } icon: {
-                                if let icon = browser.getIcon() {
-                                    Image(nsImage: icon)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
+                    HStack {
+                        Picker("Browser", selection: $targetBrowserId) {
+                            ForEach(appState.browserManager.availableBrowsers) { browser in
+                                Label {
+                                    Text(browser.displayName)
+                                } icon: {
+                                    if let icon = browser.getIcon() {
+                                        Image(nsImage: icon)
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                    }
                                 }
+                                .tag(browser.id)
                             }
-                            .tag(browser.id)
                         }
+
+                        Button(action: {
+                            appState.browserManager.refreshBrowsers()
+                        }) {
+                            if appState.browserManager.isRefreshingBrowsers {
+                                ProgressView()
+                                    .controlSize(.small)
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                            }
+                        }
+                        .buttonStyle(.borderless)
+                        .disabled(appState.browserManager.isRefreshingBrowsers)
+                        .help("Refresh browser list")
                     }
 
                     Toggle("Open in private/incognito mode", isOn: $openInPrivateMode)
@@ -647,19 +663,35 @@ struct EditRuleSheet: View {
                 }
                 
                 Section("Target Browser") {
-                    Picker("Browser", selection: $targetBrowserId) {
-                        ForEach(appState.browserManager.availableBrowsers) { browser in
-                            Label {
-                                Text(browser.displayName)
-                            } icon: {
-                                if let icon = browser.getIcon() {
-                                    Image(nsImage: icon)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
+                    HStack {
+                        Picker("Browser", selection: $targetBrowserId) {
+                            ForEach(appState.browserManager.availableBrowsers) { browser in
+                                Label {
+                                    Text(browser.displayName)
+                                } icon: {
+                                    if let icon = browser.getIcon() {
+                                        Image(nsImage: icon)
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                    }
                                 }
+                                .tag(browser.id)
                             }
-                            .tag(browser.id)
                         }
+
+                        Button(action: {
+                            appState.browserManager.refreshBrowsers()
+                        }) {
+                            if appState.browserManager.isRefreshingBrowsers {
+                                ProgressView()
+                                    .controlSize(.small)
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                            }
+                        }
+                        .buttonStyle(.borderless)
+                        .disabled(appState.browserManager.isRefreshingBrowsers)
+                        .help("Refresh browser list")
                     }
 
                     Toggle("Open in private/incognito mode", isOn: $openInPrivateMode)

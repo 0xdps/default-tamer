@@ -130,6 +130,20 @@ struct FirstRunView: View {
                         }
                         .labelsHidden()
                         .fixedSize()
+
+                        Button(action: {
+                            appState.browserManager.refreshBrowsers()
+                        }) {
+                            if appState.browserManager.isRefreshingBrowsers {
+                                ProgressView()
+                                    .controlSize(.small)
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                            }
+                        }
+                        .buttonStyle(.borderless)
+                        .disabled(appState.browserManager.isRefreshingBrowsers)
+                        .help("Refresh browser list")
                     }
                 }
                 
