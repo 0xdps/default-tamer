@@ -2,135 +2,65 @@
 
 ## Project Overview
 
-This is the marketing/documentation website for Default Tamer, a macOS browser routing app. Built with **Astro**, **Tailwind CSS v3**, and **@tailwindplus/elements v1**.
+This is the marketing/documentation website for Default Tamer, a macOS browser routing app. Built with **Astro**, **Tailwind CSS v3**, and **native HTML interactions** powered by a lightweight script.
 
 ---
 
-## Mandatory: Use @tailwindplus/elements for Interactive Components
+## Mandatory: Use Native HTML Interactions
 
-**When creating or updating any page, component, or feature on the website, you MUST use `@tailwindplus/elements` for all interactive UI behavior.** Do not write custom JavaScript for interactivity — always reach for the appropriate Tailwind Plus element first. If a Tailwind Plus element exists for the interaction you need, use it. Check the component selection table below before implementing any interactive pattern.
+**When creating or updating interactive UI, use native HTML patterns first (`<details>`, `<dialog>`, semantic buttons/links) and wire behavior through the shared script at `public/scripts/custom-interactions.js`.**
 
-The website loads `@tailwindplus/elements@1` via CDN in `BaseLayout.astro`. All interactive UI components MUST use these elements instead of custom JavaScript or vanilla HTML solutions.
+Do not re-introduce `@tailwindplus/elements` or `el-*` tags unless explicitly requested by the maintainer.
 
-### Component Selection Rules
+### Interaction Rules
 
-| Need | MUST Use | NEVER Do |
-|------|----------|----------|
-| Show/hide content (FAQ, accordion, collapsible) | `<el-disclosure>` | Plain `<details>` without wrapper, custom JS toggle |
-| Modal/dialog | `<el-dialog>` + `<dialog>` | Custom modal div, `display:none` toggle |
-| Tabbed content | `<el-tab-group>` | Custom tab JS, radio button hacks |
-| Dropdown menu | `<el-dropdown>` + `<el-menu>` | Custom dropdown JS, hover-only dropdowns |
-| Anchored popup | `<el-popover>` | Custom tooltip JS, title attributes for rich content |
-| Form select | `<el-select>` + `<el-options>` | Plain `<select>` when custom styling needed |
-| Search/combobox | `<el-autocomplete>` | Custom search input JS |
-| Copy to clipboard | `<el-copyable>` | Custom clipboard JS |
+| Need | Preferred Pattern | Avoid |
+|------|-------------------|-------|
+| Show/hide content (FAQ, accordion, collapsible) | Native `<details>` + `<summary>` | Custom div toggles with ad-hoc state |
+| Modal/dialog | Native `<dialog>` with `data-dialog-trigger` / `data-dialog-close` hooks | `display:none` modal implementations |
+| Copy to clipboard | `data-copy` button targeting an element ID | Per-page custom clipboard scripts |
+| Keyboard-accessible menus/tabs | Reuse handlers in `custom-interactions.js` | Duplicated one-off keyboard logic |
 
-### Required Global CSS
+### Current Interaction Architecture
 
-All Tailwind Plus custom elements MUST have `display: block` set in `global.css`:
+- Shared script: `DefaultTamerWeb/public/scripts/custom-interactions.js`
+- Global behavior styles: `DefaultTamerWeb/src/styles/global.css` (native `dialog` and `details` styling)
+- Base layout loader: `DefaultTamerWeb/src/layouts/BaseLayout.astro` loads the shared interaction script
 
-```css
-@layer base {
-  el-disclosure, el-dialog, el-dialog-panel, el-dialog-backdrop,
-  el-tab-group, el-tab-list, el-tab-panels, el-dropdown,
-  el-popover, el-popover-group, el-select, el-autocomplete,
-  el-command-palette, el-command-list, el-command-group, el-copyable {
-    display: block;
-  }
-}
-```
-
----
-
-### Current Migration Status
-
-#### ✅ Already Using Tailwind Plus Elements
-
-| Component | Where Used | Status |
-|-----------|-----------|--------|
-| `<el-disclosure>` | `index.astro` FAQ (4 items), `docs/index.astro` FAQ (6 items), `docs/troubleshooting.astro` Common Questions (5 items), `Header.astro` mobile docs sub-nav | ✅ Complete |
-| `<el-dialog>` | `Header.astro` mobile menu, `SearchPalette.astro` search modal | ✅ Complete |
-| `<el-dropdown>` + `<el-menu>` | `Header.astro` desktop Docs dropdown | ✅ Complete |
-| `<el-copyable>` | `docs/troubleshooting.astro` (2 code blocks), `docs/advanced-usage.astro` (6 code blocks) | ✅ Complete |
-| `<el-tab-group>` | `docs/setup-rules.astro` Rule Types (3 tabs), `docs/advanced-usage.astro` Regex Examples (5 tabs) + Rule Chaining (3 tabs), `features.astro` Screenshot gallery (3 tabs) | ✅ Complete |
-| Global CSS `display: block` | `global.css` — all custom elements registered | ✅ Complete |
-
-#### ✅ Pages With No Interactive Elements (No Migration Needed)
-
-`404.astro`, `changelog.astro`, `download.astro`, `docs/getting-started.astro`, `guides/index.astro`, `guides/[slug].astro`, `Footer.astro`, `Breadcrumbs.astro`, `SEO.astro`
-
----
-
-### Disclosure Pattern (FAQ)
-
-Every `<details>` element MUST be wrapped in `<el-disclosure>`:
+### Native FAQ Pattern
 
 ```html
-<el-disclosure>
-  <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
-    <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
-      <span class="group-open:text-primary transition-colors duration-300">Question?</span>
-      <span class="text-primary text-2xl group-open:rotate-45 transition-transform duration-300">+</span>
-    </summary>
-    <div class="px-6 pb-6 text-gray leading-relaxed">
-      Answer content.
-    </div>
-  </details>
-</el-disclosure>
+<details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
+  <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
+    <span class="group-open:text-primary transition-colors duration-300">Question?</span>
+    <span class="text-primary text-2xl group-open:rotate-45 transition-transform duration-300">+</span>
+  </summary>
+  <div class="px-6 pb-6 text-gray leading-relaxed">
+    Answer content.
+  </div>
+</details>
 ```
 
-### Dialog Pattern (Modals)
+### Native Dialog Pattern
 
 ```html
-<el-dialog>
-  <button commandfor="dialog-id" command="show-modal">Open</button>
-  <dialog id="dialog-id">
-    <el-dialog-panel>
-      <button commandfor="dialog-id" command="close">✕</button>
-      <!-- Content -->
-    </el-dialog-panel>
-    <el-dialog-backdrop class="fixed inset-0 bg-black/50"></el-dialog-backdrop>
-  </dialog>
-</el-dialog>
+<button data-dialog-trigger="dialog-id">Open</button>
+
+<dialog id="dialog-id">
+  <div class="relative z-10">
+    <button data-dialog-close>✕</button>
+    <!-- Content -->
+  </div>
+  <div class="fixed inset-0 bg-black/50"></div>
+</dialog>
 ```
 
-### Tabs Pattern
+### Clipboard Pattern (Code Blocks)
 
 ```html
-<el-tab-group>
-  <el-tab-list class="flex gap-1 rounded-lg bg-gray-lighter p-1">
-    <button class="flex-1 rounded-md px-4 py-2.5 text-sm font-semibold aria-selected:bg-white aria-selected:text-primary">Tab 1</button>
-    <button class="...">Tab 2</button>
-  </el-tab-list>
-  <el-tab-panels>
-    <div>Panel 1</div>
-    <div>Panel 2</div>
-  </el-tab-panels>
-</el-tab-group>
-```
+<pre id="snippet">npm install default-tamer</pre>
 
-### Dropdown Pattern
-
-```html
-<el-dropdown>
-  <button>Trigger</button>
-  <el-menu anchor="bottom start" class="rounded-xl bg-white shadow-xl ring-1 ring-black/5 p-2" style="--anchor-gap: 8px">
-    <a href="/link" class="block px-3 py-2 rounded-lg text-sm hover:bg-gray-lighter">Item</a>
-  </el-menu>
-</el-dropdown>
-```
-
-### Copyable Pattern (Code Blocks)
-
-Use for terminal commands in docs pages:
-
-```html
-<el-copyable id="snippet">npm install @tailwindplus/elements</el-copyable>
-
-<button command="--copy" commandfor="snippet">
-  <span class="in-data-copied:hidden">Copy</span>
-  <span class="not-in-data-copied:hidden">Copied!</span>
-</button>
+<button data-copy="snippet">Copy</button>
 ```
 
 ---
@@ -187,18 +117,18 @@ Use for terminal commands in docs pages:
 BaseLayout.astro
 ├── SEO.astro (meta tags)
 ├── Google Fonts (Outfit + Plus Jakarta Sans)
-├── @tailwindplus/elements CDN script (defer)
-├── Header.astro (sticky nav with el-dropdown + el-dialog)
+├── custom-interactions.js (async)
+├── Header.astro (sticky nav with native dialog/menu patterns)
 ├── <main><slot /></main>
 ├── Footer.astro
-├── SearchPalette.astro (⌘K search using el-dialog)
+├── SearchPalette.astro (⌘K search using native dialog)
 └── Back to top button (vanilla JS scroll listener)
 ```
 
 ### Page Types
 
 1. **Marketing pages** (`index.astro`, `features.astro`, `download.astro`) — Full-width sections with `hero-section`, feature grids, CTAs
-2. **Docs hub** (`docs/index.astro`) — Cards grid + quick links + FAQ with `<el-disclosure>`
+2. **Docs hub** (`docs/index.astro`) — Cards grid + quick links + FAQ with native `<details>`
 3. **Docs prose pages** (`docs/getting-started.astro`, `docs/setup-rules.astro`) — `<div class="docs-wrapper prose">`
 4. **Docs sidebar pages** (`docs/troubleshooting.astro`, `docs/advanced-usage.astro`) — `<section class="docs-page">` with sticky sidebar TOC
 5. **Guide pages** (`guides/[slug].astro`) — Content collection, rendered markdown
@@ -312,15 +242,14 @@ Only the 10 most recent entries are shown on the website. Older releases automat
 
 ## Don'ts
 
-- ❌ Don't use `<details>` without `<el-disclosure>` wrapper
-- ❌ Don't create custom JavaScript for show/hide, tabs, modals, dropdowns, popovers, filtering, or clipboard
+- ❌ Don't use `@tailwindplus/elements` or any `el-*` tags
+- ❌ Don't add page-specific interactive scripts when behavior can live in `public/scripts/custom-interactions.js`
 - ❌ Don't write scoped `<style>` blocks
 - ❌ Don't import or reference any CSS framework other than Tailwind
 - ❌ Don't use the theme-color `#3b82f6` (blue) — our brand is orange `#f97316`
 - ❌ Don't hardcode the site URL — it should come from `astro.config.mjs`
 - ❌ Don't add `font-family` declarations — use `font-heading` or `font-sans` tokens
-- ❌ Don't use absolute positioning for dropdowns/popovers — use `el-menu`/`el-popover` with `anchor`
-- ❌ Don't implement copy-to-clipboard manually — use `<el-copyable>`
+- ❌ Don't duplicate UI indicators in both markup and CSS pseudo-elements (e.g., double FAQ plus icons)
 - ❌ Don't read `CHANGELOG.md` from the website — the website uses `src/content/changelog/*.md` only
 - ❌ Don't copy developer log entries to user-facing changelog files verbatim — rewrite for end users
 - ❌ Don't create a user-facing changelog entry for internal refactors, website-only changes, or unreleased work
