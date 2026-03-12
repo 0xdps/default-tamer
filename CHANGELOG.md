@@ -9,8 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.6] - 2026-03-12
 
-## [0.0.6] - 2026-03-12
-
 ### Added
 
 - Browser list refresh controls in Add Rule, Edit Rule, First Run, and Preferences so newly installed browsers can be selected without restarting the app
