@@ -5,10 +5,10 @@
 //  Central app state management
 //
 
-import Foundation
-import SwiftUI
 import AppKit
 import Combine
+import Foundation
+import SwiftUI
 
 @MainActor
 class AppState: ObservableObject {
@@ -17,6 +17,9 @@ class AppState: ObservableObject {
     let diagnosticsManager = DiagnosticsManager()
     let persistence = PersistenceManager.shared
     let toastManager = ToastManager.shared
+
+    /// Thread-safe rules queue
+    private let rulesQueue = DispatchQueue(label: "com.defaulttamer.rules", attributes: .concurrent)
 
     // Published state
     @Published var settings: Settings
@@ -29,11 +32,12 @@ class AppState: ObservableObject {
     @Published var pendingTabSelection: PreferenceTab? = nil // For coordinating tab selection from menu bar
 
     private var cancellables = Set<AnyCancellable>()
+    @Published var pendingTabSelection: Int? = nil // For coordinating tab selection from menu bar
 
     init() {
-        self.settings = persistence.loadSettings()
-        self.rules = persistence.loadRules()
-        self.showFirstRun = !persistence.hasCompletedFirstRun
+        settings = persistence.loadSettings()
+        rules = persistence.loadRules()
+        showFirstRun = !persistence.hasCompletedFirstRun
         _ = persistence.installID // Eagerly guarantee UUID is generated locally
 
         // Forward child ObservableObject changes into AppState so that any view
@@ -46,24 +50,29 @@ class AppState: ObservableObject {
             .sink { [weak self] in self?.objectWillChange.send() }
             .store(in: &cancellables)
     }
-    
+
     // MARK: - Settings Management
-    
+
     func updateSettings(_ newSettings: Settings) {
         settings = newSettings
         persistence.saveSettings(settings)
     }
-    
+
     func toggleEnabled() {
         settings.enabled.toggle()
         persistence.saveSettings(settings)
     }
-    
+
     func setFallbackBrowser(_ browserId: String) {
         settings.fallbackBrowserId = browserId
         persistence.saveSettings(settings)
     }
-    
+
+    func setSecondaryBrowser(_ browserId: String?) {
+        settings.secondaryBrowserId = browserId
+        persistence.saveSettings(settings)
+    }
+
     func toggleDiagnostics() {
         settings.diagnosticsEnabled.toggle()
         persistence.saveSettings(settings)
@@ -76,22 +85,22 @@ class AppState: ObservableObject {
     }
 
     // MARK: - Telemetry
-    
+
     func setTelemetryEnabled(_ enabled: Bool) {
         let wasNil = settings.telemetryEnabled == nil
         settings.telemetryEnabled = enabled
         persistence.saveSettings(settings)
-        
+
         // If enabling for the first time, fire launch event
-        if wasNil && enabled {
+        if wasNil, enabled {
             trackAppLaunch(force: true)
         }
     }
-    
+
     func trackAppLaunch(force: Bool = false) {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        
+
         let shouldFire: Bool
         if force {
             shouldFire = true
@@ -100,45 +109,45 @@ class AppState: ObservableObject {
         } else {
             shouldFire = true
         }
-        
+
         if shouldFire {
             let bucket = AnalyticsManager.getBucket(for: rules.count)
             let isDefault = browserManager.isDefaultBrowser()
             let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
             let osVersion = ProcessInfo.processInfo.operatingSystemVersionString
-            
+
             AnalyticsManager.shared.sendEvent(name: "app_launch", data: [
                 "version": version,
                 "os": osVersion,
                 "rule_count_bucket": bucket,
-                "is_default": isDefault
+                "is_default": isDefault,
             ])
             persistence.lastLaunchDate = Date()
         }
     }
-    
+
     func trackAppUpdated() {
         let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
         guard let lastVersion = persistence.lastKnownVersion else {
             persistence.lastKnownVersion = currentVersion
             return
         }
-        
+
         if currentVersion != lastVersion {
             // Only fire if telemetry is enabled and they were already on >= 0.0.7
             if settings.telemetryEnabled == true {
                 AnalyticsManager.shared.sendEvent(name: "app_updated", data: [
                     "from_version": lastVersion,
-                    "to_version": currentVersion
+                    "to_version": currentVersion,
                 ])
             }
             persistence.lastKnownVersion = currentVersion
         }
     }
-    
+
     func trackRuleCreated(type: String = "unknown") {
         AnalyticsManager.shared.sendEvent(name: "rule_created", data: ["type": type])
-        
+
         if !settings.hasCreatedFirstRule {
             AnalyticsManager.shared.sendEvent(name: "first_rule_created") { [weak self] success in
                 if success {
@@ -150,11 +159,11 @@ class AppState: ObservableObject {
             }
         }
     }
-    
+
     func trackRuleDeleted(type: String = "unknown") {
         AnalyticsManager.shared.sendEvent(name: "rule_deleted", data: ["type": type])
     }
-    
+
     func trackLinkRouted(method: String) {
         AnalyticsManager.shared.sendEvent(name: "link_routed", data: ["method": method])
     }
@@ -170,38 +179,38 @@ class AppState: ObservableObject {
     }
 
     // MARK: - Rules Management
-    
+
     func addRule(_ rule: Rule) {
         rules.append(rule)
         persistence.saveRules(rules)
         trackRuleCreated(type: rule.type.rawValue)
     }
-    
+
     func updateRule(_ rule: Rule) {
         if let index = rules.firstIndex(where: { $0.id == rule.id }) {
             rules[index] = rule
             persistence.saveRules(rules)
         }
     }
-    
+
     func deleteRule(_ rule: Rule) {
         rules.removeAll(where: { $0.id == rule.id })
         persistence.saveRules(rules)
         trackRuleDeleted(type: rule.type.rawValue)
     }
-    
+
     func toggleRule(_ rule: Rule) {
         if let index = rules.firstIndex(where: { $0.id == rule.id }) {
             rules[index].enabled.toggle()
             persistence.saveRules(rules)
         }
     }
-    
+
     func moveRule(from source: IndexSet, to destination: Int) {
         rules.move(fromOffsets: source, toOffset: destination)
         persistence.saveRules(rules)
     }
-    
+
     func replaceRules(_ newRules: [Rule]) {
         rules = newRules
         persistence.saveRules(rules)
@@ -253,25 +262,25 @@ class AppState: ObservableObject {
     }
 
     // MARK: - URL Handling
-    
+
     func handleURL(_ url: URL, sourceApp: String? = nil) {
         guard url.isHTTP else {
             appLogger.error("Non-HTTP URL received: \(url.absoluteString)")
             return
         }
-        
+
         // Use provided source app or try to detect it
         let detectedSourceApp = sourceApp ?? SourceAppDetector.detectSourceApp()
-        
+
         if let app = detectedSourceApp {
             appLogger.info("🔍 Using source app: \(app, privacy: .public)")
         } else {
             appLogger.info("🔍 No source app available")
         }
-        
+
         // Get current modifier flags
         let modifierFlags = NSEvent.modifierFlags
-        
+
         // Route the URL
         let action = Router.route(
             url: url,
@@ -280,16 +289,16 @@ class AppState: ObservableObject {
             rules: rules,
             modifierFlags: modifierFlags
         )
-        
+
         // Execute action
         executeRouteAction(action, url: url, sourceApp: detectedSourceApp)
     }
-    
+
     private func executeRouteAction(_ action: RouteAction, url: URL, sourceApp: String?) {
         let browserName: String
 
         switch action {
-        case .openInBrowser(let bundleId, let matchedRule):
+        case let .openInBrowser(bundleId, matchedRule):
             let privateMode = matchedRule?.openInPrivateMode ?? false
             browserManager.openURLWithFallback(url, targetBrowserId: bundleId, fallbackBrowserId: settings.fallbackBrowserId, privateMode: privateMode)
             browserName = browserManager.availableBrowsers.first(where: { $0.id == bundleId })?.displayName ?? "Unknown"
@@ -308,10 +317,26 @@ class AppState: ObservableObject {
                 )
             }
 
-        case .showChooser(let url):
-            chooserURL = url
-            chooserSourceApp = sourceApp
-            showChooser = true
+        case let .showChooser(url):
+            // If a secondary browser is configured, open directly — skip the pop-up
+            if let secondaryId = settings.secondaryBrowserId {
+                browserManager.openURL(url, inBrowser: secondaryId)
+                let browserName = browserManager.availableBrowsers.first(where: { $0.id == secondaryId })?.displayName ?? "Unknown"
+                if settings.diagnosticsEnabled {
+                    diagnosticsManager.logRoute(
+                        url: url,
+                        sourceApp: sourceApp,
+                        matchedRule: nil,
+                        targetBrowserId: secondaryId,
+                        targetBrowserName: browserName,
+                        fallbackUsed: false
+                    )
+                }
+            } else {
+                chooserURL = url
+                chooserSourceApp = sourceApp
+                showChooser = true
+            }
 
             AnalyticsManager.shared.sendEvent(name: "chooser_shown")
 
@@ -334,7 +359,7 @@ class AppState: ObservableObject {
             }
         }
     }
-    
+
     func openURLFromChooser(_ url: URL, browserId: String) {
         let sourceApp = chooserSourceApp
         let browserName = browserManager.availableBrowsers.first(where: { $0.id == browserId })?.displayName ?? "Unknown"
@@ -359,16 +384,16 @@ class AppState: ObservableObject {
             )
         }
     }
-    
+
     // MARK: - First Run
-    
+
     func completeFirstRun() {
         showFirstRun = false
         persistence.hasCompletedFirstRun = true
     }
-    
+
     // MARK: - Launch at Login
-    
+
     func toggleLaunchAtLogin() {
         do {
             try LaunchAtLoginManager.shared.toggle()

@@ -11,6 +11,7 @@ import AppKit
 struct Settings: Codable {
     var enabled: Bool
     var fallbackBrowserId: String
+    var secondaryBrowserId: String? // nil means show the chooser pop-up
     var chooserModifierKey: String // "option" by default
     var diagnosticsEnabled: Bool
     var launchAtLogin: Bool
@@ -20,6 +21,7 @@ struct Settings: Codable {
     init(
         enabled: Bool = true,
         fallbackBrowserId: String = BundleIdentifiers.safari,
+        secondaryBrowserId: String? = nil,
         chooserModifierKey: String = "option",
         diagnosticsEnabled: Bool = false,
         launchAtLogin: Bool = false,
@@ -28,6 +30,7 @@ struct Settings: Codable {
     ) {
         self.enabled = enabled
         self.fallbackBrowserId = fallbackBrowserId
+        self.secondaryBrowserId = secondaryBrowserId
         self.chooserModifierKey = chooserModifierKey
         self.diagnosticsEnabled = diagnosticsEnabled
         self.launchAtLogin = launchAtLogin
