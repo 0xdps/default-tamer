@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `AppState.toggleDiagnostics()` now calls `diagnosticsManager.clearLogs()` and `ActivityDatabase.shared.deleteAllLogs()` when the Activity Log is disabled; previously existing route history was silently retained in both the SQLite database and in-memory `recentRoutes` array with no way for the user to clear it
+- `BrowserManager` completely rewrote browser discovery: replaced keyword/category heuristics with a `allowedParents` standard-location allowlist (`/Applications`, `~/Applications`, system dirs) eliminating helper bundles, Xcode DerivedData builds, Puppeteer caches, DMG-mounted apps, and other noise; added `nonBrowserBundleIds` exclusion set for apps (iTerm2, Choosy, Finicky, etc.) that register for `http://` without being browsers; `displayNameFromURL` now reads `CFBundleDisplayName`/`CFBundleName` directly from the bundle instead of calling `NSWorkspace.shared.displayName` off the main actor; added 5-second `Task`-based timeout around `LSCopyApplicationURLsForURL` to prevent permanently stuck spinner
+- `AppState` now pipes `browserManager.objectWillChange` and `diagnosticsManager.objectWillChange` into its own `objectWillChange` via Combine sinks stored in a `cancellables` set; previously `browserManager` was a plain `let` so any `@Published` change on it (available browsers, refresh spinner state) never triggered re-renders on views observing `appState` as `@EnvironmentObject`
+
+### Added
+
+- `just dmg-preview` recipe: builds a debug `.app` and packages it as `dist/preview.dmg` without signing or notarization, for rapid local iteration on the installer window appearance
+- `create-dmg.sh` background image support: accepts `private/assets/dmg-background.svg` (auto-converted to PNG via `rsvg-convert`) or a static `dmg-background.png` fallback; background is placed in the hidden `.background/` folder and applied to the Finder window via AppleScript
+- `private/assets/dmg-background.svg`: placeholder DMG installer background (dark `#0f172a`→`#1e293b` gradient, brand orange/green glow blobs, vertical app→Applications install flow with dashed arrow)
+
 - Removed broken `rulesQueue` DispatchQueue barrier pattern in `AppState`; all rule mutations are now direct `@MainActor` calls, eliminating the false sense of thread-safety
 - Added `Thread.isMainThread` guard in `AppResolver.findBundleIdUsingSpotlight` to prevent semaphore deadlock when called from the main thread
 - `DatabaseConstants.currentVersion` corrected from `1` to `2`; the v1→v2 migration was previously unreachable due to the mismatch
