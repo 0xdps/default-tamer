@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Removed broken `rulesQueue` DispatchQueue barrier pattern in `AppState`; all rule mutations are now direct `@MainActor` calls, eliminating the false sense of thread-safety
+- Added `Thread.isMainThread` guard in `AppResolver.findBundleIdUsingSpotlight` to prevent semaphore deadlock when called from the main thread
+- `DatabaseConstants.currentVersion` corrected from `1` to `2`; the v1→v2 migration was previously unreachable due to the mismatch
+- `NSRegularExpression` objects in `Router` are now cached by pattern string to avoid recompilation on every URL routing decision
+- `AnalyticsManager.sendEvent` now reads `telemetryEnabled` from the in-memory `AppState` (fast path); disk fallback only when `AppDelegate` is unavailable
+- `SourceAppDetector` returns early when Apple Event detection yields ≥ 90% confidence, skipping all subsequent detection stages
+- `Settings.chooserModifierKey` is now wired through to `Router` via a new `chooserModifierFlags` computed property; previously the modifier was hardcoded to `.option` regardless of the user's setting
+- All cache-miss paths in `BrowserManager.loadCachedBrowsers()` now dispatch `Task.detached { await refreshBrowsersInBackground() }` instead of the synchronous `discoverBrowsers()`, preventing main-thread blocking at app init
+- Removed `defaults.synchronize()` calls from `PersistenceManager`; the method is deprecated and was causing spurious error throws
+- `AppState.pendingTabSelection` type changed from `Int?` to `PreferenceTab?`; eliminates silent breakage if tab order changes
+- Removed overly-broad alternation-with-quantifier pattern from `RegexValidator.dangerousPatterns`; it was falsely rejecting valid patterns such as `(https?|http)+`
+- `ApplicationScanner` now observes `NSWorkspace.didLaunchApplicationNotification` and invalidates `cachedApps` when a newly-launched app is not already in the cache, preventing stale app lists after installs
+- `AnalyticsManager.writeDebugLog` now uses a proper `do/catch` block instead of silently discarding I/O errors
+- `Rule.slackToChrome()` and `cursorToChrome()` replaced with parameterised `slackRule(targetBrowserId:)` and `cursorRule(targetBrowserId:)`; previously hardcoded `com.google.Chrome` as the target
+
+### Changed
+
+- Extracted `TelemetryConsentDescription` as a shared SwiftUI view; `FirstRunView` and `PreferencesWindow` now reference the single definition instead of duplicating the copy
+
 ### Added
 
 - Optional, opt-in anonymous usage analytics via self-hosted Umami (`AnalyticsManager.swift`) — tracks aggregate events (`app_launch`, `app_updated`, `rule_created`, `first_rule_created`, `rule_deleted`, `link_routed`, `chooser_shown`, `routing_failed`); no URLs, domains, or personal data; anonymous install ID only
