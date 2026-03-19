@@ -41,6 +41,7 @@ class AnalyticsManager {
             "hostname": "defaulttamer.app",
             "url": "/app/\(name)",
             "language": Locale.current.identifier,
+            "browser": "DefaultTamer",
             "title": name,
             "name": name,
             "data": eventData
