@@ -271,8 +271,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config --unset-all http.https://github.com/.extraheader || true
-          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/0xdps/default-tamer.git"
+          git remote set-url origin "https://x-access-token:${SCRIPTS_DEPLOY_TOKEN}@github.com/0xdps/default-tamer.git"
           git fetch origin trunk
           git checkout -f trunk
           jq -n \
@@ -304,6 +303,7 @@ jobs:
           git push origin trunk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SCRIPTS_DEPLOY_TOKEN: ${{ secrets.SCRIPTS_DEPLOY_TOKEN }}
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
 
       - name: Clean keychain
