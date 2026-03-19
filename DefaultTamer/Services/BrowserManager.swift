@@ -458,6 +458,11 @@ class BrowserManager: ObservableObject {
             return
         }
 
+        // Target browser failed — track the failure
+        Task { @MainActor in
+            AnalyticsManager.shared.sendEvent(name: "routing_failed", data: ["reason": "browser_unavailable"])
+        }
+
         // Notify user of fallback
         let browserName = getBrowser(byId: targetBrowserId)?.displayName ?? "target browser"
         Task { @MainActor in
@@ -475,6 +480,7 @@ class BrowserManager: ObservableObject {
         // Last resort: Safari
         if fallbackBrowserId != BundleIdentifiers.safari {
             Task { @MainActor in
+                AnalyticsManager.shared.sendEvent(name: "routing_failed", data: ["reason": "no_fallback"])
                 ToastManager.shared.error(
                     "Fallback browser unavailable, using Safari",
                     duration: 3.5

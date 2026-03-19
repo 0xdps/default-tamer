@@ -281,4 +281,23 @@ final class PersistenceManagerTests: XCTestCase {
         XCTAssertNotNil(rules)
         XCTAssertEqual(rules.count, 0)
     }
+    
+    // MARK: - Telemetry & Install Info Tests
+    
+    func testInstallID_GeneratedOnFirstAccess() {
+        let installID1 = persistence.installID
+        XCTAssertFalse(installID1.isEmpty)
+        
+        let installID2 = persistence.installID
+        XCTAssertEqual(installID1, installID2)
+    }
+    
+    func testInstallID_PersistsAcrossInstances() {
+        let installID1 = persistence.installID
+        
+        let newPersistence = PersistenceManager(userDefaults: UserDefaults(suiteName: testSuiteName)!)
+        let installID2 = newPersistence.installID
+        
+        XCTAssertEqual(installID1, installID2)
+    }
 }

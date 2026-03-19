@@ -8,6 +8,7 @@ const pages = [
   { loc: '/download/',  priority: '0.9', changefreq: 'weekly'  },
   { loc: '/docs/',      priority: '0.8', changefreq: 'monthly' },
   { loc: '/changelog/', priority: '0.7', changefreq: 'weekly'  },
+  { loc: '/privacy/',   priority: '0.5', changefreq: 'monthly' },
 ];
 
 export const GET: APIRoute = () => {

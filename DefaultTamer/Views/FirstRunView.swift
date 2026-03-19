@@ -10,23 +10,22 @@ import AppKit
 
 struct FirstRunView: View {
     @EnvironmentObject var appState: AppState
-    @Environment(\.dismiss) var dismiss
-    @Environment(\.openWindow) private var openWindow
     @State private var showSystemSettingsInstructions = false
     @State private var setDefaultInProgress = false
     @State private var setDefaultFailed = false
     @State private var setDefaultSuccess = false
     @State private var checkingDefaultStatus = false
     @State private var selectedFallbackBrowser: String = ""
+    @State private var telemetryEnabled: Bool = false
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 12) {
             // Icon and title - more compact
-            VStack(spacing: 8) {
+            VStack(spacing: 4) {
                 Image(nsImage: NSApplication.shared.applicationIconImage)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 64, height: 64)
+                    .frame(width: 52, height: 52)
                     .shadow(color: .black.opacity(0.2), radius: 5, y: 2)
                 
                 Text("Welcome to Default Tamer")
@@ -147,26 +146,64 @@ struct FirstRunView: View {
                     }
                 }
                 
+                // Step 3: Privacy
+                Section {
+                    HStack {
+                        Image(systemName: "hand.raised.circle.fill")
+                            .foregroundColor(.accentColor)
+                        Text("Privacy")
+                            .font(.headline)
+                    }
+                    
+                    Toggle(isOn: $telemetryEnabled) {
+                        Text("Share anonymous usage stats") + Text(" (recommended)").foregroundColor(.secondary)
+                    }
+                    .toggleStyle(.checkbox)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Default Tamer is a free, solo, open source project. Anonymous stats are the main signal we have for what to fix or improve next.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text("Helps us:")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.top, 2)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("• Know which rule types people use most")
+                            Text("• Spot if routing failures are increasing")
+                            Text("• Prioritise fixes across macOS versions")
+                        }
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        
+                        Text("We never collect URLs, browsing history, or personal data.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.top, 2)
+
+                        Link("Privacy Policy →", destination: URL(string: ExternalLinks.privacy)!)
+                            .font(.caption)
+                            .padding(.top, 2)
+                    }
+                }
+                
             }
             .formStyle(.grouped)
             
             // Done button
             Button("Get Started") {
-                // Save fallback browser selection
+                appState.setTelemetryEnabled(telemetryEnabled)
                 appState.setFallbackBrowser(selectedFallbackBrowser)
                 appState.completeFirstRun()
-                dismiss()
-                // Open preferences window after completion
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    openWindow(id: "preferences")
-                }
+                // AppDelegate observes showFirstRun → false via Combine and handles
+                // closing this window + opening preferences. No AppKit calls here.
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .disabled(!setDefaultSuccess)
         }
-        .padding(24)
-        .frame(width: 500, height: 480)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
+        .frame(width: 480, height: 520)
         .onAppear {
             // Initialize with current fallback browser or first available
             if appState.settings.fallbackBrowserId.isEmpty {
@@ -174,6 +211,8 @@ struct FirstRunView: View {
             } else {
                 selectedFallbackBrowser = appState.settings.fallbackBrowserId
             }
+            // Pre-populate telemetry toggle from existing setting (default false)
+            telemetryEnabled = appState.settings.telemetryEnabled ?? false
         }
     }
     

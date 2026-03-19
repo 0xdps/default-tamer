@@ -51,15 +51,26 @@ targets:
     sources:
       - DefaultTamer
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: com.defaulttamer.app
-      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-      MACOSX_DEPLOYMENT_TARGET: 13.0
-      SWIFT_VERSION: 5.9
-      ENABLE_HARDENED_RUNTIME: YES
-      COMBINE_HIDPI_IMAGES: YES
-      CODE_SIGN_ENTITLEMENTS: DefaultTamer/DefaultTamer.entitlements
-      MARKETING_VERSION: "0.0.1"
-      CURRENT_PROJECT_VERSION: "1"
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.defaulttamer.app
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MACOSX_DEPLOYMENT_TARGET: 13.0
+        SWIFT_VERSION: 5.9
+        ENABLE_HARDENED_RUNTIME: YES
+        COMBINE_HIDPI_IMAGES: YES
+        CODE_SIGN_ENTITLEMENTS: DefaultTamer/DefaultTamer.entitlements
+        DEVELOPMENT_TEAM: BZ2JB93F6F
+        CODE_SIGNING_REQUIRED: YES
+        CODE_SIGNING_ALLOWED: YES
+        MARKETING_VERSION: "0.0.1"
+        CURRENT_PROJECT_VERSION: "1"
+      configs:
+        Debug:
+          CODE_SIGN_IDENTITY: "Apple Development"
+          CODE_SIGN_STYLE: Automatic
+        Release:
+          CODE_SIGN_IDENTITY: "Developer ID Application"
+          CODE_SIGN_STYLE: Manual
     dependencies:
       - package: SQLite
         product: SQLite

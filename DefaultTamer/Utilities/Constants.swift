@@ -115,10 +115,16 @@ struct NetworkConstants {
     static let maxRequestsPerMinute = 10
 }
 
+struct AnalyticsConfig {
+    static let umamiURL = "https://manage.anately.sh" 
+    static let websiteID = "babc74c5-5c94-4f0b-9a47-6b0b0fa12384"
+}
+
 struct ExternalLinks {
     static let github = "https://github.com/0xdps/default-tamer"
     static let issues = "https://github.com/0xdps/default-tamer/issues"
     static let buyMeACoffee = "https://buymeacoffee.com/0xdps"
     static let website = "https://www.defaulttamer.app"
+    static let privacy = "https://www.defaulttamer.app/privacy"
     static let developerWebsite = "https://dps.codes"
 }

@@ -31,7 +31,7 @@ const jsonLd = [
       "Route URLs to specific browsers based on rules",
       "Match by source app, domain, URL pattern, or regex",
       "Menu bar app — no dock icon",
-      "100% local — zero data collection",
+      "URL routing is 100% local — your browsing stays on your Mac",
       "Open source under MIT license",
       "Supports Chrome, Firefox, Safari, Arc, Brave, Edge and more"
     ],
@@ -69,7 +69,7 @@ const jsonLd = [
       {
         "@type": "Question",
         "name": "Does it collect any data?",
-        "acceptedAnswer": { "@type": "Answer", "text": "No. Default Tamer is 100% privacy-first. All processing happens locally on your Mac. There are zero network calls, zero telemetry, and zero data collection." }
+        "acceptedAnswer": { "@type": "Answer", "text": "URL routing is 100% local — your URLs are never sent to any server. Default Tamer includes optional, anonymous usage analytics (disabled by default) you can opt into in Preferences. No URLs, no browsing history, and no personal information are ever collected. See our privacy policy for the full details." }
       },
       {
         "@type": "Question",
@@ -88,7 +88,7 @@ const jsonLd = [
 
 <BaseLayout 
   title="Default Tamer – Send Every Link to the Right Browser on macOS"
-  description="Tired of every link opening in the wrong browser? Default Tamer lets you route Slack links to Chrome, work URLs to Firefox, personal links to Safari — automatically. Free, open source, zero data collection."
+  description="Tired of every link opening in the wrong browser? Default Tamer lets you route Slack links to Chrome, work URLs to Firefox, personal links to Safari — automatically. Free, open source, privacy-first."
   jsonLd={jsonLd}
 >
   <!-- Hero Section -->
@@ -151,8 +151,8 @@ const jsonLd = [
             <div class="mt-1 text-sm text-gray-300">Privacy-First</div>
           </div>
           <div class="text-center backdrop-blur-sm bg-dark/30 rounded-xl px-6 py-4">
-            <div class="text-3xl font-bold text-white">0</div>
-            <div class="mt-1 text-sm text-gray-300">Network Calls</div>
+            <div class="text-3xl font-bold text-white">Opt-in</div>
+            <div class="mt-1 text-sm text-gray-300">Analytics</div>
           </div>
           <div class="text-center backdrop-blur-sm bg-dark/30 rounded-xl px-6 py-4">
             <div class="text-3xl font-bold text-white">Open</div>
@@ -273,7 +273,7 @@ const jsonLd = [
             <h3 class="text-xl font-bold text-orange-700">Privacy First</h3>
           </div>
           <p class="text-gray leading-relaxed">
-            All processing is local. No network calls, no tracking, no data collection.
+            URL routing stays on your Mac. Optional, anonymous analytics are opt-in only — never your URLs or browsing history.
           </p>
         </div>
 
@@ -457,8 +457,7 @@ const jsonLd = [
             <span class="text-primary text-2xl group-open:rotate-45 transition-transform duration-300">+</span>
           </summary>
           <div class="px-6 pb-6 text-gray leading-relaxed">
-            No. Default Tamer is 100% privacy-first. All processing happens locally on your Mac.
-            There are zero network calls, zero telemetry, and zero data collection. You can verify this yourself — the code is fully open source.
+            URL routing is 100% local — your URLs are never sent to any server. Default Tamer includes optional, anonymous usage analytics that are <strong>off by default</strong>. If you choose to opt in, only aggregate events are sent (e.g. "a rule was created") — never your URLs, domains, or any personal information. You can always opt out in Preferences. See our <a href="/privacy" class="text-primary hover:text-primary-dark">Privacy Policy</a> for the full details.
           </div>
         </details>
         

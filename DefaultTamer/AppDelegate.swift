@@ -21,6 +21,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     var preferencesWindow: NSWindow?
     var chooserWindow: NSWindow?
     private var chooserCancellable: AnyCancellable?
+    private var firstRunCancellable: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide from Dock and hide default window
@@ -79,6 +80,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
         // Let macOS handle show/hide natively — no manual popover management needed
         statusItem.menu = menu
+        statusItem.isVisible = true
 
         // Register for URL events
         NSAppleEventManager.shared().setEventHandler(
@@ -107,13 +109,82 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             appLogger.info("✅ Updated \(updatedCount) rule(s) with new bundle IDs")
         }
 
+        // Disable rules whose target browser is no longer installed
+        let disabledCount = appState.validateBrowserTargets()
+        if disabledCount > 0 {
+            let noun = disabledCount == 1 ? "rule" : "rules"
+            ToastManager.shared.warning("\(disabledCount) \(noun) disabled — target browser not installed", duration: 6.0)
+        }
+
         // Show first run if needed
         if appState.showFirstRun {
-            showFirstRunWindow()
+            DispatchQueue.main.async {
+                self.showFirstRunWindow()
+            }
+        } else {
+            // Existing users get the Day 0 consent prompt
+            checkAndPromptTelemetryConsent()
         }
+        
+        // Track app launch & updates (AppState handles debouncing internal to these calls)
+        appState.trackAppUpdated()
+        appState.trackAppLaunch()
     }
 
     // MARK: - Helpers
+
+    /// Existing user Day 0 Consent
+    private func checkAndPromptTelemetryConsent() {
+        if appState.settings.telemetryEnabled == nil {
+            let alert = NSAlert()
+            alert.messageText = "Help improve DefaultTamer"
+            alert.informativeText = """
+            Share anonymous usage stats to help improve the app.
+            
+            We never collect:
+            • URLs or links
+            • Browsing history
+            • Personal information
+            
+            You can change this anytime in Settings.
+            """
+            alert.addButton(withTitle: "Share anonymous stats")
+            alert.addButton(withTitle: "No, thanks")
+            alert.alertStyle = .informational
+
+            // Privacy Policy link as accessory view
+            if let privacyURL = URL(string: ExternalLinks.privacy) {
+                let linkField = NSTextField(labelWithString: "")
+                linkField.isSelectable = true
+                linkField.allowsEditingTextAttributes = true
+                let attrTitle = NSMutableAttributedString(string: "Privacy Policy →")
+                let fullRange = NSRange(location: 0, length: attrTitle.length)
+                attrTitle.addAttribute(.link, value: privacyURL, range: fullRange)
+                attrTitle.addAttribute(.font, value: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize), range: fullRange)
+                linkField.attributedStringValue = attrTitle
+                linkField.sizeToFit()
+                alert.accessoryView = linkField
+            }
+
+            // Visual tweak: Slightly reduce icon size (~15%)
+            if let originalIcon = NSImage(named: NSImage.applicationIconName),
+               let iconCopy = originalIcon.copy() as? NSImage {
+                iconCopy.size = NSSize(width: 54, height: 54)
+                alert.icon = iconCopy
+            }
+            
+            // Bring app to front
+            NSApp.activate(ignoringOtherApps: true)
+            let response = alert.runModal()
+            
+            // NSAlertFirstButtonReturn (1000) corresponds to "Share"
+            if response == .alertFirstButtonReturn {
+                appState.setTelemetryEnabled(true)
+            } else {
+                appState.setTelemetryEnabled(false)
+            }
+        }
+    }
 
     /// Wraps a SwiftUI view in an NSHostingView sized for an NSMenuItem.
     private func makeHostingView<V: View>(_ view: V, width: CGFloat, height: CGFloat) -> NSHostingView<V> {
@@ -243,8 +314,25 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         window.title = "Welcome to Default Tamer"
         window.contentView = NSHostingView(rootView: firstRunView)
         window.delegate = self
+        window.isReleasedWhenClosed = false
 
         self.firstRunWindow = window
+
+        // When the user completes first run, close the window and open preferences.
+        // All AppKit lifecycle management stays in AppDelegate — never call close()
+        // from inside a SwiftUI view action.
+        firstRunCancellable = appState.$showFirstRun
+            .dropFirst()
+            .filter { !$0 }
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                self.firstRunWindow?.close()
+                self.firstRunCancellable = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    self.openPreferences()
+                }
+            }
 
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)

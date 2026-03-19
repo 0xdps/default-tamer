@@ -18,9 +18,11 @@ class PersistenceManager {
     private let rulesKey = "defaultTamer.rules"
     private let schemaVersionKey = "defaultTamer.schemaVersion"
     
-    // Backup keys
     private let settingsBackupKey = "defaultTamer.settings.backup"
     private let rulesBackupKey = "defaultTamer.rules.backup"
+    private let installIdKey = "defaultTamer.install_id"
+    private let lastVersionKey = "defaultTamer.lastVersion"
+    private let lastLaunchDateKey = "defaultTamer.lastLaunchDate"
     
     // File-based first-run sentinel (survives app updates, resets on full uninstall)
     private var setupCompleteURL: URL {
@@ -231,6 +233,27 @@ class PersistenceManager {
                 try? FileManager.default.removeItem(at: setupCompleteURL)
             }
         }
+    }
+    
+    // MARK: - Telemetry & Install Info
+    
+    var installID: String {
+        if let existing = defaults.string(forKey: installIdKey) {
+            return existing
+        }
+        let newID = UUID().uuidString
+        defaults.set(newID, forKey: installIdKey)
+        return newID
+    }
+    
+    var lastKnownVersion: String? {
+        get { defaults.string(forKey: lastVersionKey) }
+        set { defaults.set(newValue, forKey: lastVersionKey) }
+    }
+    
+    var lastLaunchDate: Date? {
+        get { defaults.object(forKey: lastLaunchDateKey) as? Date }
+        set { defaults.set(newValue, forKey: lastLaunchDateKey) }
     }
     
     // MARK: - Migration

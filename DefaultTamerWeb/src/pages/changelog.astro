@@ -33,9 +33,9 @@ function styleCategoryHeadings(html: string): string {
       return `<div class="changelog-category ${cls}">${cat}</div>`;
     }
   );
-  // Style "Also in this update" sub-section heading
+  // Style "Also in this update" and "A note on …" sub-section headings
   result = result.replace(
-    /<h3>(Also in this update[^<]*)<\/h3>/g,
+    /<h3>((?:Also in this update|A note on)[^<]*)<\/h3>/g,
     (_, text: string) => `<div class="changelog-category changelog-cat-default">${text}</div>`
   );
   return result;

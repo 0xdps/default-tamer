@@ -13,18 +13,25 @@ struct Settings: Codable {
     var chooserModifierKey: String // "option" by default
     var diagnosticsEnabled: Bool
     var launchAtLogin: Bool
+    var telemetryEnabled: Bool? // nil = not asked, true = opt-in, false = opt-out
+    var hasCreatedFirstRule: Bool
+    
     init(
         enabled: Bool = true,
         fallbackBrowserId: String = BundleIdentifiers.safari,
         chooserModifierKey: String = "option",
         diagnosticsEnabled: Bool = false,
-        launchAtLogin: Bool = false
+        launchAtLogin: Bool = false,
+        telemetryEnabled: Bool? = nil,
+        hasCreatedFirstRule: Bool = false
     ) {
         self.enabled = enabled
         self.fallbackBrowserId = fallbackBrowserId
         self.chooserModifierKey = chooserModifierKey
         self.diagnosticsEnabled = diagnosticsEnabled
         self.launchAtLogin = launchAtLogin
+        self.telemetryEnabled = telemetryEnabled
+        self.hasCreatedFirstRule = hasCreatedFirstRule
     }
 
     static let `default` = Settings()

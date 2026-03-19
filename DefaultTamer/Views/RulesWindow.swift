@@ -133,6 +133,15 @@ struct RuleSidebarRow: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
+
+            Spacer()
+
+            if !appState.browserManager.isBrowserAvailable(rule.targetBrowserId) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.orange)
+                    .font(.caption)
+                    .help("Target browser is not installed. This rule is inactive.")
+            }
         }
         .padding(.vertical, 2)
     }

@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Optional, opt-in anonymous usage analytics via self-hosted Umami (`AnalyticsManager.swift`)
+  - Events: `app_launch`, `app_updated`, `rule_created`, `first_rule_created`, `rule_deleted`, `link_routed`, `chooser_shown`, `routing_failed`
+  - `routing_failed` fires in `BrowserManager.openURLWithFallback` with `reason: browser_unavailable` (target browser missing) or `reason: no_fallback` (both target and fallback failed); no browser names or bundle IDs included
+  - Each event carries only aggregate/categorical data — no URLs, domains, source app names, or personal information
+  - Anonymous `installID` (random UUID) attached to events for session deduplication; never linked to any identity
+- `AppState.validateBrowserTargets()`: on launch, checks every enabled rule's `targetBrowserId` against installed browsers; auto-disables any rule whose browser is missing and persists the change via `PersistenceManager.saveRules`
+- `RuleSidebarRow` now shows an orange `exclamationmark.triangle.fill` icon (with tooltip) next to any rule whose target browser is not installed, whether the rule is enabled or disabled
+- Toast warning shown at startup (via `ToastManager.warning`) when one or more rules are auto-disabled due to a missing browser
+- `ExternalLinks.privacy` constant pointing to `https://www.defaulttamer.app/privacy`
+- Privacy Policy link in `FirstRunView` consent step (below the telemetry toggle)
+- Privacy Policy link in Preferences → General → Diagnostics section (next to telemetry toggle)
+- Privacy Policy link in Preferences → About tab links row
+- Privacy Policy link as `NSTextField` accessory view in `checkAndPromptTelemetryConsent()` `NSAlert` (existing-user Day 0 consent prompt)
+- `/privacy` page on the website with full transparency disclosure: all tracked events listed with exact fields, never-collected list, anonymous install ID explanation, opt-out steps, and website analytics disclosure
+- `Privacy Policy` link added to website footer Resources column
+- `/privacy/` added to `sitemap.xml.ts`
+
+### Changed
+
+- Telemetry consent text in `FirstRunView` and `PreferencesWindow` updated: replaced generic "Helps us" bullets with context explaining the solo/open-source nature of the project and specific actionable signals (rule type usage, routing failure rate, macOS version spread)
+- JSON-LD `featureList` and FAQ structured data on homepage updated to match new privacy posture
+- Homepage hero stat "0 / Network Calls" replaced with "Opt-in / Analytics"
+
 ## [0.0.6] - 2026-03-12
 
 ### Added

@@ -1,0 +1,379 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Privacy Policy – Default Tamer",
+  "description": "Default Tamer privacy policy. URL routing is 100% local. Optional anonymous analytics are opt-in only — your URLs and browsing history are never collected.",
+  "url": "https://www.defaulttamer.app/privacy"
+};
+---
+
+<BaseLayout
+  title="Privacy Policy – Default Tamer"
+  description="Default Tamer privacy policy. URL routing is 100% local. Optional anonymous analytics are opt-in only — your URLs and browsing history are never collected."
+  jsonLd={[jsonLd]}
+>
+  <!-- Hero -->
+  <div class="hero-section py-16">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+      <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+        Privacy <span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Policy</span>
+      </h1>
+      <p class="mt-3 text-lg text-gray-300">Last updated: March 2026</p>
+    </div>
+  </div>
+
+  <div class="bg-white">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
+      <div class="lg:grid lg:grid-cols-[220px_1fr] lg:gap-16">
+
+        <!-- Sticky sidebar TOC -->
+        <aside class="hidden lg:block">
+          <div class="sticky top-28 space-y-1">
+            <p class="text-xs font-bold uppercase tracking-widest text-gray mb-4">On this page</p>
+            <nav class="flex flex-col gap-0.5">
+              <a href="#overview" class="toc-link">Overview</a>
+              <a href="#url-routing" class="toc-link">URL Routing</a>
+              <a href="#analytics" class="toc-link">Optional Analytics</a>
+              <a href="#what-we-track" class="toc-link">Exactly What's Tracked</a>
+              <a href="#never-collected" class="toc-link">Never Collected</a>
+              <a href="#install-id" class="toc-link">Anonymous Install ID</a>
+              <a href="#opt-out" class="toc-link">Opt Out</a>
+              <a href="#website" class="toc-link">This Website</a>
+              <a href="#contact" class="toc-link">Contact</a>
+            </nav>
+          </div>
+        </aside>
+
+        <!-- Main content -->
+        <div class="min-w-0 space-y-16">
+
+          <!-- Overview -->
+          <section id="overview">
+            <h2 class="docs-section-heading">Overview</h2>
+            <p class="mt-4 text-gray leading-relaxed">
+              Default Tamer is built to respect your privacy. The short version:
+            </p>
+            <ul class="mt-4 space-y-2">
+              <li class="flex items-start gap-3 text-gray">
+                <span class="text-primary font-bold mt-0.5">✓</span>
+                <span>Your URLs and browsing history <strong class="text-dark">never leave your Mac</strong> — URL routing is entirely local.</span>
+              </li>
+              <li class="flex items-start gap-3 text-gray">
+                <span class="text-primary font-bold mt-0.5">✓</span>
+                <span>Optional anonymous usage analytics are <strong class="text-dark">off by default</strong>. You choose to opt in.</span>
+              </li>
+              <li class="flex items-start gap-3 text-gray">
+                <span class="text-primary font-bold mt-0.5">✓</span>
+                <span>If you do opt in, only <strong class="text-dark">aggregate, anonymous events</strong> are sent — never any URLs, domains, or personal information.</span>
+              </li>
+              <li class="flex items-start gap-3 text-gray">
+                <span class="text-primary font-bold mt-0.5">✓</span>
+                <span>You can verify everything — the entire app is <a href="https://github.com/0xdps/default-tamer" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-primary-dark font-medium">open source</a>.</span>
+              </li>
+            </ul>
+          </section>
+
+          <!-- URL Routing -->
+          <section id="url-routing">
+            <h2 class="docs-section-heading">URL Routing Is 100% Local</h2>
+            <p class="mt-4 text-gray leading-relaxed">
+              Every routing decision happens entirely on your Mac. When you click a link in Slack, Cursor, or any other app, Default Tamer checks your rules locally and opens the right browser — no network request is made, no URL is transmitted anywhere, and no external service is consulted.
+            </p>
+            <p class="mt-4 text-gray leading-relaxed">
+              The optional Route History log (also opt-in) is stored locally on your device only. URLs in the log are sanitized to remove query strings and fragment identifiers before being saved. This data never leaves your Mac.
+            </p>
+            <div class="callout-info mt-6">
+              Default Tamer is registered as a browser handler with macOS. It never acts as a network proxy or intercepts network traffic in any way.
+            </div>
+          </section>
+
+          <!-- Analytics -->
+          <section id="analytics">
+            <h2 class="docs-section-heading">Optional, Anonymous Analytics</h2>
+            <p class="mt-4 text-gray leading-relaxed">
+              Default Tamer is a free, solo, open source project with no business model behind it. Without any usage signal, it's genuinely hard to know what's working — whether rules are being used, whether a browser failure is isolated or widespread, or whether an update broke something for people on a specific macOS version. Crash reports don't tell the full story, and most users never file issues.
+            </p>
+            <p class="mt-4 text-gray leading-relaxed">
+              Opt-in analytics is how we answer those questions responsibly. If you choose to share, it directly shapes what gets prioritised next — without compromising your privacy in any way.
+            </p>
+            <p class="mt-4 text-gray leading-relaxed">
+              This feature is:
+            </p>
+            <ul class="mt-4 space-y-2">
+              <li class="flex items-start gap-3 text-gray">
+                <span class="text-primary font-bold mt-0.5">•</span>
+                <span><strong class="text-dark">Off by default.</strong> No data is sent until you explicitly opt in.</span>
+              </li>
+              <li class="flex items-start gap-3 text-gray">
+                <span class="text-primary font-bold mt-0.5">•</span>
+                <span><strong class="text-dark">Opt-in via Preferences → Privacy.</strong> You can enable or disable it at any time.</span>
+              </li>
+              <li class="flex items-start gap-3 text-gray">
+                <span class="text-primary font-bold mt-0.5">•</span>
+                <span><strong class="text-dark">Powered by Umami,</strong> a privacy-focused, open source analytics platform. No cookies, no fingerprinting, no cross-site tracking.</span>
+              </li>
+              <li class="flex items-start gap-3 text-gray">
+                <span class="text-primary font-bold mt-0.5">•</span>
+                <span><strong class="text-dark">No third-party ad networks.</strong> Data goes only to our own self-hosted Umami instance.</span>
+              </li>
+            </ul>
+          </section>
+
+          <!-- Exactly What's Tracked -->
+          <section id="what-we-track">
+            <h2 class="docs-section-heading">Exactly What's Tracked (When You Opt In)</h2>
+            <p class="mt-4 text-gray leading-relaxed">
+              We believe you should know the exact events that are sent. Here they are in full — no surprises:
+            </p>
+
+            <div class="mt-8 space-y-4">
+
+              <div class="rounded-xl border-2 border-gray-light p-6">
+                <div class="flex items-center gap-3 mb-3">
+                  <code class="text-sm font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded">app_launch</code>
+                  <span class="text-xs text-gray uppercase tracking-wide font-medium">Sent once per day at most</span>
+                </div>
+                <p class="text-gray text-sm leading-relaxed mb-3">Sent when the app starts up (at most once per day).</p>
+                <div class="bg-gray-lighter rounded-lg p-4">
+                  <p class="text-xs font-bold uppercase tracking-widest text-gray mb-2">Data sent</p>
+                  <ul class="text-sm text-gray space-y-1">
+                    <li><code class="text-dark font-mono">version</code> — app version (e.g. "1.2.0")</li>
+                    <li><code class="text-dark font-mono">os</code> — macOS version string (e.g. "macOS 14.4")</li>
+                    <li><code class="text-dark font-mono">rule_count_bucket</code> — number of rules in a bucket: 0, 1–3, 4–10, 11–50, 50+</li>
+                    <li><code class="text-dark font-mono">is_default</code> — whether Default Tamer is currently set as the system default browser</li>
+                    <li><code class="text-dark font-mono">install_id</code> — anonymous install identifier (see below)</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="rounded-xl border-2 border-gray-light p-6">
+                <div class="flex items-center gap-3 mb-3">
+                  <code class="text-sm font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded">app_updated</code>
+                  <span class="text-xs text-gray uppercase tracking-wide font-medium">Sent once per update</span>
+                </div>
+                <p class="text-gray text-sm leading-relaxed mb-3">Sent when the app version changes after an update.</p>
+                <div class="bg-gray-lighter rounded-lg p-4">
+                  <p class="text-xs font-bold uppercase tracking-widest text-gray mb-2">Data sent</p>
+                  <ul class="text-sm text-gray space-y-1">
+                    <li><code class="text-dark font-mono">from_version</code> — the previous version</li>
+                    <li><code class="text-dark font-mono">to_version</code> — the new version</li>
+                    <li><code class="text-dark font-mono">install_id</code> — anonymous install identifier</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="rounded-xl border-2 border-gray-light p-6">
+                <div class="flex items-center gap-3 mb-3">
+                  <code class="text-sm font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded">rule_created</code>
+                  <span class="text-xs text-gray uppercase tracking-wide font-medium">Sent when a rule is added</span>
+                </div>
+                <p class="text-gray text-sm leading-relaxed mb-3">Sent when you create a new routing rule.</p>
+                <div class="bg-gray-lighter rounded-lg p-4">
+                  <p class="text-xs font-bold uppercase tracking-widest text-gray mb-2">Data sent</p>
+                  <ul class="text-sm text-gray space-y-1">
+                    <li><code class="text-dark font-mono">type</code> — the rule type (e.g. "domain", "source_app", "regex") — never the actual domain, app name, or pattern you entered</li>
+                    <li><code class="text-dark font-mono">install_id</code> — anonymous install identifier</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="rounded-xl border-2 border-gray-light p-6">
+                <div class="flex items-center gap-3 mb-3">
+                  <code class="text-sm font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded">first_rule_created</code>
+                  <span class="text-xs text-gray uppercase tracking-wide font-medium">Sent once per install</span>
+                </div>
+                <p class="text-gray text-sm leading-relaxed mb-3">Sent the first time a rule is ever created on this install. No additional data beyond the install ID.</p>
+              </div>
+
+              <div class="rounded-xl border-2 border-gray-light p-6">
+                <div class="flex items-center gap-3 mb-3">
+                  <code class="text-sm font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded">rule_deleted</code>
+                  <span class="text-xs text-gray uppercase tracking-wide font-medium">Sent when a rule is removed</span>
+                </div>
+                <p class="text-gray text-sm leading-relaxed mb-3">Sent when you delete a routing rule.</p>
+                <div class="bg-gray-lighter rounded-lg p-4">
+                  <p class="text-xs font-bold uppercase tracking-widest text-gray mb-2">Data sent</p>
+                  <ul class="text-sm text-gray space-y-1">
+                    <li><code class="text-dark font-mono">type</code> — the rule type only, never the actual rule contents</li>
+                    <li><code class="text-dark font-mono">install_id</code> — anonymous install identifier</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="rounded-xl border-2 border-gray-light p-6">
+                <div class="flex items-center gap-3 mb-3">
+                  <code class="text-sm font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded">link_routed</code>
+                  <span class="text-xs text-gray uppercase tracking-wide font-medium">Sent when a link is routed</span>
+                </div>
+                <p class="text-gray text-sm leading-relaxed mb-3">Sent each time Default Tamer routes a link to a browser.</p>
+                <div class="bg-gray-lighter rounded-lg p-4">
+                  <p class="text-xs font-bold uppercase tracking-widest text-gray mb-2">Data sent</p>
+                  <ul class="text-sm text-gray space-y-1">
+                    <li><code class="text-dark font-mono">method</code> — how the link was matched (e.g. "rule_match", "fallback") — never the URL, domain, or destination browser</li>
+                    <li><code class="text-dark font-mono">install_id</code> — anonymous install identifier</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="rounded-xl border-2 border-gray-light p-6">
+                <div class="flex items-center gap-3 mb-3">
+                  <code class="text-sm font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded">routing_failed</code>
+                  <span class="text-xs text-gray uppercase tracking-wide font-medium">Sent when routing falls back unexpectedly</span>
+                </div>
+                <p class="text-gray text-sm leading-relaxed mb-3">Sent when a browser from a routing rule is unavailable (not installed or failed to open), forcing the app to use the fallback browser or Safari.</p>
+                <div class="bg-gray-lighter rounded-lg p-4">
+                  <p class="text-xs font-bold uppercase tracking-widest text-gray mb-2">Data sent</p>
+                  <ul class="text-sm text-gray space-y-1">
+                    <li><code class="text-dark font-mono">reason</code> — <code class="text-dark font-mono">browser_unavailable</code> (target browser missing) or <code class="text-dark font-mono">no_fallback</code> (both target and fallback failed)</li>
+                    <li><code class="text-dark font-mono">install_id</code> — anonymous install identifier</li>
+                  </ul>
+                  <p class="text-xs text-gray mt-2">No browser names or bundle IDs are included.</p>
+                </div>
+              </div>
+
+              <div class="rounded-xl border-2 border-gray-light p-6">
+                <div class="flex items-center gap-3 mb-3">
+                  <code class="text-sm font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded">chooser_shown</code>
+                  <span class="text-xs text-gray uppercase tracking-wide font-medium">Sent when the browser picker appears</span>
+                </div>
+                <p class="text-gray text-sm leading-relaxed mb-3">Sent when the manual browser chooser dialog is shown. No additional data beyond the install ID.</p>
+              </div>
+
+            </div>
+
+            <div class="callout-info mt-8">
+              <strong>Notice something missing?</strong> You will not find URLs, domains, hostnames, source app names, rule patterns, browser names, IP addresses, or any personal information in any of these events. The app source code is <a href="https://github.com/0xdps/default-tamer/blob/trunk/DefaultTamer/Services/AnalyticsManager.swift" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-primary-dark font-medium">fully open for inspection</a>.
+            </div>
+          </section>
+
+          <!-- Never Collected -->
+          <section id="never-collected">
+            <h2 class="docs-section-heading">What's Never Collected</h2>
+            <p class="mt-4 text-gray leading-relaxed">
+              Regardless of whether analytics is enabled or disabled, the following are <strong class="text-dark">never</strong> collected, transmitted, or stored anywhere outside your Mac:
+            </p>
+            <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                ["🔗", "URLs", "The actual URLs you open"],
+                ["🌐", "Domains", "The websites you visit"],
+                ["📱", "App names", "Which apps you open links from"],
+                ["🌍", "Browsing history", "Where your links go"],
+                ["🖥️", "Browser names", "Which browsers you use"],
+                ["👤", "Name or email", "No account, no identity"],
+                ["📍", "Location", "No GPS or IP-based location"],
+                ["💻", "Device identifiers", "No UDID, serial, or hardware ID"],
+              ].map(([icon, title, desc]) => (
+                <div class="flex items-start gap-3 p-4 rounded-xl border-2 border-gray-light">
+                  <span class="text-xl">{icon}</span>
+                  <div>
+                    <p class="font-semibold text-dark text-sm">{title}</p>
+                    <p class="text-gray text-sm">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <!-- Install ID -->
+          <section id="install-id">
+            <h2 class="docs-section-heading">The Anonymous Install ID</h2>
+            <p class="mt-4 text-gray leading-relaxed">
+              Each installation of Default Tamer generates a random identifier (UUID) that is stored locally. This is included with analytics events so we can distinguish between, say, 1 user who launched 50 times and 50 users who launched once each.
+            </p>
+            <p class="mt-4 text-gray leading-relaxed">
+              This ID is:
+            </p>
+            <ul class="mt-4 space-y-2">
+              <li class="flex items-start gap-3 text-gray">
+                <span class="text-primary font-bold mt-0.5">•</span>
+                <span><strong class="text-dark">Randomly generated</strong> — not derived from any hardware identifier or personal information.</span>
+              </li>
+              <li class="flex items-start gap-3 text-gray">
+                <span class="text-primary font-bold mt-0.5">•</span>
+                <span><strong class="text-dark">Not linked to your Apple ID,</strong> name, email, or any other identity.</span>
+              </li>
+              <li class="flex items-start gap-3 text-gray">
+                <span class="text-primary font-bold mt-0.5">•</span>
+                <span><strong class="text-dark">Reset when you uninstall</strong> and reinstall the app.</span>
+              </li>
+              <li class="flex items-start gap-3 text-gray">
+                <span class="text-primary font-bold mt-0.5">•</span>
+                <span><strong class="text-dark">Only sent when analytics is opted in.</strong> If analytics is disabled, this ID is never transmitted anywhere.</span>
+              </li>
+            </ul>
+          </section>
+
+          <!-- Opt Out -->
+          <section id="opt-out">
+            <h2 class="docs-section-heading">How to Opt Out</h2>
+            <p class="mt-4 text-gray leading-relaxed">
+              Analytics is <strong class="text-dark">off by default</strong>. If you previously opted in and want to disable it:
+            </p>
+            <div class="mt-6 space-y-4">
+              <div class="docs-step">
+                <div class="docs-step-number">1</div>
+                <div>
+                  <p class="font-semibold text-dark mb-1">Open Default Tamer</p>
+                  <p class="text-gray text-sm leading-relaxed">Click the Default Tamer icon in your menu bar.</p>
+                </div>
+              </div>
+              <div class="docs-step">
+                <div class="docs-step-number">2</div>
+                <div>
+                  <p class="font-semibold text-dark mb-1">Open Preferences</p>
+                  <p class="text-gray text-sm leading-relaxed">Select Preferences from the menu.</p>
+                </div>
+              </div>
+              <div class="docs-step">
+                <div class="docs-step-number">3</div>
+                <div>
+                  <p class="font-semibold text-dark mb-1">Go to the Privacy tab</p>
+                  <p class="text-gray text-sm leading-relaxed">Toggle "Share anonymous usage analytics" off.</p>
+                </div>
+              </div>
+            </div>
+            <div class="callout-success mt-6">
+              Once disabled, no data is sent. Turning off analytics takes effect immediately — no restart required.
+            </div>
+          </section>
+
+          <!-- This Website -->
+          <section id="website">
+            <h2 class="docs-section-heading">This Website</h2>
+            <p class="mt-4 text-gray leading-relaxed">
+              This website (defaulttamer.app) uses <a href="https://umami.is" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-primary-dark font-medium">Umami</a> for analytics — the same privacy-first platform used in the app. Umami uses no cookies, no fingerprinting, and collects no personal information. Page views and click events (e.g. "Download button clicked") are recorded anonymously.
+            </p>
+            <p class="mt-4 text-gray leading-relaxed">
+              No advertising networks, no session replay tools, and no third-party tracking scripts are loaded on this site.
+            </p>
+          </section>
+
+          <!-- Contact -->
+          <section id="contact">
+            <h2 class="docs-section-heading">Questions?</h2>
+            <p class="mt-4 text-gray leading-relaxed">
+              If you have questions about this policy, open an issue or start a discussion on <a href="https://github.com/0xdps/default-tamer/issues" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-primary-dark font-medium">GitHub</a>.
+            </p>
+            <p class="mt-4 text-gray leading-relaxed">
+              Since Default Tamer is open source, you can also inspect the complete analytics implementation directly:
+            </p>
+            <ul class="mt-4 space-y-2">
+              <li class="flex items-start gap-3 text-gray">
+                <span class="text-primary font-bold mt-0.5">→</span>
+                <a href="https://github.com/0xdps/default-tamer/blob/trunk/DefaultTamer/Services/AnalyticsManager.swift" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-primary-dark font-medium">AnalyticsManager.swift</a>
+              </li>
+              <li class="flex items-start gap-3 text-gray">
+                <span class="text-primary font-bold mt-0.5">→</span>
+                <a href="https://github.com/0xdps/default-tamer/blob/trunk/DefaultTamer/Services/AppState.swift" target="_blank" rel="noopener noreferrer" class="text-primary hover:text-primary-dark font-medium">AppState.swift</a> — where events are fired
+              </li>
+            </ul>
+          </section>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

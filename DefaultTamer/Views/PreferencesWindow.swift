@@ -209,6 +209,39 @@ struct GeneralTab: View {
 
             Section {
                 Toggle(isOn: Binding(
+                    get: { appState.settings.telemetryEnabled == true },
+                    set: { appState.setTelemetryEnabled($0) }
+                )) {
+                    Text("Share anonymous usage stats") + Text(" (recommended)").foregroundColor(.secondary)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Default Tamer is a free, solo, open source project. Anonymous stats are the main signal we have for what to fix or improve next.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("Helps us:")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 2)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("• Know which rule types people use most")
+                        Text("• Spot if routing failures are increasing")
+                        Text("• Prioritise fixes across macOS versions")
+                    }
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    
+                    Text("We never collect URLs, browsing history, or personal data.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 2)
+
+                    Link("Privacy Policy →", destination: URL(string: ExternalLinks.privacy)!)
+                        .font(.caption)
+                        .padding(.top, 2)
+                }
+                
+                Toggle(isOn: Binding(
                     get: { appState.settings.diagnosticsEnabled },
                     set: { _ in appState.toggleDiagnostics() }
                 )) {
@@ -1127,6 +1160,13 @@ struct AboutTab: View {
                         Label("Buy Me a Coffee", systemImage: "cup.and.saucer.fill")
                     }
                     .foregroundColor(.orange)
+
+                    Divider()
+                        .frame(height: 20)
+
+                    Link(destination: URL(string: ExternalLinks.privacy)!) {
+                        Label("Privacy Policy", systemImage: "hand.raised")
+                    }
                     
                     Spacer()
                 }

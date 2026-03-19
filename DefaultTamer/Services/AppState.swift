@@ -34,6 +34,7 @@ class AppState: ObservableObject {
         self.settings = persistence.loadSettings()
         self.rules = persistence.loadRules()
         self.showFirstRun = !persistence.hasCompletedFirstRun
+        _ = persistence.installID // Eagerly guarantee UUID is generated locally
     }
     
     // MARK: - Settings Management
@@ -58,7 +59,89 @@ class AppState: ObservableObject {
         persistence.saveSettings(settings)
     }
 
-
+    // MARK: - Telemetry
+    
+    func setTelemetryEnabled(_ enabled: Bool) {
+        let wasNil = settings.telemetryEnabled == nil
+        settings.telemetryEnabled = enabled
+        persistence.saveSettings(settings)
+        
+        // If enabling for the first time, fire launch event
+        if wasNil && enabled {
+            trackAppLaunch(force: true)
+        }
+    }
+    
+    func trackAppLaunch(force: Bool = false) {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        
+        let shouldFire: Bool
+        if force {
+            shouldFire = true
+        } else if let lastLaunch = persistence.lastLaunchDate {
+            shouldFire = calendar.startOfDay(for: lastLaunch) < today
+        } else {
+            shouldFire = true
+        }
+        
+        if shouldFire {
+            let bucket = AnalyticsManager.getBucket(for: rules.count)
+            let isDefault = browserManager.isDefaultBrowser()
+            let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+            let osVersion = ProcessInfo.processInfo.operatingSystemVersionString
+            
+            AnalyticsManager.shared.sendEvent(name: "app_launch", data: [
+                "version": version,
+                "os": osVersion,
+                "rule_count_bucket": bucket,
+                "is_default": isDefault
+            ])
+            persistence.lastLaunchDate = Date()
+        }
+    }
+    
+    func trackAppUpdated() {
+        let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+        guard let lastVersion = persistence.lastKnownVersion else {
+            persistence.lastKnownVersion = currentVersion
+            return
+        }
+        
+        if currentVersion != lastVersion {
+            // Only fire if telemetry is enabled and they were already on >= 0.0.7
+            if settings.telemetryEnabled == true {
+                AnalyticsManager.shared.sendEvent(name: "app_updated", data: [
+                    "from_version": lastVersion,
+                    "to_version": currentVersion
+                ])
+            }
+            persistence.lastKnownVersion = currentVersion
+        }
+    }
+    
+    func trackRuleCreated(type: String = "unknown") {
+        AnalyticsManager.shared.sendEvent(name: "rule_created", data: ["type": type])
+        
+        if !settings.hasCreatedFirstRule {
+            AnalyticsManager.shared.sendEvent(name: "first_rule_created") { [weak self] success in
+                if success {
+                    Task { @MainActor in
+                        self?.settings.hasCreatedFirstRule = true
+                        self?.persistence.saveSettings(self?.settings ?? Settings())
+                    }
+                }
+            }
+        }
+    }
+    
+    func trackRuleDeleted(type: String = "unknown") {
+        AnalyticsManager.shared.sendEvent(name: "rule_deleted", data: ["type": type])
+    }
+    
+    func trackLinkRouted(method: String) {
+        AnalyticsManager.shared.sendEvent(name: "link_routed", data: ["method": method])
+    }
 
     // MARK: - Reset
 
@@ -78,6 +161,8 @@ class AppState: ObservableObject {
             Task { @MainActor in
                 self.rules.append(rule)
                 self.persistence.saveRules(self.rules)
+                // For simplicity we just use a generic 'rule' type or reflection for now
+                self.trackRuleCreated(type: rule.type.rawValue)
             }
         }
     }
@@ -100,6 +185,7 @@ class AppState: ObservableObject {
             Task { @MainActor in
                 self.rules.removeAll(where: { $0.id == rule.id })
                 self.persistence.saveRules(self.rules)
+                self.trackRuleDeleted(type: rule.type.rawValue)
             }
         }
     }
@@ -157,6 +243,30 @@ class AppState: ObservableObject {
         return updatedCount
     }
 
+    /// Checks every enabled rule's target browser against the installed browsers list.
+    /// Disables any rule whose target browser is no longer installed.
+    /// Returns the number of rules that were disabled.
+    @discardableResult
+    func validateBrowserTargets() -> Int {
+        var disabledCount = 0
+
+        for index in rules.indices {
+            guard rules[index].enabled else { continue }
+            let browserId = rules[index].targetBrowserId
+            if !browserManager.isBrowserAvailable(browserId) {
+                rules[index].enabled = false
+                disabledCount += 1
+                appLogger.warning("⚠️ Disabled rule — target browser '\(browserId)' not found")
+            }
+        }
+
+        if disabledCount > 0 {
+            persistence.saveRules(rules)
+        }
+
+        return disabledCount
+    }
+
     // MARK: - URL Handling
     
     func handleURL(_ url: URL, sourceApp: String? = nil) {
@@ -199,7 +309,7 @@ class AppState: ObservableObject {
             browserManager.openURLWithFallback(url, targetBrowserId: bundleId, fallbackBrowserId: settings.fallbackBrowserId, privateMode: privateMode)
             browserName = browserManager.availableBrowsers.first(where: { $0.id == bundleId })?.displayName ?? "Unknown"
 
-
+            trackLinkRouted(method: "rule")
 
             // Log if diagnostics enabled
             if settings.diagnosticsEnabled {
@@ -218,13 +328,13 @@ class AppState: ObservableObject {
             chooserSourceApp = sourceApp
             showChooser = true
 
-
+            AnalyticsManager.shared.sendEvent(name: "chooser_shown")
 
         case .openInFallback:
             browserManager.openURL(url, inBrowser: settings.fallbackBrowserId)
             browserName = browserManager.availableBrowsers.first(where: { $0.id == settings.fallbackBrowserId })?.displayName ?? "Unknown"
 
-
+            trackLinkRouted(method: "fallback")
 
             // Log if diagnostics enabled
             if settings.diagnosticsEnabled {
@@ -249,7 +359,7 @@ class AppState: ObservableObject {
         chooserURL = nil
         chooserSourceApp = nil
 
-
+        trackLinkRouted(method: "chooser")
 
         // Log if diagnostics enabled
         if settings.diagnosticsEnabled {
