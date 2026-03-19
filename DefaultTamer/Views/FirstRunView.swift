@@ -160,31 +160,7 @@ struct FirstRunView: View {
                     }
                     .toggleStyle(.checkbox)
                     
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Default Tamer is a free, solo, open source project. Anonymous stats are the main signal we have for what to fix or improve next.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Text("Helps us:")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .padding(.top, 2)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("• Know which rule types people use most")
-                            Text("• Spot if routing failures are increasing")
-                            Text("• Prioritise fixes across macOS versions")
-                        }
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        
-                        Text("We never collect URLs, browsing history, or personal data.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .padding(.top, 2)
-
-                        Link("Privacy Policy →", destination: URL(string: ExternalLinks.privacy)!)
-                            .font(.caption)
-                            .padding(.top, 2)
-                    }
+                    TelemetryConsentDescription()
                 }
                 
             }

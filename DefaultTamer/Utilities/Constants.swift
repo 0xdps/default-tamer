@@ -54,7 +54,7 @@ struct BundleIdentifiers {
 }
 
 struct DatabaseConstants {
-    static let currentVersion = 1
+    static let currentVersion = 2 // v1→v2 migration adds duration column
     static let maxLogsRetentionDays = 90 // Keep logs for 90 days
     static let cleanupBatchSize = 100 // Delete in batches for performance
     static let defaultFetchLimit = 1000 // Default limit for fetching logs

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import AppKit
 
 struct Settings: Codable {
     var enabled: Bool
@@ -35,4 +36,20 @@ struct Settings: Codable {
     }
 
     static let `default` = Settings()
+}
+
+// MARK: - Modifier Key Helpers
+
+extension Settings {
+    /// Maps the stored `chooserModifierKey` string to the corresponding
+    /// `NSEvent.ModifierFlags` value used by the router.
+    var chooserModifierFlags: NSEvent.ModifierFlags {
+        switch chooserModifierKey.lowercased() {
+        case "command":  return .command
+        case "shift":    return .shift
+        case "control":  return .control
+        case "option":   return .option
+        default:         return .option
+        }
+    }
 }

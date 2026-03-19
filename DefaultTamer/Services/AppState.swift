@@ -17,9 +17,6 @@ class AppState: ObservableObject {
     let persistence = PersistenceManager.shared
     let toastManager = ToastManager.shared
     
-    // Thread-safe rules queue
-    private let rulesQueue = DispatchQueue(label: "com.defaulttamer.rules", attributes: .concurrent)
-    
     // Published state
     @Published var settings: Settings
     @Published private(set) var rules: [Rule]
@@ -28,7 +25,7 @@ class AppState: ObservableObject {
     @Published var showChooser = false
     @Published var chooserURL: URL?
     @Published var chooserSourceApp: String?
-    @Published var pendingTabSelection: Int? = nil // For coordinating tab selection from menu bar
+    @Published var pendingTabSelection: PreferenceTab? = nil // For coordinating tab selection from menu bar
     
     init() {
         self.settings = persistence.loadSettings()
@@ -156,70 +153,39 @@ class AppState: ObservableObject {
     // MARK: - Rules Management
     
     func addRule(_ rule: Rule) {
-        rulesQueue.async(flags: .barrier) { [weak self] in
-            guard let self = self else { return }
-            Task { @MainActor in
-                self.rules.append(rule)
-                self.persistence.saveRules(self.rules)
-                // For simplicity we just use a generic 'rule' type or reflection for now
-                self.trackRuleCreated(type: rule.type.rawValue)
-            }
-        }
+        rules.append(rule)
+        persistence.saveRules(rules)
+        trackRuleCreated(type: rule.type.rawValue)
     }
     
     func updateRule(_ rule: Rule) {
-        rulesQueue.async(flags: .barrier) { [weak self] in
-            guard let self = self else { return }
-            Task { @MainActor in
-                if let index = self.rules.firstIndex(where: { $0.id == rule.id }) {
-                    self.rules[index] = rule
-                    self.persistence.saveRules(self.rules)
-                }
-            }
+        if let index = rules.firstIndex(where: { $0.id == rule.id }) {
+            rules[index] = rule
+            persistence.saveRules(rules)
         }
     }
     
     func deleteRule(_ rule: Rule) {
-        rulesQueue.async(flags: .barrier) { [weak self] in
-            guard let self = self else { return }
-            Task { @MainActor in
-                self.rules.removeAll(where: { $0.id == rule.id })
-                self.persistence.saveRules(self.rules)
-                self.trackRuleDeleted(type: rule.type.rawValue)
-            }
-        }
+        rules.removeAll(where: { $0.id == rule.id })
+        persistence.saveRules(rules)
+        trackRuleDeleted(type: rule.type.rawValue)
     }
     
     func toggleRule(_ rule: Rule) {
-        rulesQueue.async(flags: .barrier) { [weak self] in
-            guard let self = self else { return }
-            Task { @MainActor in
-                if let index = self.rules.firstIndex(where: { $0.id == rule.id }) {
-                    self.rules[index].enabled.toggle()
-                    self.persistence.saveRules(self.rules)
-                }
-            }
+        if let index = rules.firstIndex(where: { $0.id == rule.id }) {
+            rules[index].enabled.toggle()
+            persistence.saveRules(rules)
         }
     }
     
     func moveRule(from source: IndexSet, to destination: Int) {
-        rulesQueue.async(flags: .barrier) { [weak self] in
-            guard let self = self else { return }
-            Task { @MainActor in
-                self.rules.move(fromOffsets: source, toOffset: destination)
-                self.persistence.saveRules(self.rules)
-            }
-        }
+        rules.move(fromOffsets: source, toOffset: destination)
+        persistence.saveRules(rules)
     }
     
     func replaceRules(_ newRules: [Rule]) {
-        rulesQueue.async(flags: .barrier) { [weak self] in
-            guard let self = self else { return }
-            Task { @MainActor in
-                self.rules = newRules
-                self.persistence.saveRules(self.rules)
-            }
-        }
+        rules = newRules
+        persistence.saveRules(rules)
     }
 
     /// Refreshes bundle IDs for all app-based rules

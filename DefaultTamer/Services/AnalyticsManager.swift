@@ -19,10 +19,12 @@ class AnalyticsManager {
     /// Sends an anonymous event to Umami if telemetry is enabled
     @MainActor
     func sendEvent(name: String, data: [String: Any]? = nil, completion: ((Bool) -> Void)? = nil) {
-        guard PersistenceManager.shared.loadSettings().telemetryEnabled == true else {
-            let inMemory = (NSApp.delegate as? AppDelegate)?.appState.settings.telemetryEnabled
-            let onDisk = PersistenceManager.shared.loadSettings().telemetryEnabled
-            let msg = "SKIP event '\(name)' — inMemory=\(String(describing: inMemory)) onDisk=\(String(describing: onDisk))"
+        // Prefer in-memory settings (fast path, avoids disk decode per event)
+        let telemetryEnabled = (NSApp.delegate as? AppDelegate)?.appState.settings.telemetryEnabled
+            ?? PersistenceManager.shared.loadSettings().telemetryEnabled
+        
+        guard telemetryEnabled == true else {
+            let msg = "SKIP event '\(name)' — telemetryEnabled=\(String(describing: telemetryEnabled))"
             UnifiedLogger.debug("Analytics: \(msg)", category: .network)
             Self.writeDebugLog(msg)
             completion?(false)
@@ -110,16 +112,20 @@ class AnalyticsManager {
     
     static func writeDebugLog(_ message: String) {
         let line = "[\(ISO8601DateFormatter().string(from: Date()))] \(message)\n"
-        if let data = line.data(using: .utf8) {
+        guard let data = line.data(using: .utf8) else { return }
+        
+        do {
             if FileManager.default.fileExists(atPath: debugLogURL.path) {
-                if let handle = try? FileHandle(forWritingTo: debugLogURL) {
-                    handle.seekToEndOfFile()
-                    handle.write(data)
-                    handle.closeFile()
-                }
+                let handle = try FileHandle(forWritingTo: debugLogURL)
+                handle.seekToEndOfFile()
+                try handle.write(contentsOf: data)
+                handle.closeFile()
             } else {
-                try? data.write(to: debugLogURL)
+                try data.write(to: debugLogURL)
             }
+        } catch {
+            // File logging is best-effort; failures are non-critical
+            debugLog("⚠️ Analytics debug log write failed: \(error.localizedDescription)")
         }
     }
 }

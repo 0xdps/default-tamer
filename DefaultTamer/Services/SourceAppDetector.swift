@@ -65,14 +65,17 @@ class SourceAppDetector {
     /// Returns the best match based on multiple detection methods
     /// - Parameter event: Optional Apple Event descriptor for URL handling
     func detectSourceAppWithConfidence(from event: NSAppleEventDescriptor? = nil) -> AppDetectionResult? {
-        var candidates: [AppDetectionResult] = []
-
         // Method 0: Apple Event sender - Highest confidence (if available)
-        if let event = event {
-            if let result = detectFromAppleEvent(event) {
-                candidates.append(result)
+        // If we get a reliable Apple Event result (≥90%), use it immediately without
+        // running the remaining (more expensive) detection heuristics.
+        if let event = event, let result = detectFromAppleEvent(event) {
+            if result.confidence >= 0.90 {
+                debugLog("🔍 Detected source app (fast path): \(result.bundleId) via \(result.method.rawValue) (\(Int(result.confidence * 100))%)")
+                return result
             }
         }
+
+        var candidates: [AppDetectionResult] = []
 
         // Method 1: Active (frontmost) application - Most reliable
         if let result = detectActiveApp() {

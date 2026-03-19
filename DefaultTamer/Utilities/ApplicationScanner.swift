@@ -29,7 +29,28 @@ class ApplicationScanner {
     
     private var cachedApps: [InstalledApp]?
     
-    private init() {}
+    private init() {
+        observeAppInstallations()
+    }
+    
+    /// Watches for newly launched apps that aren't in the cache, which indicates a fresh install.
+    /// macOS doesn't expose explicit install/uninstall notifications; using app-launch as a proxy.
+    private func observeAppInstallations() {
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didLaunchApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self else { return }
+            if let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+               let bundleId = app.bundleIdentifier,
+               let cached = self.cachedApps,
+               !cached.contains(where: { $0.bundleId == bundleId }) {
+                self.cachedApps = nil
+                debugLog("🗑️ Application scanner cache invalidated (new app launched: \(bundleId))")
+            }
+        }
+    }
     
     /// Get all installed applications on the system
     func getInstalledApplications() -> [InstalledApp] {

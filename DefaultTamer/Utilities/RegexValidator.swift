@@ -66,16 +66,14 @@ class RegexValidator {
     private static func checkForDangerousPatterns(_ pattern: String) -> String? {
         // Common ReDoS patterns
         let dangerousPatterns: [(String, String)] = [
-            // Nested quantifiers - (a+)+, (a*)*
+            // Nested quantifiers on a group - (a+)+, (a*)*
+            // Only flag when the outer quantifier follows a group that itself has a quantifier.
             ("\\([^)]*[+*][^)]*\\)[+*]", "Nested quantifiers can cause exponential backtracking"),
             
-            // Overlapping alternations - (a|a)*
-            ("\\([^|]*\\|[^)]*\\)[*+]", "Alternation with quantifiers may cause performance issues"),
-            
-            // Multiple consecutive quantifiers - a**
+            // Multiple consecutive quantifiers - a** (always a syntax error)
             ("[+*]{2,}", "Multiple consecutive quantifiers are invalid"),
             
-            // Unbounded repetition with overlapping patterns
+            // Unbounded repetition with backreference
             ("\\([^)]+\\)[+*]\\1", "Backreference with unbounded repetition"),
         ]
         
@@ -86,7 +84,7 @@ class RegexValidator {
             }
         }
         
-        // Check for excessive repetition depth
+        // Check for excessive nesting depth (independent of alternation)
         let nestedGroupDepth = countNestedGroups(pattern)
         if nestedGroupDepth > 5 {
             return "Too many nested groups (max 5)"

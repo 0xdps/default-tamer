@@ -69,36 +69,35 @@ struct Rule: Identifiable, Codable, Hashable {
     }
     
     // Factory methods for common rules
-    static func slackToChrome() -> Rule {
-        var rule = Rule(type: .sourceApp, targetBrowserId: "com.google.Chrome")
-
-        // Use dynamic resolution for Slack (bundle ID may change)
-        if let bundleId = AppResolver.resolveBundleId(forAppNamed: "Slack") {
+    static func sourceAppRule(
+        appName: String,
+        targetBrowserId: String,
+        fallbackBundleId: String
+    ) -> Rule {
+        var rule = Rule(type: .sourceApp, targetBrowserId: targetBrowserId)
+        if let bundleId = AppResolver.resolveBundleId(forAppNamed: appName) {
             rule.sourceAppBundleId = bundleId
-            rule.sourceAppName = "Slack"
         } else {
-            // Fallback to known bundle ID
-            rule.sourceAppBundleId = "com.tinyspeck.slackmacgap"
-            rule.sourceAppName = "Slack"
+            rule.sourceAppBundleId = fallbackBundleId
         }
-
+        rule.sourceAppName = appName
         return rule
     }
     
-    static func cursorToChrome() -> Rule {
-        var rule = Rule(type: .sourceApp, targetBrowserId: "com.google.Chrome")
-        
-        // Use dynamic resolution for Cursor (bundle ID may change)
-        if let bundleId = AppResolver.resolveBundleId(forAppNamed: "Cursor") {
-            rule.sourceAppBundleId = bundleId
-            rule.sourceAppName = "Cursor"
-        } else {
-            // Fallback to known bundle ID
-            rule.sourceAppBundleId = "com.todesktop.230313mzl4w4u92"
-            rule.sourceAppName = "Cursor"
-        }
-        
-        return rule
+    static func slackRule(targetBrowserId: String) -> Rule {
+        return sourceAppRule(
+            appName: "Slack",
+            targetBrowserId: targetBrowserId,
+            fallbackBundleId: BundleIdentifiers.slack
+        )
+    }
+    
+    static func cursorRule(targetBrowserId: String) -> Rule {
+        return sourceAppRule(
+            appName: "Cursor",
+            targetBrowserId: targetBrowserId,
+            fallbackBundleId: "com.todesktop.230313mzl4w4u92"
+        )
     }
     
     /// Updates bundle IDs for app-based rules with dynamic resolution

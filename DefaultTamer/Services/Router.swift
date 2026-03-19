@@ -16,6 +16,20 @@ enum RouteAction {
 
 class Router {
     
+    /// Compiled NSRegularExpression cache, keyed by pattern string.
+    /// NSRegularExpression is thread-safe after compilation.
+    private nonisolated(unsafe) static var regexCache: [String: NSRegularExpression] = [:]
+    
+    /// Returns a cached compiled regex, or compiles and caches on first access.
+    private static func compiledRegex(for pattern: String) throws -> NSRegularExpression {
+        if let cached = regexCache[pattern] {
+            return cached
+        }
+        let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
+        regexCache[pattern] = regex
+        return regex
+    }
+    
     /// Main routing decision function
     /// Returns the action to take for a given URL
     static func route(
@@ -36,9 +50,9 @@ class Router {
             return .openInFallback
         }
         
-        // Check for modifier key (Option) to show chooser
-        if let flags = modifierFlags, flags.contains(.option) {
-            appLogger.info("🔀 Option key held, showing chooser")
+        // Check for modifier key to show chooser
+        if let flags = modifierFlags, flags.contains(settings.chooserModifierFlags) {
+            appLogger.info("🔀 Modifier key held (\(settings.chooserModifierKey)), showing chooser")
             return .showChooser(url: url)
         }
         
@@ -149,7 +163,7 @@ class Router {
         // Regex matching (optional)
         if let regexPattern = rule.urlRegex {
             do {
-                let regex = try NSRegularExpression(pattern: regexPattern, options: [.caseInsensitive])
+                let regex = try compiledRegex(for: regexPattern)
                 let range = NSRange(urlString.startIndex..., in: urlString)
                 if regex.firstMatch(in: urlString, options: [], range: range) != nil {
                     return .openInBrowser(bundleId: rule.targetBrowserId, matchedRule: rule)

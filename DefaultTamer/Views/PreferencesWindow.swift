@@ -91,23 +91,24 @@ struct PreferencesWindow: View {
         }
         .toastOverlay(manager: toastManager)
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenPreferencesTab"))) { notification in
-            if let tabIndex = notification.object as? Int {
-                selectedTab = PreferenceTab(rawValue: tabIndex) ?? .general
+            if let tab = notification.object as? PreferenceTab {
+                selectedTab = tab
+            } else if let tabIndex = notification.object as? Int,
+                      let tab = PreferenceTab(rawValue: tabIndex) {
+                // Legacy integer-based callers
+                selectedTab = tab
             }
         }
         .onAppear {
             // Check for pending tab selection from menu bar
             if let pendingTab = appState.pendingTabSelection {
-                selectedTab = PreferenceTab(rawValue: pendingTab) ?? .general
-                // Clear the pending selection
+                selectedTab = pendingTab
                 appState.pendingTabSelection = nil
             }
         }
         .onChange(of: appState.pendingTabSelection) { newValue in
-            // Handle tab selection changes while window is open
             if let pendingTab = newValue {
-                selectedTab = PreferenceTab(rawValue: pendingTab) ?? .general
-                // Clear the pending selection
+                selectedTab = pendingTab
                 appState.pendingTabSelection = nil
             }
         }
@@ -215,31 +216,7 @@ struct GeneralTab: View {
                     Text("Share anonymous usage stats") + Text(" (recommended)").foregroundColor(.secondary)
                 }
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Default Tamer is a free, solo, open source project. Anonymous stats are the main signal we have for what to fix or improve next.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Text("Helps us:")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.top, 2)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("• Know which rule types people use most")
-                        Text("• Spot if routing failures are increasing")
-                        Text("• Prioritise fixes across macOS versions")
-                    }
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    
-                    Text("We never collect URLs, browsing history, or personal data.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.top, 2)
-
-                    Link("Privacy Policy →", destination: URL(string: ExternalLinks.privacy)!)
-                        .font(.caption)
-                        .padding(.top, 2)
-                }
+                TelemetryConsentDescription()
                 
                 Toggle(isOn: Binding(
                     get: { appState.settings.diagnosticsEnabled },
@@ -1180,6 +1157,39 @@ struct AboutTab: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             checkForUpdatesViewModel.updater = updateManager.updater
+        }
+    }
+}
+
+// MARK: - Shared Telemetry Consent Description
+
+/// Reusable description block shown wherever the telemetry toggle appears.
+struct TelemetryConsentDescription: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Default Tamer is a free, solo, open source project. Anonymous stats are the main signal we have for what to fix or improve next.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Text("Helps us:")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top, 2)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("• Know which rule types people use most")
+                Text("• Spot if routing failures are increasing")
+                Text("• Prioritise fixes across macOS versions")
+            }
+            .font(.caption)
+            .foregroundColor(.secondary)
+
+            Text("We never collect URLs, browsing history, or personal data.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top, 2)
+
+            Link("Privacy Policy →", destination: URL(string: ExternalLinks.privacy)!)
+                .font(.caption)
+                .padding(.top, 2)
         }
     }
 }

@@ -53,10 +53,6 @@ class PersistenceManager {
         do {
             let encoded = try JSONEncoder().encode(settings)
             defaults.set(encoded, forKey: settingsKey)
-            
-            guard defaults.synchronize() else {
-                throw AppError.persistence(reason: "Failed to synchronize UserDefaults")
-            }
         } catch let error as AppError {
             Task { @MainActor in
                 ErrorHandler.shared.handleCritical(error, context: "Save Settings")
@@ -124,10 +120,6 @@ class PersistenceManager {
         do {
             let encoded = try JSONEncoder().encode(rules)
             defaults.set(encoded, forKey: rulesKey)
-            
-            guard defaults.synchronize() else {
-                throw AppError.persistence(reason: "Failed to synchronize UserDefaults")
-            }
         } catch let error as AppError {
             Task { @MainActor in
                 ErrorHandler.shared.handleCritical(error, context: "Save Rules")

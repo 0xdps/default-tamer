@@ -60,15 +60,18 @@ class BrowserManager: ObservableObject {
         refreshBrowsersOnStartup()
     }
     
-    /// Load browsers from cache or discover if cache is invalid
+    /// Load browsers from cache. Falls back to async background discovery if cache is invalid.
     private func loadCachedBrowsers() {
         let defaults = UserDefaults.standard
         
         // Check cache version
         let cachedVersion = defaults.integer(forKey: Self.cacheVersionKey)
         guard cachedVersion == Self.currentCacheVersion else {
-            debugLog("🔄 Browser cache version mismatch, discovering...")
-            discoverBrowsers()
+            debugLog("🔄 Browser cache version mismatch, scheduling background discovery...")
+            // Don't call discoverBrowsers() (synchronous) from init — use async path
+            Task.detached(priority: .userInitiated) {
+                await self.refreshBrowsersInBackground()
+            }
             return
         }
         
@@ -76,12 +79,16 @@ class BrowserManager: ObservableObject {
         if let timestamp = defaults.object(forKey: Self.cacheTimestampKey) as? Date {
             let age = Date().timeIntervalSince(timestamp)
             if age > Self.cacheExpirationInterval {
-                debugLog("🔄 Browser cache expired (age: \(Int(age/3600))h), discovering...")
-                discoverBrowsers()
+                debugLog("🔄 Browser cache expired (age: \(Int(age/3600))h), scheduling background discovery...")
+                Task.detached(priority: .userInitiated) {
+                    await self.refreshBrowsersInBackground()
+                }
                 return
             }
         } else {
-            discoverBrowsers()
+            Task.detached(priority: .userInitiated) {
+                await self.refreshBrowsersInBackground()
+            }
             return
         }
         
@@ -92,8 +99,10 @@ class BrowserManager: ObservableObject {
             availableBrowsers = cached
             debugLog("✅ Loaded \(cached.count) browsers from cache")
         } else {
-            debugLog("⚠️ Cache invalid, discovering...")
-            discoverBrowsers()
+            debugLog("⚠️ Cache invalid, scheduling background discovery...")
+            Task.detached(priority: .userInitiated) {
+                await self.refreshBrowsersInBackground()
+            }
         }
     }
 
@@ -243,52 +252,41 @@ class BrowserManager: ObservableObject {
     private nonisolated static func isBrowserApp(bundleId: String, appURL: URL) -> Bool {
         let lowercasedId = bundleId.lowercased()
         
-        // Exclude terminal emulators and command line tools
-        if lowercasedId.contains("terminal") || 
-           lowercasedId.contains("iterm") ||
-           lowercasedId.contains("console") {
-            return false
-        }
-        
-        // Exclude text editors that can handle URLs
-        if lowercasedId.contains("textedit") ||
-           lowercasedId.contains("sublimetext") ||
-           lowercasedId.contains("vscode") ||
-           lowercasedId.contains("xcode") {
-            return false
-        }
-        
-        // Exclude other browser managers
-        if lowercasedId.contains("choosy") ||
-           lowercasedId.contains("browserosaurus") ||
-           lowercasedId.contains("finicky") {
-            return false
-        }
-        
-        // Include known web browsers and their variants
-        let knownBrowsers = [
-            "safari", "chrome", "firefox", "edge", "brave",
-            "opera", "vivaldi", "arc", "orion", "webkit",
-            "chromium", "browser", "navigator", "atlas",
-            "mozilla", "nightly", "developer.edition"
+        // Always exclude known non-browser apps regardless of other heuristics
+        let excludedPatterns = [
+            "terminal", "iterm", "console",  // terminal emulators
+            "textedit", "sublimetext", "vscode", "xcode",  // editors
+            "choosy", "browserosaurus", "finicky"  // other browser managers
         ]
-        
-        for browser in knownBrowsers {
-            if lowercasedId.contains(browser) {
-                return true
-            }
+        for pattern in excludedPatterns where lowercasedId.contains(pattern) {
+            return false
         }
         
-        // Check app category in Info.plist
+        // PRIMARY: Check app category in Info.plist — most accurate signal
         if let bundle = Bundle(url: appURL),
            let category = bundle.infoDictionary?["LSApplicationCategoryType"] as? String {
-            // Accept apps in the "Web Browser" category
             if category == "public.app-category.web-browser" {
                 return true
             }
+            // If the app declares a category and it's not web-browser, exclude it
+            // (prevents editors, mail clients, etc. that handle http:// from appearing)
+            if !category.isEmpty {
+                return false
+            }
         }
         
-        // Conservative approach: if we're not sure, exclude it
+        // FALLBACK: For apps that don't declare a category, use bundle ID substring matching.
+        // Only reaches here if LSApplicationCategoryType is absent.
+        let knownBrowserKeywords = [
+            "safari", "chrome", "firefox", "edge", "brave",
+            "opera", "vivaldi", "arc", "orion", "webkit",
+            "chromium", "browser", "navigator", "atlas",
+            "mozilla", "nightly"
+        ]
+        for keyword in knownBrowserKeywords where lowercasedId.contains(keyword) {
+            return true
+        }
+        
         return false
     }
     

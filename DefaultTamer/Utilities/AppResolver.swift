@@ -66,8 +66,14 @@ class AppResolver {
     }
     
     /// Finds bundle ID using Spotlight (NSMetadataQuery)
-    /// - Note: This is a synchronous search with timeout
+    /// - Note: This is a synchronous search with timeout. Must NOT be called on the main thread.
     private static func findBundleIdUsingSpotlight(appName: String) -> String? {
+        // The Spotlight notification fires on the main queue; waiting on main → deadlock.
+        guard !Thread.isMainThread else {
+            debugLog("⚠️ Skipping Spotlight lookup for '\(appName)' — called on main thread")
+            return nil
+        }
+        
         let query = NSMetadataQuery()
         query.predicate = NSPredicate(
             format: "kMDItemKind == 'Application' AND kMDItemFSName == %@",

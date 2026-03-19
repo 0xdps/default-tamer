@@ -222,12 +222,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     }
 
     @objc func openPreferences() {
-        appState.pendingTabSelection = 0
+        appState.pendingTabSelection = .general
         showPreferencesWindow()
     }
 
     @objc func openRules() {
-        appState.pendingTabSelection = 1
+        appState.pendingTabSelection = .rules
         showPreferencesWindow()
     }
 
