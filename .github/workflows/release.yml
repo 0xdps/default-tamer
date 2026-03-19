@@ -293,8 +293,12 @@ jobs:
             --argjson size "${DMG_SIZE}" \
             '{version: $version, downloadUrl: $downloadUrl, releaseDate: $releaseDate, releaseNotesUrl: $releaseNotesUrl, edSignature: $edSignature, size: $size}' \
             > DefaultTamerWeb/src/data/release.json
-          # Promote [Unreleased] section to versioned entry in CHANGELOG.md
-          perl -i -pe "s/## \[Unreleased\]/## [Unreleased]\n\n## [$VERSION] - $DATE/" CHANGELOG.md
+          # Promote [Unreleased] section to versioned entry in CHANGELOG.md.
+          # Guard: only insert if ## [VERSION] doesn't already exist (idempotent
+          # on retries / re-runs of the same tag).
+          if ! grep -qF "## [$VERSION]" CHANGELOG.md; then
+            perl -i -pe "s/## \[Unreleased\]/## [Unreleased]\n\n## [$VERSION] - $DATE/" CHANGELOG.md
+          fi
 
           # Promote the user-facing changelog entry from "upcoming" to released:
           # - Replace the 9.9.9 placeholder version with the real version

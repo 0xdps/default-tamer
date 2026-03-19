@@ -9,8 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.7] - 2026-03-19
 
-## [0.0.7] - 2026-03-19
-
 ### Fixed
 
 - `AppState.toggleDiagnostics()` now calls `diagnosticsManager.clearLogs()` and `ActivityDatabase.shared.deleteAllLogs()` when the Activity Log is disabled; previously existing route history was silently retained in both the SQLite database and in-memory `recentRoutes` array with no way for the user to clear it
