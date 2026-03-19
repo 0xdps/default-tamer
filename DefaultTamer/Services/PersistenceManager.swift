@@ -66,6 +66,11 @@ class PersistenceManager {
     }
     
     func loadSettings() -> Settings {
+        // No data written yet — first run or clean install, silently use defaults
+        guard defaults.data(forKey: settingsKey) != nil || defaults.data(forKey: settingsBackupKey) != nil else {
+            return Settings.default
+        }
+
         // Try to load current settings
         if let settings = loadSettingsFromKey(settingsKey) {
             return settings
@@ -133,6 +138,11 @@ class PersistenceManager {
     }
     
     func loadRules() -> [Rule] {
+        // No data written yet — first run or clean install, silently use defaults
+        guard defaults.data(forKey: rulesKey) != nil || defaults.data(forKey: rulesBackupKey) != nil else {
+            return []
+        }
+
         // Try to load current rules
         if let rules = loadRulesFromKey(rulesKey) {
             return rules
