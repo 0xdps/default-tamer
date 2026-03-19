@@ -131,23 +131,20 @@ jobs:
           SFB="$APP/Contents/Frameworks/Sparkle.framework/Versions/B"
 
           # Helper: re-sign a Sparkle component while preserving its original
-          # embedded entitlements. Signing with --force without --entitlements
-          # strips critical entitlements (e.g. com.apple.security.parent-application-is-sandboxed
-          # on Installer.xpc), which causes macOS to refuse to launch the XPC service.
+          # embedded entitlements. Sparkle's XPCServices come pre-signed in the
+          # SPM distribution — --preserve-metadata=entitlements re-applies their
+          # existing entitlements (e.g. com.apple.security.parent-application-is-sandboxed
+          # on Installer.xpc) so macOS will launch the XPC for the sandboxed parent app.
+          # NOTE: Do NOT use 'codesign -d --entitlements :file' to extract and re-apply
+          # entitlements — the build runs CODE_SIGNING_ALLOWED=NO so components are
+          # unsigned in the build output; extraction would silently produce an empty
+          # file, causing entitlements to be stripped.
           sign_sparkle_component() {
             local component="$1"
-            local tmp_ent
-            tmp_ent=$(mktemp /tmp/sparkle-ent.XXXX.plist)
-            codesign -d --entitlements :"${tmp_ent}" "${component}" 2>/dev/null || true
-            if [ -s "${tmp_ent}" ]; then
-              codesign --force --sign "$DEVELOPER_ID_NAME" \
-                --options runtime --timestamp \
-                --entitlements "${tmp_ent}" "${component}"
-            else
-              codesign --force --sign "$DEVELOPER_ID_NAME" \
-                --options runtime --timestamp "${component}"
-            fi
-            rm -f "${tmp_ent}"
+            codesign --force --sign "$DEVELOPER_ID_NAME" \
+              --options runtime --timestamp \
+              --preserve-metadata=entitlements \
+              "${component}"
           }
 
           # Sign Sparkle content inner-to-outer (required order)
@@ -185,8 +182,10 @@ jobs:
           echo "--- Verifying app signatures inside DMG ---"
           codesign --verify --deep --strict "/tmp/notarize-verify/DefaultTamer.app" && echo "✅ DMG signatures valid" || echo "❌ DMG signatures BROKEN"
           codesign -dv --verbose=4 "/tmp/notarize-verify/DefaultTamer.app/Contents/MacOS/DefaultTamer" 2>&1 | grep -E "Authority|Timestamp|TeamIdentifier|Identifier|Format" || true
-          echo "--- Sparkle ---"
+          echo "--- Sparkle dylib ---"
           codesign -dv --verbose=4 "/tmp/notarize-verify/DefaultTamer.app/Contents/Frameworks/Sparkle.framework/Versions/B/Sparkle" 2>&1 | grep -E "Authority|Timestamp|TeamIdentifier|Identifier|Format" || true
+          echo "--- Installer.xpc entitlements (must include parent-application-is-sandboxed) ---"
+          codesign -d --entitlements :- "/tmp/notarize-verify/DefaultTamer.app/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Installer.xpc" 2>&1 || echo "❌ Installer.xpc not signed or missing"
           hdiutil detach /tmp/notarize-verify
 
       - name: Notarize app
