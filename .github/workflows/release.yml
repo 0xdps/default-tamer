@@ -227,8 +227,12 @@ jobs:
       
       - name: Extract release notes
         run: |
-          # Pull out everything between ## [Unreleased] and the next ## [ heading
-          awk '/^## \[Unreleased\]/{found=1; next} found && /^## \[/{exit} found{print}' \
+          VERSION="${{ steps.version.outputs.version }}"
+          # Extract from the versioned heading [VERSION] — this is always populated
+          # in CHANGELOG.md (either pre-existing or promoted from [Unreleased] in
+          # the same run). Using [Unreleased] was fragile: on retries the section
+          # is already empty because the first run already promoted it.
+          awk "/^## \\[$VERSION\\]/{found=1; next} found && /^## \\[/{exit} found{print}" \
             CHANGELOG.md > /tmp/release-notes.md
           # Trim leading blank lines
           sed -i '' '/./,$!d' /tmp/release-notes.md
