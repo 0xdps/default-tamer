@@ -47,17 +47,18 @@ enum BrowserError: LocalizedError {
 class BrowserManager: ObservableObject {
     @Published var availableBrowsers: [Browser] = []
     @Published private(set) var isRefreshingBrowsers = false
+    /// True when a silent background refresh is running (no spinner shown to user).
+    private var isSilentlyRefreshing = false
     
     // Cache keys
     private static let cacheKey = "defaultTamer.cachedBrowsers"
     private static let cacheVersionKey = "defaultTamer.browserCacheVersion"
     private static let cacheTimestampKey = "defaultTamer.browserCacheTimestamp"
-    private static let currentCacheVersion = 2
+    private static let currentCacheVersion = 3
     private static let cacheExpirationInterval: TimeInterval = TimeConstants.browserCacheExpiration // 24 hours
     
     init() {
         loadCachedBrowsers()
-        refreshBrowsersOnStartup()
     }
     
     /// Load browsers from cache. Falls back to async background discovery if cache is invalid.
@@ -68,10 +69,7 @@ class BrowserManager: ObservableObject {
         let cachedVersion = defaults.integer(forKey: Self.cacheVersionKey)
         guard cachedVersion == Self.currentCacheVersion else {
             debugLog("🔄 Browser cache version mismatch, scheduling background discovery...")
-            // Don't call discoverBrowsers() (synchronous) from init — use async path
-            Task.detached(priority: .userInitiated) {
-                await self.refreshBrowsersInBackground()
-            }
+            Task { await self.refreshBrowsersInBackground(showSpinner: true) }
             return
         }
         
@@ -80,15 +78,11 @@ class BrowserManager: ObservableObject {
             let age = Date().timeIntervalSince(timestamp)
             if age > Self.cacheExpirationInterval {
                 debugLog("🔄 Browser cache expired (age: \(Int(age/3600))h), scheduling background discovery...")
-                Task.detached(priority: .userInitiated) {
-                    await self.refreshBrowsersInBackground()
-                }
+                Task { await self.refreshBrowsersInBackground(showSpinner: true) }
                 return
             }
         } else {
-            Task.detached(priority: .userInitiated) {
-                await self.refreshBrowsersInBackground()
-            }
+            Task { await self.refreshBrowsersInBackground(showSpinner: true) }
             return
         }
         
@@ -98,34 +92,41 @@ class BrowserManager: ObservableObject {
            !cached.isEmpty {
             availableBrowsers = cached
             debugLog("✅ Loaded \(cached.count) browsers from cache")
+            // Silently refresh in background to pick up new installs — no spinner
+            Task { await self.refreshBrowsersSilently() }
         } else {
             debugLog("⚠️ Cache invalid, scheduling background discovery...")
-            Task.detached(priority: .userInitiated) {
-                await self.refreshBrowsersInBackground()
-            }
-        }
-    }
-
-    /// Always refresh browser list in background on startup to pick up new installs/uninstalls.
-    private func refreshBrowsersOnStartup() {
-        Task.detached(priority: .background) {
-            await self.refreshBrowsersInBackground()
+            // List is empty; show spinner so the UI doesn't look broken
+            Task { await self.refreshBrowsersInBackground(showSpinner: true) }
         }
     }
     
-    /// Background refresh of browser list (non-blocking)
-    private func refreshBrowsersInBackground() async {
-        guard !isRefreshingBrowsers else {
-            return
-        }
-
-        isRefreshingBrowsers = true
-        debugLog("🔄 Background browser refresh started")
-
-        // Discover browsers off main thread
+    /// Silent background refresh — runs without setting isRefreshingBrowsers (no spinner).
+    @MainActor
+    private func refreshBrowsersSilently() async {
+        guard !isSilentlyRefreshing && !isRefreshingBrowsers else { return }
+        isSilentlyRefreshing = true
+        defer { isSilentlyRefreshing = false }
+        debugLog("🔄 Silent background browser refresh started")
         let newBrowsers = await performDiscovery()
+        if newBrowsers != availableBrowsers {
+            debugLog("✅ Browser list silently updated (\(availableBrowsers.count) → \(newBrowsers.count))")
+            availableBrowsers = newBrowsers
+            saveBrowserCache()
+        }
+    }
 
-        // Only update if there are changes
+    /// Background refresh of browser list (shows spinner).
+    @MainActor
+    private func refreshBrowsersInBackground(showSpinner: Bool = false) async {
+        // If a silent refresh is running, cancel it conceptually — we'll do a full refresh now
+        guard !isRefreshingBrowsers else { return }
+
+        if showSpinner { isRefreshingBrowsers = true }
+        defer { isRefreshingBrowsers = false }
+        debugLog("🔄 Browser refresh started (spinner=\(showSpinner))")
+
+        let newBrowsers = await performDiscovery()
         if newBrowsers != availableBrowsers {
             debugLog("✅ Browser list updated (\(availableBrowsers.count) → \(newBrowsers.count))")
             availableBrowsers = newBrowsers
@@ -133,8 +134,6 @@ class BrowserManager: ObservableObject {
         } else {
             debugLog("✅ Browser list unchanged")
         }
-
-        isRefreshingBrowsers = false
     }
     
     /// Save browser list to cache
@@ -149,11 +148,11 @@ class BrowserManager: ObservableObject {
         }
     }
     
-    /// Manual refresh (for user-initiated actions)
+    /// Manual refresh (user-initiated — always shows spinner).
     func refreshBrowsers() {
         debugLog("🔄 Manual browser refresh")
         Task {
-            await refreshBrowsersInBackground()
+            await refreshBrowsersInBackground(showSpinner: true)
         }
     }
     
@@ -164,146 +163,131 @@ class BrowserManager: ObservableObject {
         saveBrowserCache()
     }
     
-    /// Async wrapper for browser discovery
+    /// Async wrapper for browser discovery — caps at 5s so isRefreshingBrowsers
+    /// can never get permanently stuck if LSCopyApplicationURLsForURL hangs.
     private func performDiscovery() async -> [Browser] {
-        await Task.detached(priority: .userInitiated) {
+        let discoveryTask = Task.detached(priority: .userInitiated) {
             Self.performDiscoverySync()
-        }.value
+        }
+        let timeoutTask = Task {
+            try? await Task.sleep(for: .seconds(5))
+            discoveryTask.cancel()
+        }
+        let result = await discoveryTask.value
+        timeoutTask.cancel()
+        return result
     }
     
-    /// Core browser discovery logic (synchronous)
+    /// Core browser discovery logic (synchronous).
+    ///
+    /// Strategy: trust LaunchServices for discovery, then apply two filters:
+    ///
+    ///  1. **Standard install location** — the app's parent directory must be one of
+    ///     the known macOS app directories. This eliminates: nested helper bundles
+    ///     (e.g. ChatGPT Atlas's internal helper), Xcode DerivedData builds, apps in
+    ///     ~/.cache/puppeteer, DMG-mounted apps on /Volumes, etc.
+    ///
+    ///  2. **Known non-browser exclusion list** — a small hard-coded set of apps that
+    ///     genuinely install in /Applications but register for http without being
+    ///     browsers (iTerm2, browser-picker tools).
     private nonisolated static func performDiscoverySync() -> [Browser] {
+        let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
+
+        // Only apps whose .app bundle sits directly inside one of these directories.
+        // This is the primary noise filter — kills helpers, dev builds, DMG mounts, etc.
+        let allowedParents: Set<String> = [
+            "/Applications",
+            "/System/Applications",
+            "/System/Volumes/Preboot/Cryptexes/App/System/Applications",
+            homeDir + "/Applications",
+        ]
+
+        // Known apps that install in /Applications and register for http/https but
+        // are not web browsers. Keep this list minimal.
+        let nonBrowserBundleIds: Set<String> = [
+            "com.googlecode.iterm2",            // iTerm2 — opens http links in terminal
+            "com.apple.Safari.WebApp",          // Safari web-app wrapper
+            "com.apple.WebKit.WebContent",      // WebKit renderer helper
+            "com.choosyosx.choosy",             // Choosy — browser picker
+            "com.choosyosx.choosy.3",
+            "com.sindresorhus.Browserosaurus",  // Browserosaurus — browser picker
+            "net.kassett.Finicky",              // Finicky — browser picker
+        ]
+
+        let currentBundleId = Bundle.main.bundleIdentifier
         var discovered: [Browser] = []
         var seenBundleIds = Set<String>()
-        var seenDisplayNames = Set<String>() // Track display names to avoid duplicates
-        
-        // Get current app's bundle ID to exclude it
-        let currentBundleId = Bundle.main.bundleIdentifier
-        
-        // Apps to exclude from browser list (terminal emulators, browser managers, system utilities)
-        let excludedBundleIds: Set<String> = [
-            "com.googlecode.iterm2",           // iTerm2
-            "com.apple.Terminal",               // Terminal
-            "com.choosyosx.choosy",            // Choosy
-            "com.choosyosx.choosy.3",          // Choosy 3
-            "com.apple.Safari.WebApp",         // Safari Web Apps
-            "com.apple.WebKit.WebContent",     // WebKit Helper
-        ]
-        
-        // Query for all apps that handle http URL scheme
-        if let httpURL = URL(string: "http://"),
-           let httpHandlers = LSCopyApplicationURLsForURL(httpURL as CFURL, .all)?.takeRetainedValue() as? [URL] {
-            
-            for appURL in httpHandlers {
-                if let bundle = Bundle(url: appURL),
-                   let bundleId = bundle.bundleIdentifier,
-                   !seenBundleIds.contains(bundleId),
-                   bundleId != currentBundleId,
-                   !excludedBundleIds.contains(bundleId),
-                   Self.isBrowserApp(bundleId: bundleId, appURL: appURL) {
-                    
-                    if let displayName = Self.getDisplayName(for: bundleId) {
-                        // Check for duplicate display names (e.g., multiple Atlas installations)
-                        if !seenDisplayNames.contains(displayName) {
-                            discovered.append(Browser(bundleId: bundleId, displayName: displayName, isInstalled: true))
-                            seenBundleIds.insert(bundleId)
-                            seenDisplayNames.insert(displayName)
-                        }
-                    }
-                }
+
+        guard let httpURL = URL(string: "http://"),
+              let handlers = LSCopyApplicationURLsForURL(httpURL as CFURL, .all)?
+                .takeRetainedValue() as? [URL] else {
+            if let safariURL = safariAppURL() {
+                return [Browser(bundleId: BundleIdentifiers.safari,
+                                displayName: displayNameFromURL(safariURL),
+                                isInstalled: true)]
             }
+            return []
         }
-        
-        // Query for https handlers as well
-        if let httpsURL = URL(string: "https://"),
-           let httpsHandlers = LSCopyApplicationURLsForURL(httpsURL as CFURL, .all)?.takeRetainedValue() as? [URL] {
-            
-            for appURL in httpsHandlers {
-                if let bundle = Bundle(url: appURL),
-                   let bundleId = bundle.bundleIdentifier,
-                   !seenBundleIds.contains(bundleId),
-                   bundleId != currentBundleId,
-                   !excludedBundleIds.contains(bundleId),
-                   Self.isBrowserApp(bundleId: bundleId, appURL: appURL) {
-                    
-                    if let displayName = Self.getDisplayName(for: bundleId) {
-                        // Check for duplicate display names
-                        if !seenDisplayNames.contains(displayName) {
-                            discovered.append(Browser(bundleId: bundleId, displayName: displayName, isInstalled: true))
-                            seenBundleIds.insert(bundleId)
-                            seenDisplayNames.insert(displayName)
-                        }
-                    }
-                }
-            }
+
+        for appURL in handlers {
+            // Filter 1: must be in a standard installation directory
+            let parentPath = appURL.deletingLastPathComponent().path
+            guard allowedParents.contains(parentPath) else { continue }
+
+            guard let bundle = Bundle(url: appURL),
+                  let bundleId = bundle.bundleIdentifier,
+                  !seenBundleIds.contains(bundleId),
+                  bundleId != currentBundleId else { continue }
+
+            // Filter 2: known non-browser apps
+            guard !nonBrowserBundleIds.contains(bundleId) else { continue }
+
+            let displayName = displayNameFromURL(appURL)
+            discovered.append(Browser(bundleId: bundleId, displayName: displayName, isInstalled: true))
+            seenBundleIds.insert(bundleId)
         }
-        
-        // Always ensure Safari is present as fallback
+
+        // Safari's real path is in the system cryptex — always ensure it's present.
         if !seenBundleIds.contains(BundleIdentifiers.safari),
-              let displayName = Self.getDisplayName(for: BundleIdentifiers.safari) {
-            discovered.append(Browser(bundleId: BundleIdentifiers.safari, displayName: displayName, isInstalled: true))
+           let safariURL = safariAppURL() {
+            discovered.append(Browser(bundleId: BundleIdentifiers.safari,
+                                      displayName: displayNameFromURL(safariURL),
+                                      isInstalled: true))
         }
-        
-        // Sort by display name for consistency
+
         return discovered.sorted { $0.displayName < $1.displayName }
     }
-    
-    /// Check if an app is likely a web browser (not a terminal, text editor, etc.)
-    private nonisolated static func isBrowserApp(bundleId: String, appURL: URL) -> Bool {
-        let lowercasedId = bundleId.lowercased()
-        
-        // Always exclude known non-browser apps regardless of other heuristics
-        let excludedPatterns = [
-            "terminal", "iterm", "console",  // terminal emulators
-            "textedit", "sublimetext", "vscode", "xcode",  // editors
-            "choosy", "browserosaurus", "finicky"  // other browser managers
+
+    /// Finds Safari.app without NSWorkspace (safe to call off main actor).
+    /// Safari lives in the system cryptex on modern macOS, not /Applications.
+    private nonisolated static func safariAppURL() -> URL? {
+        let paths = [
+            "/System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app",
+            "/System/Applications/Safari.app",
+            "/Applications/Safari.app",
         ]
-        for pattern in excludedPatterns where lowercasedId.contains(pattern) {
-            return false
+        return paths.map { URL(fileURLWithPath: $0) }.first {
+            FileManager.default.fileExists(atPath: $0.path)
         }
-        
-        // PRIMARY: Check app category in Info.plist — most accurate signal
-        if let bundle = Bundle(url: appURL),
-           let category = bundle.infoDictionary?["LSApplicationCategoryType"] as? String {
-            if category == "public.app-category.web-browser" {
-                return true
-            }
-            // If the app declares a category and it's not web-browser, exclude it
-            // (prevents editors, mail clients, etc. that handle http:// from appearing)
-            if !category.isEmpty {
-                return false
-            }
-        }
-        
-        // FALLBACK: For apps that don't declare a category, use bundle ID substring matching.
-        // Only reaches here if LSApplicationCategoryType is absent.
-        let knownBrowserKeywords = [
-            "safari", "chrome", "firefox", "edge", "brave",
-            "opera", "vivaldi", "arc", "orion", "webkit",
-            "chromium", "browser", "navigator", "atlas",
-            "mozilla", "nightly"
-        ]
-        for keyword in knownBrowserKeywords where lowercasedId.contains(keyword) {
-            return true
-        }
-        
-        return false
     }
     
-    /// Get the human-readable name for an app bundle ID
-    private nonisolated static func getDisplayName(for bundleId: String) -> String? {
-        // Try to get from bundle
-        if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId),
-           let bundle = Bundle(url: appURL),
-           let displayName = bundle.infoDictionary?["CFBundleDisplayName"] as? String ?? bundle.infoDictionary?["CFBundleName"] as? String {
-            return displayName
+    /// Reads the human-readable display name directly from a bundle URL.
+    /// Safe to call from any thread — does not use NSWorkspace.
+    private nonisolated static func displayNameFromURL(_ url: URL) -> String {
+        if let bundle = Bundle(url: url) {
+            if let name = bundle.infoDictionary?["CFBundleDisplayName"] as? String, !name.isEmpty { return name }
+            if let name = bundle.infoDictionary?["CFBundleName"] as? String, !name.isEmpty { return name }
         }
-        
-        // Fallback: try to get from app name
+        return url.deletingPathExtension().lastPathComponent
+    }
+
+    /// Get the human-readable name for an app bundle ID (main-actor safe only).
+    /// Use `displayNameFromURL` instead when calling from background threads.
+    @MainActor
+    static func getDisplayName(for bundleId: String) -> String? {
         if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) {
-            return appURL.deletingPathExtension().lastPathComponent
+            return displayNameFromURL(appURL)
         }
-        
         return nil
     }
     

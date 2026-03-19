@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 import AppKit
+import Combine
 
 @MainActor
 class AppState: ObservableObject {
@@ -16,7 +17,7 @@ class AppState: ObservableObject {
     let diagnosticsManager = DiagnosticsManager()
     let persistence = PersistenceManager.shared
     let toastManager = ToastManager.shared
-    
+
     // Published state
     @Published var settings: Settings
     @Published private(set) var rules: [Rule]
@@ -26,12 +27,24 @@ class AppState: ObservableObject {
     @Published var chooserURL: URL?
     @Published var chooserSourceApp: String?
     @Published var pendingTabSelection: PreferenceTab? = nil // For coordinating tab selection from menu bar
-    
+
+    private var cancellables = Set<AnyCancellable>()
+
     init() {
         self.settings = persistence.loadSettings()
         self.rules = persistence.loadRules()
         self.showFirstRun = !persistence.hasCompletedFirstRun
         _ = persistence.installID // Eagerly guarantee UUID is generated locally
+
+        // Forward child ObservableObject changes into AppState so that any view
+        // observing appState re-renders when browserManager or diagnosticsManager
+        // publish changes (e.g. availableBrowsers, isRefreshingBrowsers).
+        browserManager.objectWillChange
+            .sink { [weak self] in self?.objectWillChange.send() }
+            .store(in: &cancellables)
+        diagnosticsManager.objectWillChange
+            .sink { [weak self] in self?.objectWillChange.send() }
+            .store(in: &cancellables)
     }
     
     // MARK: - Settings Management
