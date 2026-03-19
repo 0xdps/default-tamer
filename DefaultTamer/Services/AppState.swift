@@ -54,6 +54,12 @@ class AppState: ObservableObject {
     func toggleDiagnostics() {
         settings.diagnosticsEnabled.toggle()
         persistence.saveSettings(settings)
+        // Purge all tracked data when the user disables activity logging.
+        // Data should not silently persist in a state the user can't see or clear.
+        if !settings.diagnosticsEnabled {
+            diagnosticsManager.clearLogs()
+            ActivityDatabase.shared.deleteAllLogs()
+        }
     }
 
     // MARK: - Telemetry
