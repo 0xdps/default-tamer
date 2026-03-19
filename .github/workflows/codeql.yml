@@ -1,0 +1,57 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [trunk, main]
+    paths-ignore:
+      - '**.md'
+      - 'DefaultTamerWeb/**'
+      - 'LICENSE'
+  pull_request:
+    branches: [trunk, main]
+  schedule:
+    - cron: '0 8 * * 1'
+
+jobs:
+  analyze:
+    name: Analyze Swift
+    runs-on: macos-15
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "16"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: swift
+          build-mode: manual
+
+      - name: Build for CodeQL
+        run: |
+          xcodebuild -project DefaultTamer.xcodeproj \
+            -scheme DefaultTamer \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:swift"
