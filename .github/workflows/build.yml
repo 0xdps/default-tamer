@@ -44,6 +44,7 @@ jobs:
             -scheme DefaultTamer \
             -configuration Debug \
             -destination 'platform=macOS' \
+            CODE_SIGNING_ALLOWED=NO \
             build
 
       - name: Run tests
@@ -52,7 +53,8 @@ jobs:
             -project DefaultTamer.xcodeproj \
             -scheme DefaultTamer \
             -destination 'platform=macOS' \
-            -enableCodeCoverage YES
+            -enableCodeCoverage YES \
+            CODE_SIGNING_ALLOWED=NO
         continue-on-error: true
 
       - name: Archive build artifacts
