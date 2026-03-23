@@ -48,6 +48,9 @@ targets:
           - CFBundleURLName: HTTPS
             CFBundleURLSchemes:
               - https
+          - CFBundleURLName: Default Tamer Auth
+            CFBundleURLSchemes:
+              - defaulttamer
     sources:
       - DefaultTamer
     settings:

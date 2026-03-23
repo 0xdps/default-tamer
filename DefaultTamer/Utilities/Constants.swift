@@ -128,3 +128,63 @@ struct ExternalLinks {
     static let privacy = "https://www.defaulttamer.app/privacy"
     static let developerWebsite = "https://dps.codes"
 }
+
+struct NubeAuthConstants {
+    /// NubeAuth Gateway base URL (staging and production share the same path structure)
+    static let gatewayURL = "https://api.staging.proofa.dev"
+    /// NubeAuth app public_id registered for Default Tamer
+    static let appId = "APP0D4FPSe4Ev"
+    /// NubeAuth Power price public_id — encodes the plan, billing interval, provider and currency.
+    static let powerPriceId = "PRC0paZVrwadG"
+    /// Website bridge page — receives the exchange code from NubeAuth and opens the deep-link
+    static let authCallbackURL = "http://localhost:4321/auth/callback"
+    /// Pricing page — used as checkout cancel URL
+    static let pricingURL = "http://localhost:4321/pricing"
+
+    /// OAuth start URL — activates an existing license (no payment step).
+    /// Used when the user already has a Power license and just needs to link it to this device.
+    static var oauthStartURL: URL {
+        var components = URLComponents(string: "\(gatewayURL)/v1/auth/start")!
+        components.queryItems = [
+            URLQueryItem(name: "provider",  value: "google"),
+            URLQueryItem(name: "app_id",    value: appId),
+            URLQueryItem(name: "audience",  value: "app"),
+            URLQueryItem(name: "return_to", value: authCallbackURL),
+        ]
+        return components.url!
+    }
+
+    /// Direct billing checkout endpoint — the app calls this with Bearer auth to skip
+    /// re-authentication when the user is already signed in.
+    static var billingCheckoutURL: URL {
+        URL(string: "\(gatewayURL)/v1/payment/checkout")!
+    }
+    /// Success URL for direct (already-signed-in) checkout.
+    /// The callback page detects `?upgraded=true` (no code), shows a success state,
+    /// then opens `defaulttamer://upgraded` so the app re-checks the subscription.
+    static var upgradeSuccessURL: String { authCallbackURL + "?upgraded=true" }
+
+    /// OAuth + checkout URL — used when the user is NOT yet signed in.
+    /// Authenticates via Google and triggers a payment checkout in one browser flow.
+    /// The gateway embeds `price_id` in its OAuth state, calls Core billing S2S after
+    /// login, then redirects to the payment provider. On success the provider returns
+    /// to `returnTo?code=…` — same as plain sign-in — so `handleOAuthCallback` activates
+    /// the subscription automatically.
+    static func oauthUpgradeURL(returnTo: String) -> URL {
+        var components = URLComponents(string: "\(gatewayURL)/v1/auth/start")!
+        components.queryItems = [
+            URLQueryItem(name: "provider",   value: "google"),
+            URLQueryItem(name: "app_id",     value: appId),
+            URLQueryItem(name: "audience",   value: "app"),
+            URLQueryItem(name: "price_id",   value: powerPriceId),
+            URLQueryItem(name: "return_to",  value: returnTo),
+            URLQueryItem(name: "cancel_url", value: pricingURL),
+        ]
+        return components.url!
+    }
+
+    /// License check endpoint
+    static var licenseCheckURL: URL {
+        URL(string: "\(gatewayURL)/v1/license/check")!
+    }
+}

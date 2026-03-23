@@ -11,6 +11,7 @@ import Sparkle
 struct PreferencesWindow: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var updateManager: UpdateManager
+    @EnvironmentObject var licensing: LicensingManager
     @State private var selectedTab: PreferenceTab = .general
     @StateObject private var toastManager = ToastManager.shared
     
@@ -24,6 +25,8 @@ struct PreferencesWindow: View {
             return "Default Tamer / Activity"
         case .about:
             return "Default Tamer / About"
+        case .power:
+            return "Default Tamer / Power Plan"
         }
     }
     
@@ -49,6 +52,10 @@ struct PreferencesWindow: View {
                     AboutTab()
                         .environmentObject(appState)
                         .environmentObject(updateManager)
+                case .power:
+                    LicensingTab()
+                        .environmentObject(appState)
+                        .environmentObject(licensing)
                 }
             }
         }
@@ -87,6 +94,13 @@ struct PreferencesWindow: View {
                 }
                 .keyboardShortcut("4", modifiers: .command)
                 .help("About Default Tamer")
+
+                Button(action: { selectedTab = .power }) {
+                    Label("Power", systemImage: "bolt.fill")
+                        .foregroundColor(selectedTab == .power ? .orange : .primary)
+                }
+                .keyboardShortcut("5", modifiers: .command)
+                .help("Manage your Power plan license")
             }
         }
         .toastOverlay(manager: toastManager)
@@ -126,6 +140,7 @@ enum PreferenceTab: Int {
     case rules = 1
     case activity = 2
     case about = 3
+    case power = 4
 }
 
 // MARK: - General Tab

@@ -1,0 +1,136 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Opening Default Tamer…"
+  description="Completing sign-in for Default Tamer."
+  noIndex={true}
+>
+  <section class="min-h-screen flex items-center justify-center bg-gray-lighter px-4">
+    <div class="max-w-md w-full text-center">
+
+      <!-- Success state: direct checkout payment confirmed -->
+      <div id="state-upgraded" class="hidden">
+        <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <span class="text-4xl">⚡</span>
+        </div>
+        <h1 class="font-heading text-3xl font-bold text-dark mb-3">Welcome to Power!</h1>
+        <p class="text-gray mb-8 leading-relaxed">
+          Your payment was successful. Default Tamer is activating your Power plan — it should open automatically.
+        </p>
+        <button
+          id="open-app-btn-upgraded"
+          class="rounded-lg bg-primary px-8 py-3 text-sm font-semibold text-white hover:bg-primary-dark transition-all duration-200 cursor-pointer"
+        >
+          Open Default Tamer
+        </button>
+        <p class="text-sm text-gray mt-6">
+          Don't have Default Tamer yet?
+          <a href="/download" class="text-primary font-semibold hover:text-primary-dark transition-colors duration-200">Download it free</a>
+        </p>
+      </div>
+      <!-- Success state: sign-in / post-OAuth-payment (code present) -->
+      <div id="state-success" class="hidden">
+        <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <span class="text-4xl">✓</span>
+        </div>
+        <h1 class="font-heading text-3xl font-bold text-dark mb-3">Signed in!</h1>
+        <p class="text-gray mb-8 leading-relaxed">
+          Default Tamer should open automatically — if it doesn't, click the button below.
+        </p>
+        <button
+          id="open-app-btn"
+          class="rounded-lg bg-primary px-8 py-3 text-sm font-semibold text-white hover:bg-primary-dark transition-all duration-200 cursor-pointer"
+        >
+          Open Default Tamer
+        </button>
+        <p class="text-sm text-gray mt-6">
+          Don't have Default Tamer yet?
+          <a href="/download" class="text-primary font-semibold hover:text-primary-dark transition-colors duration-200">Download it free</a>
+        </p>
+      </div>
+
+      <!-- Error state -->
+      <div id="state-error" class="hidden">
+        <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+          <span class="text-4xl">✕</span>
+        </div>
+        <h1 class="font-heading text-3xl font-bold text-dark mb-3">Sign-in failed</h1>
+        <p id="error-message" class="text-gray mb-8 leading-relaxed">
+          Something went wrong during sign-in. Please try again.
+        </p>
+        <a
+          href="/pricing"
+          class="rounded-lg bg-primary px-8 py-3 text-sm font-semibold text-white hover:bg-primary-dark transition-all duration-200"
+        >
+          Try again
+        </a>
+      </div>
+
+      <!-- Loading state (shown briefly while JS reads the URL) -->
+      <div id="state-loading">
+        <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <span class="text-4xl animate-spin inline-block">⟳</span>
+        </div>
+        <h1 class="font-heading text-3xl font-bold text-dark mb-3">Completing sign-in…</h1>
+        <p class="text-gray">Just a moment.</p>
+      </div>
+
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const error = params.get('error');
+  // upgraded=true is set by the success URL in the direct (already-signed-in) checkout path.
+  const upgraded = params.get('upgraded') === 'true';
+
+  const loading = document.getElementById('state-loading')!;
+  const success = document.getElementById('state-success')!;
+  const upgradedEl = document.getElementById('state-upgraded')!;
+  const errorEl = document.getElementById('state-error')!;
+  const errorMsg = document.getElementById('error-message')!;
+  const openBtn = document.getElementById('open-app-btn')!;
+  const openBtnUpgraded = document.getElementById('open-app-btn-upgraded')!;
+
+  loading.classList.add('hidden');
+
+  if (upgraded && !code) {
+    // Direct checkout success: no exchange code — signal the app to re-check subscription.
+    const deepLink = 'defaulttamer://upgraded';
+    upgradedEl.classList.remove('hidden');
+    openBtnUpgraded.addEventListener('click', () => { window.location.href = deepLink; });
+    setTimeout(() => { window.location.href = deepLink; }, 1200);
+  } else if (code && upgraded) {
+    // OAuth+checkout path: code present AND upgraded=true — user just paid via the combined
+    // sign-in+checkout flow. Pass upgraded=true so the app uses retry logic.
+    const deepLink = `defaulttamer://auth?code=${encodeURIComponent(code)}&upgraded=true`;
+    success.classList.remove('hidden');
+    openBtn.addEventListener('click', () => { window.location.href = deepLink; });
+    setTimeout(() => { window.location.href = deepLink; }, 1200);
+  } else if (code) {
+    // OAuth exchange (plain sign-in OR OAuth+payment flow): deliver the exchange code.
+    // The app exchanges the code, gets a session token, then checks subscription.
+    const deepLink = `defaulttamer://auth?code=${encodeURIComponent(code)}`;
+    success.classList.remove('hidden');
+    openBtn.addEventListener('click', () => { window.location.href = deepLink; });
+    setTimeout(() => { window.location.href = deepLink; }, 1200);
+  } else {
+    errorEl.classList.remove('hidden');
+    const messages: Record<string, string> = {
+      missing_app_id:    'The sign-in request was missing required app information.',
+      invalid_state:     'The sign-in request could not be verified. Please try again.',
+      csrf_mismatch:     'The sign-in request could not be verified. Please try again.',
+      exchange_failed:   'Authentication failed. Please try again.',
+      missing_code:      'The sign-in flow was interrupted. Please try again.',
+      email_required:    'Your Google account did not provide an email address. Please try again.',
+      checkout_failed:   'Could not start the payment flow. Please try again from the pricing page.',
+      payment_cancelled: 'Payment was cancelled. You can try again from the pricing page.',
+    };
+    const errorCode = error ?? 'unknown';
+    errorMsg.textContent = messages[errorCode] ?? 'Something went wrong. Please try again.';
+  }
+</script>

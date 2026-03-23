@@ -32,6 +32,7 @@ struct RulesWindowContent: View {
         .sheet(isPresented: $showAddRule) {
             AddRuleSheet()
                 .environmentObject(appState)
+                .environmentObject(LicensingManager.shared)
         }
         .onAppear {
             // Select first rule if available
@@ -305,6 +306,7 @@ struct RuleDetailView: View {
         .sheet(isPresented: $showEditSheet) {
             EditRuleSheet(rule: rule)
                 .environmentObject(appState)
+                .environmentObject(LicensingManager.shared)
         }
         .alert("Delete Rule?", isPresented: $showDeleteConfirmation) {
             Button("Cancel", role: .cancel) { }
@@ -423,6 +425,7 @@ struct RulesWindow: View {
         .sheet(isPresented: $showAddRule) {
             AddRuleSheet()
                 .environmentObject(appState)
+                .environmentObject(LicensingManager.shared)
         }
     }
 }

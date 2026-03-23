@@ -125,6 +125,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             // Existing users get the Day 0 consent prompt
             checkAndPromptTelemetryConsent()
         }
+
+        // Validate stored license in the background (refreshes plan status from server)
+        LicensingManager.shared.validateOnLaunch()
         
         // Track app launch & updates (AppState handles debouncing internal to these calls)
         appState.trackAppUpdated()
@@ -241,6 +244,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         let prefsView = PreferencesWindow()
             .environmentObject(appState)
             .environmentObject(updateManager)
+            .environmentObject(LicensingManager.shared)
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 640, height: 400),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
@@ -276,6 +280,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
         if diagnosticsEnabled {
             appLogger.info("📥 Received URL: \(url.absoluteString, privacy: .public)")
+        }
+
+        // Route `defaulttamer://auth` deep-links to LicensingManager (sign-in / code exchange)
+        if url.scheme == "defaulttamer", url.host == "auth" {
+            LicensingManager.shared.handleOAuthCallback(url)
+            return
+        }
+
+        // Route `defaulttamer://upgraded` deep-links — direct checkout payment confirmed
+        if url.scheme == "defaulttamer", url.host == "upgraded" {
+            LicensingManager.shared.handleUpgradeCallback()
+            return
         }
 
         // Use enhanced SourceAppDetector with Apple Event support

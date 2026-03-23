@@ -9,6 +9,7 @@ import SwiftUI
 
 struct AddRuleSheet: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var licensing: LicensingManager
     @Environment(\.dismiss) var dismiss
     
     @State private var ruleType: RuleType = .domain
@@ -203,6 +204,12 @@ struct AddRuleSheet: View {
 
                     Toggle("Open in private/incognito mode", isOn: $openInPrivateMode)
                         .help("Opens URLs in private/incognito window (not all browsers supported)")
+                        .disabled(!licensing.isEnabled(.privateBrowsing))
+                        .overlay(alignment: .trailing) {
+                            if !licensing.isEnabled(.privateBrowsing) {
+                                PlusFeatureBadge().allowsHitTesting(false)
+                            }
+                        }
                 }
             }
             .formStyle(.grouped)
@@ -478,6 +485,7 @@ struct AppPickerRow: View {
 struct EditRuleSheet: View {
     let rule: Rule
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var licensing: LicensingManager
     @Environment(\.dismiss) var dismiss
     
     @State private var ruleType: RuleType
@@ -696,6 +704,12 @@ struct EditRuleSheet: View {
 
                     Toggle("Open in private/incognito mode", isOn: $openInPrivateMode)
                         .help("Opens URLs in private/incognito window (not all browsers supported)")
+                        .disabled(!licensing.isEnabled(.privateBrowsing))
+                        .overlay(alignment: .trailing) {
+                            if !licensing.isEnabled(.privateBrowsing) {
+                                PlusFeatureBadge().allowsHitTesting(false)
+                            }
+                        }
                 }
             }
             .formStyle(.grouped)

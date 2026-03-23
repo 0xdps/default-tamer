@@ -1,0 +1,310 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Pricing — Default Tamer"
+  description="Default Tamer is free and open source. Upgrade to the Power plan for advanced routing features: private browsing rules, Chrome profile routing, and keyboard shortcuts."
+>
+  <!-- Hero -->
+  <section class="hero-section relative flex items-center">
+    <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 text-center">
+      <span class="inline-flex items-center rounded-full bg-primary/10 px-4 py-1.5 text-sm font-semibold text-primary ring-1 ring-inset ring-primary/20 backdrop-blur-sm mb-6">
+        Simple, honest pricing
+      </span>
+      <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl drop-shadow-lg">
+        Free forever,<br />
+        <span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Power when you need it</span>
+      </h1>
+      <p class="mt-6 text-lg leading-8 text-gray-300 max-w-xl mx-auto">
+        Core URL routing is 100% free and open source.
+        The Power plan unlocks advanced features for developers and power users.
+      </p>
+    </div>
+  </section>
+
+  <!-- Plan Cards -->
+  <section class="bg-gray-lighter py-16 sm:py-20">
+    <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 items-start">
+
+        <!-- Free -->
+        <div class="bg-white rounded-2xl border-2 border-gray-light p-8 flex flex-col gap-6">
+          <div>
+            <h2 class="text-xl font-bold text-dark">Free</h2>
+            <p class="mt-1 text-gray text-sm">Everything you need for smart browser routing.</p>
+          </div>
+
+          <div>
+            <span class="text-4xl font-bold text-dark">$0</span>
+            <span class="text-gray text-sm ml-1">/ forever</span>
+          </div>
+
+          <ul class="space-y-3 text-sm text-gray flex-1">
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              Route by domain, URL match, or regex
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              Route by source app (Slack, VS Code, etc.)
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              Menu bar app — no Dock icon
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              Unlimited rules
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              Routing is 100% local — no data leaves your Mac
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              Open source (MIT)
+            </li>
+          </ul>
+
+          <a
+            href="/download"
+            class="w-full text-center rounded-lg bg-gray-light px-6 py-3 text-sm font-semibold text-dark hover:bg-gray-light/70 transition-all duration-200"
+          >
+            Download Free
+          </a>
+        </div>
+
+        <!-- Power -->
+        <div class="bg-white rounded-2xl border-2 border-primary p-8 flex flex-col gap-6 relative shadow-xl shadow-primary/10">
+          <div class="absolute -top-3.5 left-1/2 -translate-x-1/2">
+            <span class="inline-flex items-center rounded-full bg-primary px-4 py-1 text-xs font-bold text-white uppercase tracking-wide shadow">
+              ⚡ Power Plan
+            </span>
+          </div>
+
+          <div>
+            <h2 class="text-xl font-bold text-dark">Power</h2>
+            <p class="mt-1 text-gray text-sm">For developers and routing power users.</p>
+          </div>
+
+          <div>
+            <span class="text-4xl font-bold text-dark">$2.99</span>
+            <span class="text-gray text-sm ml-1">/ month</span>
+            <p class="text-xs text-gray mt-1">Activate with Google Sign-In — no license keys.</p>
+          </div>
+
+          <ul class="space-y-3 text-sm text-gray flex-1">
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              <span><strong class="text-dark">Everything in Free</strong></span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              <span><strong class="text-dark">Private browsing rules</strong> — route links directly to a private/incognito window</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              <span><strong class="text-dark">Chrome Profile routing</strong> — open links in a specific Chrome profile</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              <span><strong class="text-dark">Keyboard shortcut rules</strong> — trigger routing with a global shortcut</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-primary mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              Priority support
+            </li>
+          </ul>
+
+          <a
+            href="/download"
+            class="w-full text-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-dark transition-all duration-200 shadow-sm"
+          >
+            Get the App — Activate Inside
+          </a>
+          <p class="text-xs text-gray text-center -mt-3">
+            After downloading, open Preferences → Power to sign in.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature Comparison Table -->
+  <section class="bg-white py-16 sm:py-20">
+    <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl font-bold text-dark text-center mb-10">Full Feature Comparison</h2>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b-2 border-gray-light">
+              <th class="text-left py-3 pr-4 text-gray font-medium w-1/2">Feature</th>
+              <th class="text-center py-3 px-4 font-bold text-dark">Free</th>
+              <th class="text-center py-3 px-4 font-bold text-primary">Power</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-light">
+            <tr>
+              <td class="py-3 pr-4 text-gray">Route by domain pattern</td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-primary mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-primary mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 text-gray">Route by source app</td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-primary mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-primary mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 text-gray">URL contains / regex matching</td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-primary mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-primary mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 text-gray">Unlimited rules</td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-primary mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-primary mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 text-gray">Import / export rules</td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-primary mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-primary mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </td>
+            </tr>
+            <tr class="bg-primary/5">
+              <td class="py-3 pr-4 text-dark font-medium">Private / incognito mode rules</td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-gray-light mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-primary mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </td>
+            </tr>
+            <tr class="bg-primary/5">
+              <td class="py-3 pr-4 text-dark font-medium">Chrome Profile routing</td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-gray-light mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-primary mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </td>
+            </tr>
+            <tr class="bg-primary/5">
+              <td class="py-3 pr-4 text-dark font-medium">Keyboard shortcut rules</td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-gray-light mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-primary mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </td>
+            </tr>
+            <tr class="bg-primary/5">
+              <td class="py-3 pr-4 text-dark font-medium">Priority support</td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-gray-light mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </td>
+              <td class="py-3 px-4 text-center">
+                <svg class="w-5 h-5 text-primary mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="bg-gray-lighter py-16 sm:py-20">
+    <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl font-bold text-dark text-center mb-10">FAQ</h2>
+
+      <div class="space-y-3">
+        <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
+          <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
+            <span class="group-open:text-primary transition-colors duration-300">How do I activate the Power plan?</span>
+            <span class="text-primary text-2xl group-open:rotate-45 transition-transform duration-300">+</span>
+          </summary>
+          <div class="px-6 pb-6 text-gray leading-relaxed">
+            Download Default Tamer and open <strong>Preferences → Power</strong>. Click "Sign in with Google" — you'll be redirected to our secure sign-in page. Once you've signed in and completed payment, your plan activates automatically and you're redirected back to the app. No license keys to manage.
+          </div>
+        </details>
+
+        <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
+          <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
+            <span class="group-open:text-primary transition-colors duration-300">Is the Free plan really free forever?</span>
+            <span class="text-primary text-2xl group-open:rotate-45 transition-transform duration-300">+</span>
+          </summary>
+          <div class="px-6 pb-6 text-gray leading-relaxed">
+            Yes. The core URL routing features — domain rules, source app rules, regex matching, unlimited rules, import/export — are free and will always be free. Default Tamer is also open source under the MIT license.
+          </div>
+        </details>
+
+        <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
+          <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
+            <span class="group-open:text-primary transition-colors duration-300">Can I use the app on multiple Macs?</span>
+            <span class="text-primary text-2xl group-open:rotate-45 transition-transform duration-300">+</span>
+          </summary>
+          <div class="px-6 pb-6 text-gray leading-relaxed">
+            One Power subscription activates on up to 3 Macs. Sign in with the same Google account on each device. If you need more activations, contact support.
+          </div>
+        </details>
+
+        <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
+          <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
+            <span class="group-open:text-primary transition-colors duration-300">What happens if I cancel?</span>
+            <span class="text-primary text-2xl group-open:rotate-45 transition-transform duration-300">+</span>
+          </summary>
+          <div class="px-6 pb-6 text-gray leading-relaxed">
+            Your plan remains active until the end of the billing period. After that, power features (private browsing rules, Chrome Profile routing, keyboard shortcuts) are locked. Your rules are preserved — they just won't be applied until you reactivate.
+          </div>
+        </details>
+
+        <details class="group bg-white border-2 border-gray-light rounded-xl overflow-hidden hover:border-primary transition-colors duration-300">
+          <summary class="flex items-center justify-between p-6 cursor-pointer font-semibold text-lg list-none">
+            <span class="group-open:text-primary transition-colors duration-300">Does the app work offline?</span>
+            <span class="text-primary text-2xl group-open:rotate-45 transition-transform duration-300">+</span>
+          </summary>
+          <div class="px-6 pb-6 text-gray leading-relaxed">
+            Yes. URL routing is completely local — no internet connection needed for routing to work. License validation is checked in the background when online. If your Mac is offline, the last verified plan is used.
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bottom CTA -->
+  <section class="bg-dark py-16 sm:py-20 text-center">
+    <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl font-bold text-white mb-4">Ready to tame your links?</h2>
+      <p class="text-gray-300 mb-8">Start free. Upgrade when you need more.</p>
+      <a
+        href="/download"
+        class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-dark transition-all duration-200 hover:scale-105"
+      >
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+        Download Free
+      </a>
+    </div>
+  </section>
+</BaseLayout>
