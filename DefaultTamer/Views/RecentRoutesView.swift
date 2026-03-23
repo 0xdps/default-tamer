@@ -12,7 +12,8 @@ struct RecentRoutesView: View {
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack {
+            VStack(spacing: 0) {
             // Header
             HStack {
                 Text("Recent Routes")
@@ -119,8 +120,41 @@ struct RecentRoutesView: View {
                 }
             }
             .padding()
-        }
+        } // VStack
+
+            if !appState.settings.diagnosticsEnabled {
+                activityDisabledOverlay
+            }
+        } // ZStack
         .frame(width: 700, height: 500)
+    }
+
+    private var activityDisabledOverlay: some View {
+        Rectangle()
+            .fill(.ultraThinMaterial)
+            .overlay {
+                VStack(spacing: 14) {
+                    Image(systemName: "chart.bar.xmark")
+                        .font(.system(size: 36))
+                        .foregroundColor(.secondary)
+                    Text("Activity tracking is off")
+                        .font(.headline)
+                    Text("Enable it in General settings to start recording routing decisions.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 280)
+                    Button("Open General Settings") {
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("OpenPreferencesTab"),
+                            object: 0
+                        )
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .padding()
+            }
+            .ignoresSafeArea()
     }
 }
 

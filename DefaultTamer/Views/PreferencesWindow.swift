@@ -78,15 +78,12 @@ struct PreferencesWindow: View {
                 .keyboardShortcut("2", modifiers: .command)
                 .help("Manage routing rules")
                 
-                // Only show Activity tab when diagnostics is enabled
-                if appState.settings.diagnosticsEnabled {
-                    Button(action: { selectedTab = .activity }) {
-                        Label("Activity", systemImage: "clock.arrow.circlepath")
-                            .foregroundColor(selectedTab == .activity ? .accentColor : .primary)
-                    }
-                    .keyboardShortcut("3", modifiers: .command)
-                    .help("View routing activity logs")
+                Button(action: { selectedTab = .activity }) {
+                    Label("Activity", systemImage: "list.bullet.rectangle")
+                        .foregroundColor(selectedTab == .activity ? .accentColor : .primary)
                 }
+                .keyboardShortcut("3", modifiers: .command)
+                .help("View routing activity logs")
                 
                 Button(action: { selectedTab = .about }) {
                     Label("About", systemImage: "info.circle")
@@ -134,12 +131,7 @@ struct PreferencesWindow: View {
                 appState.pendingTabSelection = nil
             }
         }
-        .onChange(of: appState.settings.diagnosticsEnabled) { isEnabled in
-            // If diagnostics is disabled while on Activity tab, switch to General
-            if !isEnabled && selectedTab == .activity {
-                selectedTab = .general
-            }
-        }
+
     }
 }
 
@@ -233,15 +225,6 @@ struct GeneralTab: View {
 
             Section {
                 Toggle(isOn: Binding(
-                    get: { appState.settings.telemetryEnabled == true },
-                    set: { appState.setTelemetryEnabled($0) }
-                )) {
-                    Text("Share anonymous usage stats") + Text(" (recommended)").foregroundColor(.secondary)
-                }
-                
-                TelemetryConsentDescription()
-                
-                Toggle(isOn: Binding(
                     get: { appState.settings.diagnosticsEnabled },
                     set: { _ in appState.toggleDiagnostics() }
                 )) {
@@ -252,6 +235,15 @@ struct GeneralTab: View {
                             .foregroundColor(.secondary)
                     }
                 }
+
+                Toggle(isOn: Binding(
+                    get: { appState.settings.telemetryEnabled == true },
+                    set: { appState.setTelemetryEnabled($0) }
+                )) {
+                    Text("Share anonymous usage stats") + Text(" (recommended)").foregroundColor(.secondary)
+                }
+                
+                TelemetryConsentDescription()
 
             } header: {
                 Text("Diagnostics")

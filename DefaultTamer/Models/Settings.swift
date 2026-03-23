@@ -14,7 +14,7 @@ struct Settings: Codable {
     var chooserModifierKey: String // "option" by default
     var diagnosticsEnabled: Bool
     var launchAtLogin: Bool
-    var telemetryEnabled: Bool? // nil = not asked, true = opt-in, false = opt-out
+    var telemetryEnabled: Bool? // nil = not asked, true = opt-in (default), false = opt-out
     var hasCreatedFirstRule: Bool
     
     init(
@@ -23,7 +23,7 @@ struct Settings: Codable {
         chooserModifierKey: String = "option",
         diagnosticsEnabled: Bool = false,
         launchAtLogin: Bool = false,
-        telemetryEnabled: Bool? = nil,
+        telemetryEnabled: Bool? = true,
         hasCreatedFirstRule: Bool = false
     ) {
         self.enabled = enabled
