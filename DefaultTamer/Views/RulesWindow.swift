@@ -20,12 +20,11 @@ struct RulesWindowContent: View {
             RulesSidebar(selectedRule: $selectedRule, showAddRule: $showAddRule)
                 .environmentObject(appState)
         } detail: {
-            // Detail pane - selected rule details
             if let rule = selectedRule {
                 RuleDetailView(rule: rule)
                     .environmentObject(appState)
             } else {
-                EmptyRuleDetail()
+                EmptyRuleDetail(onAddRule: { showAddRule = true })
             }
         }
         .frame(minWidth: 600, minHeight: 400)
@@ -72,13 +71,13 @@ struct RulesSidebar: View {
             
             // Rules list
             if appState.rules.isEmpty {
-                VStack(spacing: 8) {
-                    Image(systemName: "list.bullet.rectangle")
-                        .font(.largeTitle)
+                VStack(spacing: 12) {
+                    Text("No rules yet")
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
-                    Text("No rules")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    Button("Add Rule") { showAddRule = true }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -119,17 +118,23 @@ struct RulesSidebar: View {
 struct RuleSidebarRow: View {
     let rule: Rule
     @EnvironmentObject var appState: AppState
-    
+
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: rule.enabled ? "checkmark.circle.fill" : "circle")
-                .foregroundColor(rule.enabled ? .green : .secondary)
-                .font(.caption)
-            
+        HStack(spacing: 10) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(typeColor.opacity(rule.enabled ? 0.15 : 0.07))
+                    .frame(width: 30, height: 30)
+                Image(systemName: typeIcon)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(rule.enabled ? typeColor : .secondary)
+            }
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(ruleName)
                     .font(.body)
                     .lineLimit(1)
+                    .foregroundColor(rule.enabled ? .primary : .secondary)
                 Text(rule.type.rawValue)
                     .font(.caption2)
                     .foregroundColor(.secondary)
@@ -142,20 +147,38 @@ struct RuleSidebarRow: View {
                     .foregroundColor(.orange)
                     .font(.caption)
                     .help("Target browser is not installed. This rule is inactive.")
+            } else if let browser = appState.browserManager.getBrowser(byId: rule.targetBrowserId),
+                      let icon = browser.getIcon() {
+                Image(nsImage: icon)
+                    .renderingMode(.original)
+                    .resizable()
+                    .frame(width: 16, height: 16)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 3)
     }
-    
-    private var ruleName: String {
-        // Generate a short name for the rule
+
+    private var typeIcon: String {
         switch rule.type {
-        case .sourceApp:
-            return rule.sourceAppName ?? rule.sourceAppBundleId ?? "Source App"
-        case .domain:
-            return rule.domainPattern ?? "Domain"
-        case .urlPattern:
-            return rule.urlContains ?? "URL Pattern"
+        case .sourceApp:  return "app.badge"
+        case .domain:     return "globe"
+        case .urlPattern: return "link"
+        }
+    }
+
+    private var typeColor: Color {
+        switch rule.type {
+        case .sourceApp:  return .orange
+        case .domain:     return .blue
+        case .urlPattern: return .purple
+        }
+    }
+
+    private var ruleName: String {
+        switch rule.type {
+        case .sourceApp:  return rule.sourceAppName ?? rule.sourceAppBundleId ?? "Source App"
+        case .domain:     return rule.domainPattern ?? "Domain"
+        case .urlPattern: return rule.urlContains ?? rule.urlRegex ?? "URL Pattern"
         }
     }
 }
@@ -166,141 +189,105 @@ struct RuleDetailView: View {
     @EnvironmentObject var appState: AppState
     @State private var showDeleteConfirmation = false
     @State private var showEditSheet = false
-    
-    // Computed property to get the current state of the rule
+
     private var currentRule: Rule? {
         appState.rules.first(where: { $0.id == rule.id })
     }
-    
+
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Rule Type
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Rule Type")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
+        VStack(spacing: 0) {
+            // ── Header ─────────────────────────────────────────────────
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(typeColor.opacity(0.12))
+                        .frame(width: 48, height: 48)
+                    Image(systemName: typeIcon)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(typeColor)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(ruleName)
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .lineLimit(1)
                     Text(rule.type.rawValue)
-                        .font(.body)
-                }
-                
-                Divider()
-                
-                // Match Criteria
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Match Criteria")
-                        .font(.headline)
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
-                    
-                    switch rule.type {
-                    case .sourceApp:
-                        if let appName = rule.sourceAppName {
-                            HStack {
-                                Text("App Name:")
-                                    .foregroundColor(.secondary)
-                                Text(appName)
-                            }
-                        }
-                        if let bundleId = rule.sourceAppBundleId {
-                            HStack {
-                                Text("Bundle ID:")
-                                    .foregroundColor(.secondary)
-                                Text(bundleId)
-                                    .font(.caption)
-                            }
-                        }
-                        
-                    case .domain:
-                        if let pattern = rule.domainPattern {
-                            HStack {
-                                Text("Domain:")
-                                    .foregroundColor(.secondary)
-                                Text(pattern)
-                            }
-                        }
-                        if let matchType = rule.domainMatchType {
-                            HStack {
-                                Text("Match Type:")
-                                    .foregroundColor(.secondary)
-                                Text(matchType.rawValue)
-                            }
-                        }
-                        
-                    case .urlPattern:
-                        if let contains = rule.urlContains {
-                            HStack {
-                                Text("URL Contains:")
-                                    .foregroundColor(.secondary)
-                                Text(contains)
-                            }
-                        }
-                    }
                 }
-                
-                Divider()
-                
-                // Target Browser
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Target Browser")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                    
-                    if let browser = appState.browserManager.getBrowser(byId: rule.targetBrowserId) {
-                        HStack {
-                            if let icon = browser.getIcon() {
-                                Image(nsImage: icon)
-                                    .resizable()
-                                    .frame(width: 20, height: 20)
-                            }
-                            Text(browser.displayName)
-                        }
-                    }
-                }
-                
-                Divider()
-                
-                // Status
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Status")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                    
-                    Toggle("Enabled", isOn: Binding(
-                        get: { currentRule?.enabled ?? false },
-                        set: { _ in appState.toggleRule(rule) }
-                    ))
-                    .toggleStyle(.switch)
-                }
-                
-                Divider()
-                
-                // Actions
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Actions")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                    
-                    HStack(spacing: 12) {
-                        Button("Edit") {
-                            showEditSheet = true
-                        }
-                        .buttonStyle(.borderedProminent)
-                        
-                        Button("Duplicate") {
-                            duplicateRule()
-                        }
-                        .buttonStyle(.bordered)
-                        
-                        Button("Delete Rule", role: .destructive) {
-                            showDeleteConfirmation = true
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                }
-                
+
                 Spacer()
+
+                Toggle("", isOn: Binding(
+                    get: { currentRule?.enabled ?? false },
+                    set: { _ in appState.toggleRule(rule) }
+                ))
+                .toggleStyle(.switch)
+                .labelsHidden()
+                .help(currentRule?.enabled == true ? "Disable rule" : "Enable rule")
             }
             .padding(20)
+
+            Divider()
+
+            // ── Info cards ─────────────────────────────────────────────
+            ScrollView {
+                VStack(spacing: 12) {
+                    DetailCard(label: "Match Criteria", icon: "scope") {
+                        matchCriteriaContent
+                    }
+
+                    if let browser = appState.browserManager.getBrowser(byId: rule.targetBrowserId) {
+                        DetailCard(label: "Opens In", icon: "safari") {
+                            HStack(spacing: 10) {
+                                if let icon = browser.getIcon() {
+                                    Image(nsImage: icon)
+                                        .resizable()
+                                        .frame(width: 24, height: 24)
+                                }
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(browser.displayName).font(.body)
+                                    if rule.openInPrivateMode {
+                                        Text("Private / incognito mode")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                                Spacer()
+                                if !appState.browserManager.isBrowserAvailable(rule.targetBrowserId) {
+                                    Label("Not installed", systemImage: "exclamationmark.triangle.fill")
+                                        .font(.caption)
+                                        .foregroundColor(.orange)
+                                }
+                            }
+                        }
+                    }
+                }
+                .padding(16)
+            }
+
+            Divider()
+
+            // ── Action bar ─────────────────────────────────────────────
+            HStack(spacing: 10) {
+                Button(role: .destructive) {
+                    showDeleteConfirmation = true
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .buttonStyle(.bordered)
+                .help("Delete rule")
+
+                Spacer()
+
+                Button("Duplicate") { duplicateRule() }
+                    .buttonStyle(.bordered)
+
+                Button("Edit Rule") { showEditSheet = true }
+                    .buttonStyle(.borderedProminent)
+            }
+            .padding(16)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .sheet(isPresented: $showEditSheet) {
@@ -310,50 +297,152 @@ struct RuleDetailView: View {
         }
         .alert("Delete Rule?", isPresented: $showDeleteConfirmation) {
             Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive) {
-                appState.deleteRule(rule)
-            }
+            Button("Delete", role: .destructive) { appState.deleteRule(rule) }
         } message: {
             Text("This action cannot be undone.")
         }
     }
-    
+
+    @ViewBuilder
+    private var matchCriteriaContent: some View {
+        switch rule.type {
+        case .sourceApp:
+            HStack(spacing: 10) {
+                Image(systemName: "app.badge").foregroundColor(.orange).frame(width: 20)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(rule.sourceAppName ?? "Unknown App").font(.body)
+                    if let bundleId = rule.sourceAppBundleId {
+                        Text(bundleId).font(.caption).foregroundColor(.secondary)
+                    }
+                }
+                Spacer()
+            }
+        case .domain:
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Image(systemName: "globe").foregroundColor(.blue).frame(width: 20)
+                    Text(rule.domainPattern ?? "")
+                        .font(.system(.body, design: .monospaced))
+                    Spacer()
+                }
+                if let matchType = rule.domainMatchType {
+                    HStack {
+                        Text("Match type").font(.caption).foregroundColor(.secondary)
+                        Spacer()
+                        Text(matchType.rawValue)
+                            .font(.caption)
+                            .padding(.horizontal, 8).padding(.vertical, 2)
+                            .background(Color.secondary.opacity(0.12))
+                            .clipShape(Capsule())
+                    }
+                }
+            }
+        case .urlPattern:
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: rule.urlRegex != nil ? "chevron.left.forwardslash.chevron.right" : "link")
+                        .foregroundColor(.purple).frame(width: 20)
+                    Text(rule.urlRegex ?? rule.urlContains ?? "")
+                        .font(.system(.caption, design: .monospaced))
+                        .textSelection(.enabled)
+                    Spacer()
+                }
+                if rule.urlRegex != nil {
+                    Text("Regular expression").font(.caption).foregroundColor(.secondary)
+                }
+            }
+        }
+    }
+
+    private var typeIcon: String {
+        switch rule.type {
+        case .sourceApp:  return "app.badge"
+        case .domain:     return "globe"
+        case .urlPattern: return "link"
+        }
+    }
+
+    private var typeColor: Color {
+        switch rule.type {
+        case .sourceApp:  return .orange
+        case .domain:     return .blue
+        case .urlPattern: return .purple
+        }
+    }
+
+    private var ruleName: String {
+        switch rule.type {
+        case .sourceApp:  return rule.sourceAppName ?? rule.sourceAppBundleId ?? "Source App"
+        case .domain:     return rule.domainPattern ?? "Domain Rule"
+        case .urlPattern: return rule.urlContains ?? rule.urlRegex ?? "URL Pattern"
+        }
+    }
+
     private func duplicateRule() {
-        // Create a new rule with a new ID but same properties
-        let newRule = Rule(
-            id: UUID(),
-            type: rule.type,
-            enabled: rule.enabled,
-            targetBrowserId: rule.targetBrowserId
-        )
-        // Copy the match criteria based on type
-        var ruleToAdd = newRule
-        ruleToAdd.sourceAppBundleId = rule.sourceAppBundleId
-        ruleToAdd.sourceAppName = rule.sourceAppName
-        ruleToAdd.domainPattern = rule.domainPattern
-        ruleToAdd.domainMatchType = rule.domainMatchType
-        ruleToAdd.urlContains = rule.urlContains
-        ruleToAdd.urlRegex = rule.urlRegex
-        
+        var ruleToAdd = Rule(id: UUID(), type: rule.type, enabled: rule.enabled, targetBrowserId: rule.targetBrowserId)
+        ruleToAdd.sourceAppBundleId  = rule.sourceAppBundleId
+        ruleToAdd.sourceAppName      = rule.sourceAppName
+        ruleToAdd.domainPattern      = rule.domainPattern
+        ruleToAdd.domainMatchType    = rule.domainMatchType
+        ruleToAdd.urlContains        = rule.urlContains
+        ruleToAdd.urlRegex           = rule.urlRegex
+        ruleToAdd.openInPrivateMode  = rule.openInPrivateMode
         appState.addRule(ruleToAdd)
     }
 }
 
-// Empty state for detail view
+// Empty state for the detail panel
 struct EmptyRuleDetail: View {
+    var onAddRule: (() -> Void)? = nil
+
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "list.bullet.rectangle")
-                .font(.system(size: 48))
+        VStack(spacing: 16) {
+            Image(systemName: "arrow.triangle.branch")
+                .font(.system(size: 44))
                 .foregroundColor(.secondary)
             Text("No Rule Selected")
                 .font(.headline)
+            Text("Select a rule from the list, or add a new one to start routing links.")
+                .font(.subheadline)
                 .foregroundColor(.secondary)
-            Text("Select a rule from the sidebar to view details")
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 260)
+            if let onAddRule {
+                Button("Add Rule") { onAddRule() }
+                    .buttonStyle(.borderedProminent)
+                    .padding(.top, 4)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+// Card component used in RuleDetailView
+struct DetailCard<Content: View>: View {
+    let label: String
+    let icon: String
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text(label.uppercased())
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.secondary)
+            }
+            content
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(Color(NSColor.controlBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(Color.secondary.opacity(0.15), lineWidth: 1)
+        )
     }
 }
 

@@ -66,7 +66,7 @@ struct UIConstants {
     static let rulesWindowWidth: CGFloat = 600
     static let rulesWindowHeight: CGFloat = 500
     static let addRuleSheetCompactWidth: CGFloat = 500
-    static let addRuleSheetCompactHeight: CGFloat = 400
+    static let addRuleSheetCompactHeight: CGFloat = 420
     static let addRuleSheetExpandedHeight: CGFloat = 500
     
     // Icon sizes

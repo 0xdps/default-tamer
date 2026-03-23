@@ -343,12 +343,9 @@ struct RulesTab: View {
                 
                 // Rules list
                 if appState.rules.isEmpty {
-                    VStack(spacing: 8) {
-                        Image(systemName: "list.bullet.rectangle")
-                            .font(.largeTitle)
-                            .foregroundColor(.secondary)
-                        Text("No rules")
-                            .font(.caption)
+                    VStack(spacing: 12) {
+                        Text("No rules yet")
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -385,7 +382,7 @@ struct RulesTab: View {
                 RuleDetailView(rule: rule)
                     .environmentObject(appState)
             } else {
-                EmptyRuleDetail()
+                EmptyRuleDetail(onAddRule: { showAddRule = true })
             }
         }
         .sheet(isPresented: $showAddRule) {

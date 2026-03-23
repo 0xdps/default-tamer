@@ -53,7 +53,7 @@ struct AddRuleSheet: View {
             
             // Form
             Form {
-                Section("Rule Type") {
+                Section() {
                     Picker("Type", selection: $ruleType) {
                         ForEach(RuleType.allCases, id: \.self) { type in
                             Text(type.rawValue).tag(type)
@@ -170,7 +170,7 @@ struct AddRuleSheet: View {
                     }
                 }
                 
-                Section("Target Browser") {
+                Section() {
                     HStack {
                         Picker("Browser", selection: $targetBrowserId) {
                             ForEach(appState.browserManager.availableBrowsers) { browser in
@@ -202,14 +202,25 @@ struct AddRuleSheet: View {
                         .help("Refresh browser list")
                     }
 
-                    Toggle("Open in private/incognito mode", isOn: $openInPrivateMode)
-                        .help("Opens URLs in private/incognito window (not all browsers supported)")
-                        .disabled(!licensing.isEnabled(.privateBrowsing))
-                        .overlay(alignment: .trailing) {
-                            if !licensing.isEnabled(.privateBrowsing) {
-                                PlusFeatureBadge().allowsHitTesting(false)
+                    if licensing.isEnabled(.privateBrowsing) {
+                        Toggle("Open in private/incognito mode", isOn: $openInPrivateMode)
+                            .help("Opens URLs in private/incognito window (not all browsers supported)")
+                    } else {
+                        HStack(spacing: 8) {
+                            Image(systemName: "lock.fill")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Private / incognito mode")
+                                    .foregroundColor(.secondary)
+                                Text("Upgrade to Power to open links in private windows.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
                             }
+                            Spacer()
+                            PlusFeatureBadge()
                         }
+                    }
                 }
             }
             .formStyle(.grouped)
@@ -702,14 +713,25 @@ struct EditRuleSheet: View {
                         .help("Refresh browser list")
                     }
 
-                    Toggle("Open in private/incognito mode", isOn: $openInPrivateMode)
-                        .help("Opens URLs in private/incognito window (not all browsers supported)")
-                        .disabled(!licensing.isEnabled(.privateBrowsing))
-                        .overlay(alignment: .trailing) {
-                            if !licensing.isEnabled(.privateBrowsing) {
-                                PlusFeatureBadge().allowsHitTesting(false)
+                    if licensing.isEnabled(.privateBrowsing) {
+                        Toggle("Open in private/incognito mode", isOn: $openInPrivateMode)
+                            .help("Opens URLs in private/incognito window (not all browsers supported)")
+                    } else {
+                        HStack(spacing: 8) {
+                            Image(systemName: "lock.fill")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Private / incognito mode")
+                                    .foregroundColor(.secondary)
+                                Text("Upgrade to Power to open links in private windows.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
                             }
+                            Spacer()
+                            PlusFeatureBadge()
                         }
+                    }
                 }
             }
             .formStyle(.grouped)
