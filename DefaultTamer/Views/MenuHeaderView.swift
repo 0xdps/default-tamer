@@ -9,6 +9,7 @@ import SwiftUI
 
 struct MenuHeaderView: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var licensing: LicensingManager
     var isDefaultBrowser: Bool = true
     @State private var isToggleHovering = false
     @State private var isIconHovered = false
@@ -104,10 +105,12 @@ struct MenuHeaderView: View {
 
     private var statusText: String {
         let rulesCount = appState.rules.count
+        let isPaid = licensing.status?.plan.isPaid == true
+        let prefix = isPaid ? "⚡ " : ""
         if rulesCount == 0 {
-            return "No rules configured"
+            return "\(prefix)No rules configured"
         } else {
-            return "\(rulesCount) rule\(rulesCount == 1 ? "" : "s")"
+            return "\(prefix)\(rulesCount) rule\(rulesCount == 1 ? "" : "s")"
         }
     }
 

@@ -46,7 +46,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         let isDefault = appState.browserManager.isDefaultBrowser()
         let headerItem = NSMenuItem()
         headerItem.view = makeHostingView(
-            MenuHeaderView(isDefaultBrowser: isDefault).environmentObject(appState),
+            MenuHeaderView(isDefaultBrowser: isDefault)
+                .environmentObject(appState)
+                .environmentObject(LicensingManager.shared),
             width: UIConstants.menuBarPopoverWidth, height: isDefault ? 90 : 150)
         menu.addItem(headerItem)
 
@@ -128,7 +130,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
         // Validate stored license in the background (refreshes plan status from server)
         LicensingManager.shared.validateOnLaunch()
-        
+
+        // Re-validate when the app returns to the foreground (throttled in LicensingManager)
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            Task { @MainActor in
+                LicensingManager.shared.validateOnForeground()
+            }
+        }
+
         // Track app launch & updates (AppState handles debouncing internal to these calls)
         appState.trackAppUpdated()
         appState.trackAppLaunch()
@@ -205,7 +218,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
         if let headerItem = menu.items.first {
             headerItem.view = makeHostingView(
-                MenuHeaderView(isDefaultBrowser: isDefault).environmentObject(appState),
+                MenuHeaderView(isDefaultBrowser: isDefault)
+                    .environmentObject(appState)
+                    .environmentObject(LicensingManager.shared),
                 width: UIConstants.menuBarPopoverWidth, height: headerHeight)
         }
     }

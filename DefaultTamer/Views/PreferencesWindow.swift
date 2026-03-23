@@ -96,8 +96,16 @@ struct PreferencesWindow: View {
                 .help("About Default Tamer")
 
                 Button(action: { selectedTab = .power }) {
-                    Label("Power", systemImage: "bolt.fill")
-                        .foregroundColor(selectedTab == .power ? .orange : .primary)
+                    ZStack(alignment: .topTrailing) {
+                        Label("Power", systemImage: "bolt.fill")
+                            .foregroundColor(selectedTab == .power ? .orange : .primary)
+                        if !licensing.hasPowerPlan && !licensing.isValidating {
+                            Circle()
+                                .fill(Color.orange)
+                                .frame(width: 7, height: 7)
+                                .offset(x: 3, y: -3)
+                        }
+                    }
                 }
                 .keyboardShortcut("5", modifiers: .command)
                 .help("Manage your Power plan license")

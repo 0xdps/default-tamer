@@ -3,7 +3,6 @@
 //  Default Tamer
 //
 //  Preferences tab for managing the Power plan license.
-//  Shows current plan status and a sign-in / sign-out action.
 //
 
 import SwiftUI
@@ -11,261 +10,327 @@ import SwiftUI
 struct LicensingTab: View {
     @EnvironmentObject var licensing: LicensingManager
     @EnvironmentObject var appState: AppState
-
+    @State private var isUpgrading = false
+    @State private var showSignOutConfirmation = false
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
-                // Header
-                VStack(spacing: 8) {
-                    Image(systemName: "bolt.fill")
-                        .font(.system(size: 40))
-                        .foregroundColor(.orange)
-
-                    Text("Power Plan")
-                        .font(.title2)
-                        .fontWeight(.bold)
-
-                    Text("Unlock advanced routing features for power users.")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.top, 8)
+            VStack(spacing: 0) {
+                statusSection
+                    .padding(28)
 
                 Divider()
+                    .padding(.horizontal, 28)
 
-                // Plan status
-                if licensing.isValidating {
-                    HStack(spacing: 8) {
-                        ProgressView().controlSize(.small)
-                        Text("Checking license…")
-                            .foregroundColor(.secondary)
-                    }
-                } else if let status = licensing.status, status.plan.isPaid {
-                    activePlanCard(status: status)
-                } else if licensing.status != nil {
-                    // Signed in but on free plan — show upgrade prompt
-                    signedInFreePlanCard
-                } else {
-                    signInCard
-                }
-
-                Divider()
-
-                // Feature list
-                featureList
-
-                Spacer()
+                featuresSection
+                    .padding(28)
             }
-            .padding(24)
+            .frame(maxWidth: 600)
+            .frame(maxWidth: .infinity)
+        }
+        .confirmationDialog("Sign out?", isPresented: $showSignOutConfirmation, titleVisibility: .visible) {
+            Button("Sign Out", role: .destructive) { licensing.signOut() }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("You'll need to sign in again to access Power features on this device.")
         }
     }
 
-    // MARK: - Subviews
+    // MARK: - Status section
 
     @ViewBuilder
-    private func activePlanCard(status: LicenseStatus) -> some View {
-        VStack(spacing: 12) {
-            HStack {
-                Image(systemName: "checkmark.seal.fill")
-                    .foregroundColor(.green)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Power Plan — Active")
+    private var statusSection: some View {
+        if licensing.isValidating && licensing.status == nil {
+            HStack(spacing: 8) {
+                ProgressView().controlSize(.small)
+                Text("Checking license…")
+                    .foregroundColor(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+        } else if let status = licensing.status, status.plan.isPaid {
+            activePlanSection(status: status)
+        } else if licensing.status != nil {
+            freePlanSection
+        } else {
+            notSignedInSection
+        }
+    }
+
+    // Active paid plan
+    @ViewBuilder
+    private func activePlanSection(status: LicenseStatus) -> some View {
+        HStack(alignment: .center, spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.orange.opacity(0.12))
+                    .frame(width: 52, height: 52)
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundColor(.orange)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Text("Power Plan")
+                        .font(.title3)
                         .fontWeight(.semibold)
-                    if let until = status.validUntil {
-                        Text("Renews \(until.formatted(date: .abbreviated, time: .omitted))")
-                            .font(.caption)
+                    Text("ACTIVE")
+                        .font(.system(size: 9, weight: .bold))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.orange.opacity(0.12))
+                        .foregroundColor(.orange)
+                        .clipShape(Capsule())
+                }
+                if let until = status.validUntil {
+                    Text("Renews \(until.formatted(date: .abbreviated, time: .omitted))")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                } else {
+                    Text("Lifetime — no expiry")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            Spacer()
+
+            HStack(spacing: 14) {
+                Button {
+                    licensing.validateOnLaunch()
+                } label: {
+                    if licensing.isValidating {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Image(systemName: "arrow.clockwise")
                             .foregroundColor(.secondary)
                     }
                 }
-                Spacer()
-            }
-            .padding()
-            .background(Color.green.opacity(0.08))
-            .cornerRadius(8)
+                .buttonStyle(.borderless)
+                .disabled(licensing.isValidating)
+                .help("Refresh license status")
 
-            Button(role: .destructive) {
-                licensing.signOut()
-            } label: {
-                Text("Sign out")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-        }
-    }
-
-    @State private var isUpgrading = false
-    @State private var upgradeError: String? = nil
-
-    // Not signed in at all
-    private var signInCard: some View {
-        VStack(spacing: 12) {
-            HStack {
-                Image(systemName: "bolt.circle.fill")
-                    .foregroundColor(.orange)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Unlock Power Plan")
-                        .fontWeight(.semibold)
-                    Text("Sign in and purchase to unlock all features")
-                        .font(.caption)
+                Button {
+                    showSignOutConfirmation = true
+                } label: {
+                    Text("Sign out")
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
-                Spacer()
+                .buttonStyle(.plain)
+                .help("Sign out of your Power plan account")
             }
-            .padding()
-            .background(Color.orange.opacity(0.06))
-            .cornerRadius(8)
-
-            Button {
-                isUpgrading = true
-                upgradeError = nil
-                Task {
-                    await licensing.startUpgrade(
-                        fallbackBrowserId: appState.settings.fallbackBrowserId
-                    )
-                    isUpgrading = false
-                }
-            } label: {
-                if isUpgrading {
-                    HStack(spacing: 6) {
-                        ProgressView().controlSize(.small).tint(.white)
-                        Text("Opening checkout…")
-                    }
-                    .frame(maxWidth: .infinity)
-                } else {
-                    Label("Get Power Plan", systemImage: "bolt.fill")
-                        .frame(maxWidth: .infinity)
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.orange)
-            .disabled(isUpgrading)
-            .help("Sign in with Google and purchase the Power plan")
-
-            Button {
-                licensing.startOAuth(fallbackBrowserId: appState.settings.fallbackBrowserId)
-            } label: {
-                Text("Already have a plan? Sign in")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-            .help("Sign in to restore an existing Power plan on this device")
         }
     }
 
-    // Signed in, but no active subscription
-    private var signedInFreePlanCard: some View {
-        VStack(spacing: 12) {
-            HStack {
-                Image(systemName: "lock.fill")
-                    .foregroundColor(.secondary)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Free Plan")
+    // Signed in but free
+    private var freePlanSection: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HStack(alignment: .center, spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.orange.opacity(0.1))
+                        .frame(width: 52, height: 52)
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 22))
+                        .foregroundColor(.orange)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Upgrade to Power")
+                        .font(.title3)
                         .fontWeight(.semibold)
-                    Text("You're signed in — upgrade to unlock all features")
-                        .font(.caption)
+                    Text("You're signed in — unlock all features below")
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
-                Spacer()
-            }
-            .padding()
-            .background(Color.secondary.opacity(0.06))
-            .cornerRadius(8)
-
-            if let error = upgradeError {
-                Text(error)
-                    .font(.caption)
-                    .foregroundColor(.red)
-                    .multilineTextAlignment(.center)
             }
 
-            Button {
-                isUpgrading = true
-                upgradeError = nil
-                Task {
-                    await licensing.startUpgrade(
-                        fallbackBrowserId: appState.settings.fallbackBrowserId
-                    )
-                    isUpgrading = false
-                }
-            } label: {
-                if isUpgrading {
-                    HStack(spacing: 6) {
-                        ProgressView().controlSize(.small).tint(.white)
-                        Text("Opening checkout\u{2026}")
+            HStack(spacing: 10) {
+                Button {
+                    isUpgrading = true
+                    Task {
+                        await licensing.startUpgrade(fallbackBrowserId: appState.settings.fallbackBrowserId)
+                        isUpgrading = false
                     }
-                    .frame(maxWidth: .infinity)
-                } else {
-                    Label("Upgrade to Power", systemImage: "bolt.fill")
-                        .frame(maxWidth: .infinity)
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.orange)
-            .disabled(isUpgrading)
-            .help("Opens your browser to purchase the Power plan")
-
-            Button(role: .destructive) {
-                licensing.signOut()
-            } label: {
-                Text("Sign out")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-        }
-    }
-
-    private var featureList: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("What's included")
-                .font(.headline)
-
-            featureRow(
-                icon: "eye.slash",
-                title: "Private Browsing rules",
-                description: "Route specific links to a private/incognito browser session.",
-                feature: .privateBrowsing
-            )
-            featureRow(
-                icon: "person.2",
-                title: "Chrome Profile rules",
-                description: "Open links in a specific Chrome profile by name.",
-                feature: .chromeProfiles
-            )
-            featureRow(
-                icon: "keyboard",
-                title: "Keyboard Shortcut rules",
-                description: "Trigger routing rules with a global keyboard shortcut.",
-                feature: .shortcutRules
-            )
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func featureRow(icon: String, title: String, description: String, feature: LicenseFeature) -> some View {
-        let unlocked = licensing.isEnabled(feature)
-        return HStack(alignment: .top, spacing: 10) {
-            Image(systemName: icon)
-                .frame(width: 20)
-                .foregroundColor(unlocked ? .orange : .secondary)
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(title)
-                        .fontWeight(.medium)
-                    if !unlocked {
-                        PlusFeatureBadge()
+                } label: {
+                    if isUpgrading {
+                        HStack(spacing: 6) {
+                            ProgressView().controlSize(.small).tint(.white)
+                            Text("Opening…")
+                        }
                     } else {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
-                            .font(.caption)
+                        Label("Upgrade to Power", systemImage: "bolt.fill")
                     }
                 }
-                Text(description)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                .buttonStyle(.borderedProminent)
+                .tint(.orange)
+                .disabled(isUpgrading)
+
+                Button {
+                    licensing.validateOnLaunch()
+                } label: {
+                    Label("Restore", systemImage: "arrow.clockwise")
+                }
+                .buttonStyle(.bordered)
+                .help("Re-check for an existing subscription on your account")
+
+                Spacer()
+
+                Button {
+                    showSignOutConfirmation = true
+                } label: {
+                    Text("Sign Out")
+                }
+                .buttonStyle(.bordered)
             }
         }
-        .padding(.vertical, 4)
+    }
+
+    // Not signed in
+    private var notSignedInSection: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HStack(alignment: .center, spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.orange.opacity(0.1))
+                        .frame(width: 52, height: 52)
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 22))
+                        .foregroundColor(.orange)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Power Plan")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                    Text("Advanced routing for power users")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            HStack(spacing: 10) {
+                Button {
+                    isUpgrading = true
+                    Task {
+                        await licensing.startUpgrade(fallbackBrowserId: appState.settings.fallbackBrowserId)
+                        isUpgrading = false
+                    }
+                } label: {
+                    if isUpgrading {
+                        HStack(spacing: 6) {
+                            ProgressView().controlSize(.small).tint(.white)
+                            Text("Opening…")
+                        }
+                    } else {
+                        Label("Get Power Plan", systemImage: "bolt.fill")
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.orange)
+                .disabled(isUpgrading)
+                .help("Sign in with Google and purchase the Power plan")
+
+                Button {
+                    licensing.startOAuth(fallbackBrowserId: appState.settings.fallbackBrowserId)
+                } label: {
+                    Text("Sign In")
+                }
+                .buttonStyle(.bordered)
+                .help("Sign in to restore an existing Power plan on this device")
+            }
+        }
+    }
+
+    // MARK: - Features grid
+
+    /// Column count adapts to feature count:
+    ///   2 features → 1 row  of 2  (2 cols)
+    ///   3 features → 1 row  of 3  (3 cols)
+    ///   4 features → 2 rows of 2  (2 cols)
+    private var featureColumnCount: Int {
+        switch LicenseFeature.allCases.count {
+        case 3:  return 3
+        default: return 2
+        }
+    }
+
+    private var featuresSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("What’s included")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundColor(.secondary)
+
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: featureColumnCount),
+                spacing: 12
+            ) {
+                featureTile(
+                    icon: "eye.slash",
+                    title: "Private Browsing",
+                    description: "Route links to private/incognito browser sessions.",
+                    feature: .privateBrowsing
+                )
+                featureTile(
+                    icon: "person.2",
+                    title: "Chrome Profiles",
+                    description: "Open links in a specific Chrome profile by name.",
+                    feature: .chromeProfiles
+                )
+                featureTile(
+                    icon: "keyboard",
+                    title: "Keyboard Shortcuts",
+                    description: "Trigger routing rules with a global hotkey.",
+                    feature: .shortcutRules
+                )
+            }
+        }
+    }
+
+    private func featureTile(icon: String, title: String, description: String, feature: LicenseFeature) -> some View {
+        let unlocked = licensing.isEnabled(feature)
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(unlocked ? .orange : .secondary)
+                    .frame(width: 20)
+                Spacer()
+                if unlocked {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                } else {
+                    PlusFeatureBadge()
+                }
+            }
+
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+
+            Spacer(minLength: 0)
+
+            Text(description)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .lineLimit(3)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 110, maxHeight: 110, alignment: .leading)
+        .background(Color(nsColor: .controlBackgroundColor))
+        .cornerRadius(8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(
+                    unlocked ? Color.orange.opacity(0.35) : Color.primary.opacity(0.07),
+                    lineWidth: unlocked ? 1.5 : 1
+                )
+        )
     }
 }
+

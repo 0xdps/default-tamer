@@ -5,6 +5,7 @@ interface Props {
   image?: string;
   type?: string;
   jsonLd?: unknown;
+  noIndex?: boolean;
 }
 
 const { 
@@ -13,6 +14,7 @@ const {
   image,
   type = 'website',
   jsonLd,
+  noIndex = false,
 } = Astro.props;
 
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') || 'https://www.defaulttamer.app';
@@ -29,7 +31,7 @@ const ogImage = image || '/images/og-image.png';
 <meta name="author" content="Default Tamer" />
 <meta name="application-name" content="Default Tamer" />
 <meta name="apple-mobile-web-app-title" content="Default Tamer" />
-<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+<meta name="robots" content={noIndex ? 'noindex, nofollow' : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1'} />
 <meta name="theme-color" content="#f97316" />
 
 <!-- Canonical URL -->

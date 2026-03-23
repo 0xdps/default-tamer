@@ -69,6 +69,7 @@ final class LicensingManager: ObservableObject {
 
     private let sessionTokenKey = "sessionToken"
     private let userIdKey       = "userId"
+    private var lastValidated: Date?
 
     private init() {}
 
@@ -86,6 +87,13 @@ final class LicensingManager: ObservableObject {
     func validateOnLaunch() {
         guard let sessionToken = Keychain.load(key: sessionTokenKey) else { return }
         Task { await checkSubscription(sessionToken: sessionToken) }
+    }
+
+    /// Called when the app returns to the foreground.
+    /// Throttled — skips the network call if a check ran within the last 5 minutes.
+    func validateOnForeground() {
+        if let last = lastValidated, Date().timeIntervalSince(last) < 300 { return }
+        validateOnLaunch()
     }
 
     /// Opens the NubeAuth OAuth flow to activate an existing license (no payment).
@@ -322,7 +330,9 @@ final class LicensingManager: ObservableObject {
                 let plan = LicensePlan(slug: result.planSlug)
                 var validUntil: Date?
                 if let iso = result.periodEnd {
-                    validUntil = ISO8601DateFormatter().date(from: iso)
+                    let fmt = ISO8601DateFormatter()
+                    fmt.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                    validUntil = fmt.date(from: iso)
                 }
                 // All Power features are unlocked when the subscription is active.
                 let allFeatures = LicenseFeature.allCases.map(\.rawValue)
@@ -337,6 +347,7 @@ final class LicensingManager: ObservableObject {
                 status = LicenseStatus(licenseId: "", plan: .free, features: [], validUntil: nil)
                 appLogger.info("Subscription inactive or free plan")
             }
+            lastValidated = Date()
         } catch {
             appLogger.error("Subscription check failed: \(error.localizedDescription, privacy: .public)")
             // Non-fatal: leave existing status unchanged so the app stays usable offline

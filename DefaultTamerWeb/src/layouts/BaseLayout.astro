@@ -11,9 +11,10 @@ interface Props {
   image?: string;
   type?: string;
   jsonLd?: unknown;
+  noIndex?: boolean;
 }
 
-const { title, description, image, type, jsonLd } = Astro.props;
+const { title, description, image, type, jsonLd, noIndex } = Astro.props;
 ---
 
 <!doctype html>
@@ -25,6 +26,7 @@ const { title, description, image, type, jsonLd } = Astro.props;
       image={image}
       type={type}
       jsonLd={jsonLd}
+      noIndex={noIndex}
     />
     <!-- Preload self-hosted fonts so LCP text renders fast -->
     <link rel="preload" href="/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin />
