@@ -1,0 +1,28 @@
+DefaultTamer/Views/RecentRoutesView.swift
+  622d509bcd7d2250 15-16,123-128,131-157
+DefaultTamer/Views/PreferencesWindow.swift
+  622d509bcd7d2250 82,85-86,134
+DefaultTamer/Models/Settings.swift
+  622d509bcd7d2250 17,26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "0ec136b99af4c8c6a3555d0ba8d472f9f555a469",
+  "prompts": {
+    "622d509bcd7d2250": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "09141db6-4c3b-415b-8ca3-1da725e73d2d",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>",
+      "messages": [],
+      "total_additions": 46,
+      "total_deletions": 20,
+      "accepted_lines": 1463,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/29eaf8d6bb7a09ef3217b203e7c39850907b25847b591e934f1f540253520106"
+    }
+  }
+}
