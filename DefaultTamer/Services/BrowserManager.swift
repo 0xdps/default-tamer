@@ -338,8 +338,16 @@ class BrowserManager: ObservableObject {
     /// Single unified launch entry point.
     /// Resolves the browser's LaunchStrategy and dispatches to the correct mechanism.
     private func safeLaunch(url: URL, inBrowser browserId: String, privateMode: Bool) throws {
-        let parts = browserId.components(separatedBy: Browser.profileSeparator)
+        var parts = browserId.components(separatedBy: Browser.profileSeparator)
         let bundleId = parts[0]
+
+        // Gate: if the requested browser is a profile entry and the user's license
+        // doesn't include Chrome Profiles, silently drop to the base browser.
+        if parts.count > 1 && !LicensingManager.shared.isEnabled(.chromeProfiles) {
+            debugLog("⚠️ chromeProfiles feature not licensed — stripping profile from \(browserId), opening base browser")
+            parts = [bundleId]
+        }
+
         let profileDir: String? = parts.count > 1 ? parts[1] : nil
 
         guard let appURL = safeURLForApplication(withBundleIdentifier: browserId) else {

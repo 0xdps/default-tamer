@@ -173,7 +173,11 @@ struct AddRuleSheet: View {
                 Section() {
                     HStack {
                         Picker("Browser", selection: $targetBrowserId) {
-                            ForEach(appState.browserManager.availableBrowsers) { browser in
+                            // Locked profile entries are excluded from the picker entirely —
+                            // .disabled() on Picker items is cosmetic only and doesn't block selection.
+                            ForEach(appState.browserManager.availableBrowsers.filter {
+                                $0.profileDirectory == nil || licensing.isEnabled(.chromeProfiles)
+                            }) { browser in
                                 Label {
                                     Text(browser.displayName)
                                 } icon: {
@@ -200,6 +204,25 @@ struct AddRuleSheet: View {
                         .buttonStyle(.borderless)
                         .disabled(appState.browserManager.isRefreshingBrowsers)
                         .help("Refresh browser list")
+                    }
+
+                    // Show a locked hint row if there are profile browsers the user can't pick yet.
+                    if !licensing.isEnabled(.chromeProfiles) &&
+                        appState.browserManager.availableBrowsers.contains(where: { $0.profileDirectory != nil }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "person.2.fill")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Browser profiles")
+                                    .foregroundColor(.secondary)
+                                Text("Upgrade to Power to route URLs to a specific Chrome, Edge, or Brave profile.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            PlusFeatureBadge()
+                        }
                     }
 
                     if licensing.isEnabled(.privateBrowsing) {
@@ -274,7 +297,18 @@ struct AddRuleSheet: View {
             }
         }
     }
-    
+
+    /// Returns the effective browser ID for `targetBrowserId`, downgrading to the base
+    /// browser if the selected entry is a locked profile the user can't actually use.
+    private var effectiveTargetBrowserId: String {
+        guard !licensing.isEnabled(.chromeProfiles),
+              let browser = appState.browserManager.availableBrowsers.first(where: { $0.id == targetBrowserId }),
+              browser.profileDirectory != nil else {
+            return targetBrowserId
+        }
+        return browser.baseBundleId
+    }
+
     private var isValid: Bool {
         // Must have target browser
         guard !targetBrowserId.isEmpty else { return false }
@@ -684,7 +718,9 @@ struct EditRuleSheet: View {
                 Section("Target Browser") {
                     HStack {
                         Picker("Browser", selection: $targetBrowserId) {
-                            ForEach(appState.browserManager.availableBrowsers) { browser in
+                            ForEach(appState.browserManager.availableBrowsers.filter {
+                                $0.profileDirectory == nil || licensing.isEnabled(.chromeProfiles)
+                            }) { browser in
                                 Label {
                                     Text(browser.displayName)
                                 } icon: {
@@ -711,6 +747,24 @@ struct EditRuleSheet: View {
                         .buttonStyle(.borderless)
                         .disabled(appState.browserManager.isRefreshingBrowsers)
                         .help("Refresh browser list")
+                    }
+
+                    if !licensing.isEnabled(.chromeProfiles) &&
+                        appState.browserManager.availableBrowsers.contains(where: { $0.profileDirectory != nil }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "person.2.fill")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Browser profiles")
+                                    .foregroundColor(.secondary)
+                                Text("Upgrade to Power to route URLs to a specific Chrome, Edge, or Brave profile.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            PlusFeatureBadge()
+                        }
                     }
 
                     if licensing.isEnabled(.privateBrowsing) {
@@ -771,6 +825,14 @@ struct EditRuleSheet: View {
             )
         }
         .onAppear {
+            // If the rule's saved target is a locked profile (e.g. user signed out since
+            // rule was created), reset to the base browser to avoid a blank picker.
+            if !licensing.isEnabled(.chromeProfiles),
+               let browser = appState.browserManager.availableBrowsers.first(where: { $0.id == targetBrowserId }),
+               browser.profileDirectory != nil {
+                targetBrowserId = browser.baseBundleId
+            }
+
             // Load installed apps in background
             DispatchQueue.global(qos: .userInitiated).async {
                 let apps = ApplicationScanner.shared.getInstalledApplications()

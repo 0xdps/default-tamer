@@ -42,6 +42,7 @@ struct PreferencesWindow: View {
                 case .general:
                     GeneralTab()
                         .environmentObject(appState)
+                        .environmentObject(licensing)
                 case .rules:
                     RulesTab()
                         .environmentObject(appState)
@@ -147,6 +148,7 @@ enum PreferenceTab: Int {
 
 struct GeneralTab: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var licensing: LicensingManager
     @State private var showResetConfirmation = false
     
     var body: some View {
@@ -186,7 +188,11 @@ struct GeneralTab: View {
                         get: { appState.settings.fallbackBrowserId },
                         set: { appState.setFallbackBrowser($0) }
                     )) {
-                        ForEach(appState.browserManager.availableBrowsers) { browser in
+                        // Locked profile entries are excluded from the picker — .disabled()
+                        // on Picker items is cosmetic only and doesn't prevent selection.
+                        ForEach(appState.browserManager.availableBrowsers.filter {
+                            $0.profileDirectory == nil || licensing.isEnabled(.chromeProfiles)
+                        }) { browser in
                             Label {
                                 Text(browser.displayName)
                             } icon: {
@@ -215,6 +221,25 @@ struct GeneralTab: View {
                     .buttonStyle(.borderless)
                     .disabled(appState.browserManager.isRefreshingBrowsers)
                     .help("Refresh browser list")
+                }
+
+                // Informational row so free users discover the Chrome Profiles feature.
+                if !licensing.isEnabled(.chromeProfiles) &&
+                    appState.browserManager.availableBrowsers.contains(where: { $0.profileDirectory != nil }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "person.2.fill")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Browser profiles")
+                                .foregroundColor(.secondary)
+                            Text("Upgrade to Power to set a specific Chrome, Edge, or Brave profile as fallback.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        PlusFeatureBadge()
+                    }
                 }
             } header: {
                 Text("Default Browser")
