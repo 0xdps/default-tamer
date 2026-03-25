@@ -49,15 +49,30 @@ class Router {
             appLogger.info("🔀 App disabled, using fallback")
             return .openInFallback
         }
-        
+
+        // Check shortcut rules first — they act as explicit modifier-hold overrides.
+        // This check runs before the chooser so a shortcut combo always wins.
+        if let flags = modifierFlags {
+            let heldFlags = flags.intersection([.command, .option, .shift, .control])
+            if !heldFlags.isEmpty {
+                for rule in rules where rule.type == .shortcut && rule.enabled {
+                    if let action = evaluateShortcutRule(rule, heldFlags: heldFlags) {
+                        appLogger.info("🔀 ⌨️ Shortcut rule matched: \(ShortcutFormatter.format(keyCode: nil, modifiers: rule.shortcutModifiers), privacy: .public)")
+                        return action
+                    }
+                }
+            }
+        }
+
         // Check for modifier key to show chooser
         if let flags = modifierFlags, flags.contains(settings.chooserModifierFlags) {
             appLogger.info("🔀 Modifier key held (\(settings.chooserModifierKey)), showing chooser")
             return .showChooser(url: url)
         }
         
-        // Evaluate rules top-to-bottom, first match wins
-        for (index, rule) in rules.enumerated() where rule.enabled {
+        // Evaluate rules top-to-bottom, first match wins.
+        // Shortcut rules are already handled above, so skip them here.
+        for (index, rule) in rules.enumerated() where rule.enabled && rule.type != .shortcut {
             appLogger.info("🔀 Evaluating rule #\(index + 1, privacy: .public): \(rule.type.rawValue, privacy: .public)")
             if let action = evaluateRule(rule, url: url, sourceApp: sourceApp) {
                 appLogger.info("🔀 ✅ Rule matched!")
@@ -80,7 +95,18 @@ class Router {
             return evaluateDomainRule(rule, url: url)
         case .urlPattern:
             return evaluateURLPatternRule(rule, url: url)
+        case .shortcut:
+            return nil  // Handled before normal rule evaluation in route()
         }
+    }
+
+    /// Evaluates a shortcut rule: matches when the held modifier flags exactly equal the rule's combo.
+    private static func evaluateShortcutRule(_ rule: Rule, heldFlags: NSEvent.ModifierFlags) -> RouteAction? {
+        guard let rawMods = rule.shortcutModifiers else { return nil }
+        let ruleFlags = NSEvent.ModifierFlags(rawValue: UInt(rawMods))
+            .intersection([.command, .option, .shift, .control])
+        guard !ruleFlags.isEmpty, heldFlags == ruleFlags else { return nil }
+        return .openInBrowser(bundleId: rule.targetBrowserId, matchedRule: rule)
     }
     
     /// Evaluates source app rule

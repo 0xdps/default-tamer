@@ -370,19 +370,27 @@ class BrowserManager: ObservableObject {
             if privateMode {
                 debugLog("⚠️ Private mode not supported via CLI for \(bundleId), opening normally")
             }
-            try openViaWorkspace(url: url, appURL: appURL, bundleId: bundleId)
+            openViaWorkspace(url: url, appURL: appURL, bundleId: bundleId)
 
         case .chromium(let privateFlag):
-            // Chrome, Edge, Brave, Opera, Vivaldi, and all Chromium forks.
-            //   open -na <App> --args [--profile-directory=X] [privateFlag] <url>
-            var args: [String] = ["-na", appURL.path, "--args"]
-            if let dir = profileDir { args.append("--profile-directory=\(dir)") }
-            if privateMode        { args.append(privateFlag) }
-            args.append(url.absoluteString)
-            try runProcess("/usr/bin/open", arguments: args, bundleId: bundleId)
-            let note = [profileDir.map { "profile: \($0)" }, privateMode ? "private" : nil]
-                .compactMap { $0 }.joined(separator: ", ")
-            debugLog("✅ Opened \(url.absoluteString) in \(bundleId)\(note.isEmpty ? "" : " (\(note))")")
+            // Real Chromium browsers (Chrome, Edge, Brave, etc.) support CLI args for profiles
+            // and private mode. For those cases use `open -na --args` so the flags reach the app.
+            // Without those flags, fall back to NSWorkspace which is universal and works for
+            // any browser-registered app (including unknown Electron wrappers like Atlas, Dia, etc.)
+            // that don't implement Chrome-style single-instance IPC.
+            if privateMode || profileDir != nil {
+                var args: [String] = ["-na", appURL.path, "--args"]
+                if let dir = profileDir { args.append("--profile-directory=\(dir)") }
+                if privateMode        { args.append(privateFlag) }
+                args.append(url.absoluteString)
+                try runProcess("/usr/bin/open", arguments: args, bundleId: bundleId)
+                let note = [profileDir.map { "profile: \($0)" }, privateMode ? "private" : nil]
+                    .compactMap { $0 }.joined(separator: ", ")
+                debugLog("✅ Opened \(url.absoluteString) in \(bundleId) (\(note))")
+            } else {
+                openViaWorkspace(url: url, appURL: appURL, bundleId: bundleId)
+                debugLog("✅ Opened \(url.absoluteString) in \(bundleId)")
+            }
 
         case .gecko(let privateFlag):
             // Firefox-family — invoke the binary directly.
@@ -400,18 +408,18 @@ class BrowserManager: ObservableObject {
     }
 
     /// Opens a URL via NSWorkspace (Safari, Arc, and any browser without useful CLI flags).
-    private func openViaWorkspace(url: URL, appURL: URL, bundleId: String) throws {
+    /// Fire-and-forget: does NOT block the calling thread. NSWorkspace’s completion block is
+    /// dispatched on the main queue, so waiting with a semaphore on the main thread deadlocks.
+    /// Errors are surfaced asynchronously via the completion handler.
+    private func openViaWorkspace(url: URL, appURL: URL, bundleId: String) {
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.activates = true
-        var openError: Error?
-        let semaphore = DispatchSemaphore(value: 0)
         NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: configuration) { _, error in
-            openError = error
-            semaphore.signal()
-        }
-        _ = semaphore.wait(timeout: .now() + 5.0)
-        if let error = openError {
-            throw BrowserError.openFailed(bundleId: bundleId, underlying: error)
+            guard let error else { return }
+            DispatchQueue.main.async {
+                debugLog("⚠️ openViaWorkspace failed for \(bundleId): \(error.localizedDescription)")
+                ErrorNotifier.shared.notifyWarning("Browser Error", message: error.localizedDescription)
+            }
         }
     }
 

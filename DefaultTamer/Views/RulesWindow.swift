@@ -163,6 +163,7 @@ struct RuleSidebarRow: View {
         case .sourceApp:  return "app.badge"
         case .domain:     return "globe"
         case .urlPattern: return "link"
+        case .shortcut:   return "keyboard"
         }
     }
 
@@ -171,6 +172,7 @@ struct RuleSidebarRow: View {
         case .sourceApp:  return .orange
         case .domain:     return .blue
         case .urlPattern: return .purple
+        case .shortcut:   return .teal
         }
     }
 
@@ -179,6 +181,7 @@ struct RuleSidebarRow: View {
         case .sourceApp:  return rule.sourceAppName ?? rule.sourceAppBundleId ?? "Source App"
         case .domain:     return rule.domainPattern ?? "Domain"
         case .urlPattern: return rule.urlContains ?? rule.urlRegex ?? "URL Pattern"
+        case .shortcut:   return ShortcutFormatter.format(keyCode: rule.shortcutKeyCode, modifiers: rule.shortcutModifiers)
         }
     }
 }
@@ -351,6 +354,13 @@ struct RuleDetailView: View {
                     Text("Regular expression").font(.caption).foregroundColor(.secondary)
                 }
             }
+        case .shortcut:
+            HStack(spacing: 10) {
+                Image(systemName: "keyboard").foregroundColor(.teal).frame(width: 20)
+                Text(ShortcutFormatter.format(keyCode: rule.shortcutKeyCode, modifiers: rule.shortcutModifiers))
+                    .font(.system(.body, design: .monospaced))
+                Spacer()
+            }
         }
     }
 
@@ -359,6 +369,7 @@ struct RuleDetailView: View {
         case .sourceApp:  return "app.badge"
         case .domain:     return "globe"
         case .urlPattern: return "link"
+        case .shortcut:   return "keyboard"
         }
     }
 
@@ -367,6 +378,7 @@ struct RuleDetailView: View {
         case .sourceApp:  return .orange
         case .domain:     return .blue
         case .urlPattern: return .purple
+        case .shortcut:   return .teal
         }
     }
 
@@ -375,6 +387,7 @@ struct RuleDetailView: View {
         case .sourceApp:  return rule.sourceAppName ?? rule.sourceAppBundleId ?? "Source App"
         case .domain:     return rule.domainPattern ?? "Domain Rule"
         case .urlPattern: return rule.urlContains ?? rule.urlRegex ?? "URL Pattern"
+        case .shortcut:   return ShortcutFormatter.format(keyCode: rule.shortcutKeyCode, modifiers: rule.shortcutModifiers)
         }
     }
 
@@ -387,6 +400,8 @@ struct RuleDetailView: View {
         ruleToAdd.urlContains        = rule.urlContains
         ruleToAdd.urlRegex           = rule.urlRegex
         ruleToAdd.openInPrivateMode  = rule.openInPrivateMode
+        ruleToAdd.shortcutKeyCode    = rule.shortcutKeyCode
+        ruleToAdd.shortcutModifiers  = rule.shortcutModifiers
         appState.addRule(ruleToAdd)
     }
 }
@@ -582,12 +597,10 @@ struct RuleRow: View {
     
     private var ruleIcon: String {
         switch rule.type {
-        case .sourceApp:
-            return "app.badge"
-        case .domain:
-            return "globe"
-        case .urlPattern:
-            return "link"
+        case .sourceApp:  return "app.badge"
+        case .domain:     return "globe"
+        case .urlPattern: return "link"
+        case .shortcut:   return "keyboard"
         }
     }
 }

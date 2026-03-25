@@ -176,32 +176,32 @@ class AppState: ObservableObject {
         persistence.saveRules(rules)
         trackRuleCreated(type: rule.type.rawValue)
     }
-    
+
     func updateRule(_ rule: Rule) {
         if let index = rules.firstIndex(where: { $0.id == rule.id }) {
             rules[index] = rule
             persistence.saveRules(rules)
         }
     }
-    
+
     func deleteRule(_ rule: Rule) {
         rules.removeAll(where: { $0.id == rule.id })
         persistence.saveRules(rules)
         trackRuleDeleted(type: rule.type.rawValue)
     }
-    
+
     func toggleRule(_ rule: Rule) {
         if let index = rules.firstIndex(where: { $0.id == rule.id }) {
             rules[index].enabled.toggle()
             persistence.saveRules(rules)
         }
     }
-    
+
     func moveRule(from source: IndexSet, to destination: Int) {
         rules.move(fromOffsets: source, toOffset: destination)
         persistence.saveRules(rules)
     }
-    
+
     func replaceRules(_ newRules: [Rule]) {
         rules = newRules
         persistence.saveRules(rules)
@@ -254,7 +254,7 @@ class AppState: ObservableObject {
 
     // MARK: - URL Handling
     
-    func handleURL(_ url: URL, sourceApp: String? = nil) {
+    func handleURL(_ url: URL, sourceApp: String? = nil, modifierFlags: NSEvent.ModifierFlags? = nil) {
         guard url.isHTTP else {
             appLogger.error("Non-HTTP URL received: \(url.absoluteString)")
             return
@@ -269,16 +269,24 @@ class AppState: ObservableObject {
             appLogger.info("🔍 No source app available")
         }
         
-        // Get current modifier flags
-        let modifierFlags = NSEvent.modifierFlags
-        
+        // Use the caller-supplied snapshot (captured at Apple Event arrival time) so we
+        // always see the modifier keys that were held at the moment the link was clicked,
+        // even if processing is slightly delayed by async dispatch.
+        let currentFlags = modifierFlags ?? NSEvent.modifierFlags
+
+        // Strip shortcut rules when the feature isn't licensed so they can never
+        // fire at the routing layer, regardless of UI state.
+        let effectiveRules = LicensingManager.shared.isEnabled(.shortcutRules)
+            ? rules
+            : rules.filter { $0.type != .shortcut }
+
         // Route the URL
         let action = Router.route(
             url: url,
             sourceApp: detectedSourceApp,
             settings: settings,
-            rules: rules,
-            modifierFlags: modifierFlags
+            rules: effectiveRules,
+            modifierFlags: currentFlags
         )
         
         // Execute action
@@ -291,7 +299,21 @@ class AppState: ObservableObject {
         switch action {
         case .openInBrowser(let bundleId, let matchedRule):
             let privateMode = matchedRule?.openInPrivateMode ?? false
-            browserManager.openURLWithFallback(url, targetBrowserId: bundleId, fallbackBrowserId: settings.fallbackBrowserId, privateMode: privateMode)
+
+            if matchedRule?.type == .shortcut {
+                // Modifier keys are still physically held at this point (they triggered the
+                // shortcut match). Wait for actual key release before opening the browser —
+                // a fixed delay is not reliable if the user holds the keys longer.
+                let rawMods = matchedRule?.shortcutModifiers ?? 0
+                let triggerFlags = NSEvent.ModifierFlags(rawValue: UInt(rawMods))
+                    .intersection([.command, .option, .shift, .control])
+                let fallbackId = settings.fallbackBrowserId
+                waitForShortcutRelease(shortcutMods: triggerFlags) { [weak self] in
+                    self?.browserManager.openURLWithFallback(url, targetBrowserId: bundleId, fallbackBrowserId: fallbackId, privateMode: privateMode)
+                }
+            } else {
+                browserManager.openURLWithFallback(url, targetBrowserId: bundleId, fallbackBrowserId: settings.fallbackBrowserId, privateMode: privateMode)
+            }
             browserName = browserManager.availableBrowsers.first(where: { $0.id == bundleId })?.displayName ?? "Unknown"
 
             trackLinkRouted(method: "rule")
@@ -334,7 +356,42 @@ class AppState: ObservableObject {
             }
         }
     }
-    
+
+    /// Calls `action` as soon as the shortcut’s trigger modifier keys are released.
+    /// Uses a global NSEvent monitor so it works while Default Tamer is a background app.
+    /// Falls back after 2 seconds in case the key-up event is missed.
+    private func waitForShortcutRelease(shortcutMods: NSEvent.ModifierFlags, action: @escaping () -> Void) {
+        let relevant: NSEvent.ModifierFlags = [.command, .option, .shift, .control]
+        let current = NSEvent.modifierFlags.intersection(relevant)
+
+        // Keys are already released — dispatch on next runloop to keep call-stack clean.
+        if !current.isSuperset(of: shortcutMods) {
+            DispatchQueue.main.async { action() }
+            return
+        }
+
+        var monitor: Any?
+        var fired = false
+
+        let fire = {
+            guard !fired else { return }
+            fired = true
+            if let m = monitor { NSEvent.removeMonitor(m); monitor = nil }
+            DispatchQueue.main.async { action() }
+        }
+
+        // Guarantee: fire no later than 2 seconds from now.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { fire() }
+
+        // Listen for actual modifier key release.
+        monitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { event in
+            let held = event.modifierFlags.intersection(relevant)
+            if !held.isSuperset(of: shortcutMods) {
+                fire()
+            }
+        }
+    }
+
     func openURLFromChooser(_ url: URL, browserId: String) {
         let sourceApp = chooserSourceApp
         let browserName = browserManager.availableBrowsers.first(where: { $0.id == browserId })?.displayName ?? "Unknown"

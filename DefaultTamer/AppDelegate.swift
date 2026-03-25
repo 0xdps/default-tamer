@@ -274,6 +274,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
         preferencesWindow = window
 
+        // Switch to .regular so the app becomes the key application and can
+        // receive keyboard events (e.g. in the shortcut recorder, text fields).
+        // Restored to .accessory when the window closes.
+        NSApp.setActivationPolicy(.regular)
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
@@ -323,8 +327,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             }
         }
 
+        // Capture modifier flags immediately at Apple Event arrival time, before any
+        // async dispatch, so the snapshot is correct for shortcut-rule matching.
+        let capturedFlags = NSEvent.modifierFlags
+
         Task { @MainActor in
-            appState.handleURL(url, sourceApp: sourceAppBundleId)
+            appState.handleURL(url, sourceApp: sourceAppBundleId, modifierFlags: capturedFlags)
         }
     }
 
@@ -415,6 +423,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             firstRunWindow = nil
         } else if window === preferencesWindow {
             preferencesWindow = nil
+            NSApp.setActivationPolicy(.accessory)
         } else if window === chooserWindow {
             chooserWindow = nil
             appState.showChooser = false

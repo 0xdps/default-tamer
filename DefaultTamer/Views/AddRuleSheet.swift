@@ -35,6 +35,11 @@ struct AddRuleSheet: View {
     @State private var testURL: String = ""
     @State private var testResult: Bool? = nil
 
+    // Shortcut fields
+    @State private var shortcutKeyCode: Int? = nil
+    @State private var shortcutModifiers: Int? = nil
+    @State private var shortcutConflict: String? = nil
+
     // Privacy mode
     @State private var openInPrivateMode: Bool = false
 
@@ -60,6 +65,23 @@ struct AddRuleSheet: View {
                         }
                     }
                     .pickerStyle(.segmented)
+
+                    if ruleType == .shortcut && !licensing.isEnabled(.shortcutRules) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "keyboard.fill")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Global keyboard shortcuts")
+                                    .foregroundColor(.secondary)
+                                Text("Upgrade to Power to assign keyboard shortcuts to browsers.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            PlusFeatureBadge()
+                        }
+                    }
                 }
                 
                 Section("Match Criteria") {
@@ -167,9 +189,32 @@ struct AddRuleSheet: View {
                         } else {
                             TextField("URL contains (e.g., /docs/)", text: $urlContains)
                         }
+
+                    case .shortcut:
+                        if licensing.isEnabled(.shortcutRules) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                ShortcutRecorderView(keyCode: $shortcutKeyCode, modifiers: $shortcutModifiers)
+                                    .frame(height: 32)
+                                    .onChange(of: shortcutModifiers) { _ in checkShortcutConflict() }
+                                    .onChange(of: shortcutKeyCode) { _ in checkShortcutConflict() }
+                                Text("Hold ⌘⌥ then add ⇧ or ⌃ for more combos (e.g. ⌘⌥, ⌘⌥⇧, ⌘⌥⌃). Clicking a link while holding that combo routes it to this browser.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                if let conflict = shortcutConflict {
+                                    HStack(alignment: .top, spacing: 6) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .font(.caption)
+                                            .foregroundColor(.orange)
+                                        Text("May conflict with \(conflict) — holding this combo while clicking may also trigger that action.")
+                                            .font(.caption)
+                                            .foregroundColor(.orange)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-                
+
                 Section() {
                     HStack {
                         Picker("Browser", selection: $targetBrowserId) {
@@ -312,7 +357,7 @@ struct AddRuleSheet: View {
     private var isValid: Bool {
         // Must have target browser
         guard !targetBrowserId.isEmpty else { return false }
-        
+
         switch ruleType {
         case .sourceApp:
             return selectedApp != nil
@@ -324,9 +369,11 @@ struct AddRuleSheet: View {
             } else {
                 return !urlContains.isEmpty
             }
+        case .shortcut:
+            return licensing.isEnabled(.shortcutRules) && shortcutModifiers != nil
         }
     }
-    
+
     private func validateRegex(_ pattern: String) {
         guard !pattern.isEmpty else {
             regexError = nil
@@ -354,23 +401,32 @@ struct AddRuleSheet: View {
                 rule.sourceAppBundleId = app.bundleId
                 rule.sourceAppName = app.name
             }
-            
+
         case .domain:
             rule.domainPattern = domainPattern
             rule.domainMatchType = domainMatchType
-            
+
         case .urlPattern:
             if useRegex {
                 rule.urlRegex = urlRegex
             } else {
                 rule.urlContains = urlContains
             }
+
+        case .shortcut:
+            rule.shortcutKeyCode = shortcutKeyCode
+            rule.shortcutModifiers = shortcutModifiers
         }
         
         appState.addRule(rule)
         dismiss()
     }
-    
+
+    private func checkShortcutConflict() {
+        guard let mods = shortcutModifiers else { shortcutConflict = nil; return }
+        shortcutConflict = SystemShortcutChecker.conflictName(keyCode: shortcutKeyCode, modifiers: mods)
+    }
+
     private var validationMessage: String {
         if targetBrowserId.isEmpty {
             return "Select a browser"
@@ -392,6 +448,9 @@ struct AddRuleSheet: View {
                 return "Enter URL pattern"
             }
             return ""
+        case .shortcut:
+            if !licensing.isEnabled(.shortcutRules) { return "Requires Power" }
+            return shortcutModifiers == nil ? "Record a shortcut" : ""
         }
     }
 }
@@ -559,6 +618,11 @@ struct EditRuleSheet: View {
     // Privacy mode
     @State private var openInPrivateMode: Bool
 
+    // Shortcut fields
+    @State private var shortcutKeyCode: Int?
+    @State private var shortcutModifiers: Int?
+    @State private var shortcutConflict: String? = nil
+
     init(rule: Rule) {
         self.rule = rule
 
@@ -581,6 +645,10 @@ struct EditRuleSheet: View {
 
         // Privacy mode
         _openInPrivateMode = State(initialValue: rule.openInPrivateMode)
+
+        // Shortcut
+        _shortcutKeyCode = State(initialValue: rule.shortcutKeyCode)
+        _shortcutModifiers = State(initialValue: rule.shortcutModifiers)
     }
     
     var body: some View {
@@ -605,6 +673,23 @@ struct EditRuleSheet: View {
                         }
                     }
                     .pickerStyle(.segmented)
+
+                    if ruleType == .shortcut && !licensing.isEnabled(.shortcutRules) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "keyboard.fill")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Global keyboard shortcuts")
+                                    .foregroundColor(.secondary)
+                                Text("Upgrade to Power to assign keyboard shortcuts to browsers.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            PlusFeatureBadge()
+                        }
+                    }
                 }
                 
                 Section("Match Criteria") {
@@ -712,9 +797,32 @@ struct EditRuleSheet: View {
                         } else {
                             TextField("URL contains (e.g., /docs/)", text: $urlContains)
                         }
+
+                    case .shortcut:
+                        if licensing.isEnabled(.shortcutRules) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                ShortcutRecorderView(keyCode: $shortcutKeyCode, modifiers: $shortcutModifiers)
+                                    .frame(height: 32)
+                                    .onChange(of: shortcutModifiers) { _ in checkShortcutConflict() }
+                                    .onChange(of: shortcutKeyCode) { _ in checkShortcutConflict() }
+                                Text("Hold ⌘⌥ then add ⇧ or ⌃ for more combos (e.g. ⌘⌥, ⌘⌥⇧, ⌘⌥⌃). Clicking a link while holding that combo routes it to this browser.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                if let conflict = shortcutConflict {
+                                    HStack(alignment: .top, spacing: 6) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .font(.caption)
+                                            .foregroundColor(.orange)
+                                        Text("May conflict with \(conflict) — holding this combo while clicking may also trigger that action.")
+                                            .font(.caption)
+                                            .foregroundColor(.orange)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-                
+
                 Section("Target Browser") {
                     HStack {
                         Picker("Browser", selection: $targetBrowserId) {
@@ -851,7 +959,7 @@ struct EditRuleSheet: View {
     private var isValid: Bool {
         // Must have target browser
         guard !targetBrowserId.isEmpty else { return false }
-        
+
         switch ruleType {
         case .sourceApp:
             return selectedApp != nil
@@ -863,9 +971,11 @@ struct EditRuleSheet: View {
             } else {
                 return !urlContains.isEmpty
             }
+        case .shortcut:
+            return licensing.isEnabled(.shortcutRules) && shortcutModifiers != nil
         }
     }
-    
+
     private func validateRegex() {
         guard !urlRegex.isEmpty else {
             regexError = nil
@@ -906,9 +1016,12 @@ struct EditRuleSheet: View {
             } else {
                 return urlContains.isEmpty ? "Enter URL pattern" : ""
             }
+        case .shortcut:
+            if !licensing.isEnabled(.shortcutRules) { return "Requires Power" }
+            return shortcutModifiers == nil ? "Record a shortcut" : ""
         }
     }
-    
+
     private func saveChanges() {
         var updatedRule = rule
         updatedRule.type = ruleType
@@ -922,7 +1035,9 @@ struct EditRuleSheet: View {
         updatedRule.domainMatchType = nil
         updatedRule.urlContains = nil
         updatedRule.urlRegex = nil
-        
+        updatedRule.shortcutKeyCode = nil
+        updatedRule.shortcutModifiers = nil
+
         // Set the appropriate fields based on rule type
         switch ruleType {
         case .sourceApp:
@@ -930,20 +1045,29 @@ struct EditRuleSheet: View {
                 updatedRule.sourceAppBundleId = app.bundleId
                 updatedRule.sourceAppName = app.name
             }
-            
+
         case .domain:
             updatedRule.domainPattern = domainPattern
             updatedRule.domainMatchType = domainMatchType
-            
+
         case .urlPattern:
             if useRegex {
                 updatedRule.urlRegex = urlRegex
             } else {
                 updatedRule.urlContains = urlContains
             }
+
+        case .shortcut:
+            updatedRule.shortcutKeyCode = shortcutKeyCode
+            updatedRule.shortcutModifiers = shortcutModifiers
         }
         
         appState.updateRule(updatedRule)
         dismiss()
+    }
+
+    private func checkShortcutConflict() {
+        guard let mods = shortcutModifiers else { shortcutConflict = nil; return }
+        shortcutConflict = SystemShortcutChecker.conflictName(keyCode: shortcutKeyCode, modifiers: mods)
     }
 }

@@ -236,7 +236,7 @@ struct LicensingTab: View {
                 Button {
                     licensing.startOAuth(fallbackBrowserId: appState.settings.fallbackBrowserId)
                 } label: {
-                    Text("Sign In")
+                    Label("Sign In", systemImage: "person.fill")
                 }
                 .buttonStyle(.bordered)
                 .help("Sign in to restore an existing Power plan on this device")

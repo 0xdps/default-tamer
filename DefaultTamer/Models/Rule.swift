@@ -11,6 +11,7 @@ enum RuleType: String, Codable, CaseIterable {
     case sourceApp = "Source App"
     case domain = "Domain"
     case urlPattern = "URL Pattern"
+    case shortcut = "Shortcut"
 }
 
 enum DomainMatchType: String, Codable {
@@ -35,6 +36,10 @@ struct Rule: Identifiable, Codable, Hashable {
 
     var urlContains: String?
     var urlRegex: String?
+
+    // Shortcut fields
+    var shortcutKeyCode: Int?      // NSEvent.keyCode
+    var shortcutModifiers: Int?    // NSEvent.ModifierFlags.rawValue
     
     init(
         id: UUID = UUID(),
@@ -65,6 +70,9 @@ struct Rule: Identifiable, Codable, Hashable {
         case .urlPattern:
             let pattern = urlContains ?? urlRegex ?? ""
             return "URL contains '\(pattern)' → \(targetBrowser)"
+        case .shortcut:
+            let keys = ShortcutFormatter.format(keyCode: shortcutKeyCode, modifiers: shortcutModifiers)
+            return "\(keys) → \(targetBrowser)"
         }
     }
     
