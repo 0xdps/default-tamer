@@ -1,0 +1,96 @@
+DefaultTamer/Views/ShortcutRecorderView.swift
+  eb441fb92013577e 23,29,35-36,46-47,142,178-184,187-192,196,211-215,220-232,244-245
+  72864f8a0cbcf681 5-7,21-22,33-34,37,42,44-45,48-49,51-141,143-177,185-186,193-195,197-210,216-219,233-243,246-249
+DefaultTamer/Utilities/SystemShortcutChecker.swift
+  eb441fb92013577e 98,100-101,103-106
+DefaultTamer/Models/Rule.swift
+  72864f8a0cbcf681 14,39-42,73-75
+DefaultTamer/AppDelegate.swift
+  eb441fb92013577e 330-333,335
+  72864f8a0cbcf681 277-280,426
+DefaultTamer/Services/Router.swift
+  72864f8a0cbcf681 52-66,73-75,98-99,102-109
+DefaultTamer/Utilities/RuleImportExport.swift
+  72864f8a0cbcf681 99-100,238-239,301-302
+DefaultTamer/Services/BrowserManager.swift
+  eb441fb92013577e 373,376-393,411-414,418-422
+DefaultTamer/Services/ShortcutManager.swift
+  72864f8a0cbcf681 5-6,10,16-17,19,21-24,102
+DefaultTamer/Views/LicensingView.swift
+  72864f8a0cbcf681 239
+DefaultTamer/Views/RulesWindow.swift
+  72864f8a0cbcf681 166,175,184,357-363,372,381,390,403-404,600-603
+DefaultTamer/Services/AppState.swift
+  eb441fb92013577e 257,272-275,289,302-316,359-394
+  72864f8a0cbcf681 179,186,192,199,204,276-282,288
+DefaultTamer/Views/AddRuleSheet.swift
+  72864f8a0cbcf681 38-40,42,68-84,192-197,201-202,213-214,217,360,372,376,404,408,415-418,451-452,621-623,625,648-651,676-692,800-805,809-810,821,825,962,974,978,1019-1020,1038-1040,1048,1052,1059-1062
+  eb441fb92013577e 41,198-200,203-212,373,424-429,453,624,806-808,811-820,975,1021,1024,1068-1071
+DefaultTamer/Services/AnalyticsManager.swift
+  1b185ea2c292ccb9 26-33
+DefaultTamerWeb/src/layouts/BaseLayout.astro
+  1b185ea2c292ccb9 94-95,115
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "6a3804e23f3702fa227d4280e68883cde669426d",
+  "prompts": {
+    "1b185ea2c292ccb9": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "0afa16f2-d78c-4812-a28b-382b1c511d92",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>",
+      "messages": [],
+      "total_additions": 11,
+      "total_deletions": 1,
+      "accepted_lines": 11,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/4d1e2c4348dad2ddecc4e4e0c4b5dd8b6cf97a9d2373e7f099807ce1a9b1d8a2"
+    },
+    "622d509bcd7d2250": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "09141db6-4c3b-415b-8ca3-1da725e73d2d",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1430,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/085348a2e858a181ef847da5a163a44f306d4093eb6a7baa13fd59d8c2471a02"
+    },
+    "72864f8a0cbcf681": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "0658d0b8-1c54-4d29-912c-1b4c4d74181a",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>",
+      "messages": [],
+      "total_additions": 565,
+      "total_deletions": 466,
+      "accepted_lines": 362,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/eb74b4e50593dc75017aaa38fff4e321b328e69451d8fae25ed072b97bd9b54c"
+    },
+    "eb441fb92013577e": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "3d995b5f-a392-44d6-991f-cfd8ed16134b",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>",
+      "messages": [],
+      "total_additions": 212,
+      "total_deletions": 100,
+      "accepted_lines": 183,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/788127b77fcad9f81259d2d46e892ede30837d7809da54d6973eebbfb004ae65"
+    }
+  }
+}
