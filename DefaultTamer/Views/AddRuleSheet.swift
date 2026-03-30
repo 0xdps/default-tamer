@@ -197,7 +197,7 @@ struct AddRuleSheet: View {
                                     .frame(height: 32)
                                     .onChange(of: shortcutModifiers) { _ in checkShortcutConflict() }
                                     .onChange(of: shortcutKeyCode) { _ in checkShortcutConflict() }
-                                Text("Hold ⌘⌥ then add ⇧ or ⌃ for more combos (e.g. ⌘⌥, ⌘⌥⇧, ⌘⌥⌃). Clicking a link while holding that combo routes it to this browser.")
+                                Text("Hold ⌘⌥ and press a key (A–Z or 0–9) to set your shortcut (e.g. ⌘⌥A). Clicking a link while holding that combo routes it to this browser.")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                 if let conflict = shortcutConflict {
@@ -370,7 +370,7 @@ struct AddRuleSheet: View {
                 return !urlContains.isEmpty
             }
         case .shortcut:
-            return licensing.isEnabled(.shortcutRules) && shortcutModifiers != nil
+            return licensing.isEnabled(.shortcutRules) && shortcutModifiers != nil && shortcutKeyCode != nil
         }
     }
 
@@ -450,7 +450,7 @@ struct AddRuleSheet: View {
             return ""
         case .shortcut:
             if !licensing.isEnabled(.shortcutRules) { return "Requires Power" }
-            return shortcutModifiers == nil ? "Record a shortcut" : ""
+            return (shortcutModifiers == nil || shortcutKeyCode == nil) ? "Record a shortcut (⌘⌥ + key)" : ""
         }
     }
 }
@@ -805,7 +805,7 @@ struct EditRuleSheet: View {
                                     .frame(height: 32)
                                     .onChange(of: shortcutModifiers) { _ in checkShortcutConflict() }
                                     .onChange(of: shortcutKeyCode) { _ in checkShortcutConflict() }
-                                Text("Hold ⌘⌥ then add ⇧ or ⌃ for more combos (e.g. ⌘⌥, ⌘⌥⇧, ⌘⌥⌃). Clicking a link while holding that combo routes it to this browser.")
+                                Text("Hold ⌘⌥ and press a key (A–Z or 0–9) to set your shortcut (e.g. ⌘⌥A). Clicking a link while holding that combo routes it to this browser.")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                 if let conflict = shortcutConflict {
@@ -972,7 +972,7 @@ struct EditRuleSheet: View {
                 return !urlContains.isEmpty
             }
         case .shortcut:
-            return licensing.isEnabled(.shortcutRules) && shortcutModifiers != nil
+            return licensing.isEnabled(.shortcutRules) && shortcutModifiers != nil && shortcutKeyCode != nil
         }
     }
 
@@ -1018,7 +1018,7 @@ struct EditRuleSheet: View {
             }
         case .shortcut:
             if !licensing.isEnabled(.shortcutRules) { return "Requires Power" }
-            return shortcutModifiers == nil ? "Record a shortcut" : ""
+            return (shortcutModifiers == nil || shortcutKeyCode == nil) ? "Record a shortcut (⌘⌥ + key)" : ""
         }
     }
 

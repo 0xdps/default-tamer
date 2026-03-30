@@ -131,6 +131,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         // Validate stored license in the background (refreshes plan status from server)
         LicensingManager.shared.validateOnLaunch()
 
+        // Check for active promo codes (throttled to once per 24 h)
+        PromoManager.shared.checkIfNeeded()
+
         // Re-validate when the app returns to the foreground (throttled in LicensingManager)
         NotificationCenter.default.addObserver(
             forName: NSApplication.didBecomeActiveNotification,
@@ -139,6 +142,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         ) { _ in
             Task { @MainActor in
                 LicensingManager.shared.validateOnForeground()
+                PromoManager.shared.checkIfNeeded()
             }
         }
 
@@ -310,6 +314,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         // Route `defaulttamer://upgraded` deep-links — direct checkout payment confirmed
         if url.scheme == "defaulttamer", url.host == "upgraded" {
             LicensingManager.shared.handleUpgradeCallback()
+            return
+        }
+
+        // Route `defaulttamer://promo?code=XXXX` — promo code delivered via deep link
+        // (e.g. from a pricing page button or a notification tap).
+        // Opens Preferences on the License tab with the code pre-filled and validated.
+        if url.scheme == "defaulttamer", url.host == "promo" {
+            let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            if let code = components?.queryItems?.first(where: { $0.name == "code" })?.value,
+               !code.isEmpty {
+                PromoManager.shared.applyFromDeepLink(code: code)
+                appState.pendingTabSelection = .power
+                showPreferencesWindow()
+            }
             return
         }
 

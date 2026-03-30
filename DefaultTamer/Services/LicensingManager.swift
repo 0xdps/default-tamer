@@ -58,6 +58,34 @@ private enum Keychain {
     }
 }
 
+// MARK: - Promo validation
+
+struct PromoValidationResult {
+    let valid: Bool
+    let discountCents: Int?
+    let adjustedTotal: Int?
+    let reason: String?
+    let promotionName: String?
+
+    /// Human-readable error suitable for display in the UI.
+    var errorMessage: String {
+        guard !valid else { return "" }
+        switch reason {
+        case "code_not_found":                           return "Invalid promo code."
+        case "promotion_inactive", "code_inactive":      return "This promo code is no longer active."
+        case "promotion_not_started":                    return "This promo code isn't active yet."
+        case "promotion_expired":                        return "This promo code has expired."
+        case "code_exhausted",
+             "promotion_max_redemptions_reached":        return "This promo code has reached its usage limit."
+        case "plan_not_eligible":                        return "This promo code isn't valid for this plan."
+        case "interval_not_eligible":                   return "This promo code isn't valid for this billing period."
+        case "existing_customer":                       return "This promo code is for new customers only."
+        case "already_redeemed":                        return "You've already used this promo code."
+        default:                                         return "This promo code is not valid."
+        }
+    }
+}
+
 // MARK: - LicensingManager
 
 @MainActor
@@ -103,6 +131,79 @@ final class LicensingManager: ObservableObject {
         open(NubeAuthConstants.oauthStartURL, in: fallbackBrowserId)
     }
 
+    /// Validates a promo code against the NubeAuth billing API before opening any browser.
+    /// Returns the result synchronously so the caller can show immediate feedback.
+    /// Passes `X-Nube-User-Id` when the user is already signed in to enable
+    /// `existing_customer` / `already_redeemed` server-side checks.
+    func validatePromoCode(_ code: String) async -> PromoValidationResult {
+        var request = URLRequest(url: NubeAuthConstants.validatePromoURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 15
+
+        let userId = Keychain.load(key: userIdKey)
+        if let userId {
+            request.setValue(userId, forHTTPHeaderField: "X-Nube-User-Id")
+        }
+
+        let body: [String: String] = [
+            "code":    code,
+            "priceId": NubeAuthConstants.powerPriceId,
+            "appId":   NubeAuthConstants.appId,
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        print("━━━ [PromoValidate] REQUEST ━━━")
+        print("  URL:     \(NubeAuthConstants.validatePromoURL.absoluteString)")
+        print("  code:    \(code)")
+        print("  priceId: \(NubeAuthConstants.powerPriceId)")
+        print("  appId:   \(NubeAuthConstants.appId)")
+        print("  userId:  \(userId ?? "(none)")")
+        appLogger.info("[PromoValidate] POST \(NubeAuthConstants.validatePromoURL.absoluteString, privacy: .public) code=\(code, privacy: .public) priceId=\(NubeAuthConstants.powerPriceId, privacy: .public) appId=\(NubeAuthConstants.appId, privacy: .public) userId=\(userId ?? "(none)", privacy: .public)")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+            let rawBody = String(data: data, encoding: .utf8) ?? "<non-utf8>"
+
+            print("━━━ [PromoValidate] RESPONSE ━━━")
+            print("  HTTP:    \(statusCode)")
+            print("  Body:    \(rawBody)")
+            appLogger.info("[PromoValidate] HTTP \(statusCode) body=\(rawBody, privacy: .public)")
+
+            struct Response: Decodable {
+                let valid: Bool
+                let discountCents: Int?
+                let adjustedTotal: Int?
+                let reason: String?
+                struct Promotion: Decodable { let name: String? }
+                let promotion: Promotion?
+            }
+
+            do {
+                let result = try JSONDecoder().decode(Response.self, from: data)
+                print("  Decoded: valid=\(result.valid) reason=\(result.reason ?? "nil") promotion=\(result.promotion?.name ?? "nil")")
+                appLogger.info("[PromoValidate] decoded valid=\(result.valid) reason=\(result.reason ?? "nil", privacy: .public)")
+                return PromoValidationResult(
+                    valid: result.valid,
+                    discountCents: result.discountCents,
+                    adjustedTotal: result.adjustedTotal,
+                    reason: result.reason,
+                    promotionName: result.promotion?.name
+                )
+            } catch {
+                print("  DECODE ERROR: \(error)")
+                appLogger.error("[PromoValidate] decode error: \(error.localizedDescription, privacy: .public)")
+                return PromoValidationResult(valid: false, discountCents: nil, adjustedTotal: nil, reason: nil, promotionName: nil)
+            }
+        } catch {
+            print("━━━ [PromoValidate] NETWORK ERROR ━━━")
+            print("  \(error)")
+            appLogger.error("[PromoValidate] network error: \(error.localizedDescription, privacy: .public)")
+            return PromoValidationResult(valid: false, discountCents: nil, adjustedTotal: nil, reason: nil, promotionName: nil)
+        }
+    }
+
     /// Initiates a Power plan purchase.
     ///
     /// If the user is already signed in, calls `POST /v1/payment/checkout` directly
@@ -114,17 +215,21 @@ final class LicensingManager: ObservableObject {
     /// If the user is NOT signed in, falls back to the combined OAuth + payment URL
     /// so they authenticate and pay in a single browser flow. Success returns a
     /// `defaulttamer://auth?code=…` deep-link handled by `handleOAuthCallback`.
+    ///
+    /// Pass `promoCode` after validating it with `validatePromoCode(_:)` to apply a
+    /// discount. It is forwarded to the payment provider in both the direct-checkout
+    /// and OAuth+checkout paths.
     @discardableResult
-    func startUpgrade(fallbackBrowserId: String? = nil) async -> Bool {
+    func startUpgrade(promoCode: String? = nil, fallbackBrowserId: String? = nil) async -> Bool {
         if let sessionToken = Keychain.load(key: sessionTokenKey) {
-            if let checkoutURL = await createCheckoutSession(sessionToken: sessionToken) {
+            if let checkoutURL = await createCheckoutSession(sessionToken: sessionToken, promoCode: promoCode) {
                 open(checkoutURL, in: fallbackBrowserId)
                 return true
             }
             appLogger.warning("Direct checkout failed; falling back to OAuth+payment URL")
         }
 
-        open(NubeAuthConstants.oauthUpgradeURL(returnTo: NubeAuthConstants.authCallbackURL),
+        open(NubeAuthConstants.oauthUpgradeURL(returnTo: NubeAuthConstants.authCallbackURL, promoCode: promoCode),
              in: fallbackBrowserId)
         return true
     }
@@ -187,19 +292,22 @@ final class LicensingManager: ObservableObject {
     /// Calls `POST /v1/payment/checkout` with the stored session token to create a
     /// checkout session directly (no re-authentication needed).
     /// Returns the payment provider's redirect URL on success, or `nil` on failure.
-    private func createCheckoutSession(sessionToken: String) async -> URL? {
+    private func createCheckoutSession(sessionToken: String, promoCode: String? = nil) async -> URL? {
         var request = URLRequest(url: NubeAuthConstants.billingCheckoutURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(sessionToken)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 30
 
-        let body: [String: String] = [
+        var body: [String: String] = [
             "priceId":    NubeAuthConstants.powerPriceId,
             "appId":      NubeAuthConstants.appId,
             "successUrl": NubeAuthConstants.upgradeSuccessURL,
             "cancelUrl":  NubeAuthConstants.pricingURL,
         ]
+        if let promoCode {
+            body["promoCode"] = promoCode
+        }
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
         do {

@@ -7,6 +7,7 @@
 
 import Foundation
 import AppKit
+import CoreGraphics
 
 enum RouteAction {
     case openInBrowser(bundleId: String, matchedRule: Rule?)
@@ -57,7 +58,7 @@ class Router {
             if !heldFlags.isEmpty {
                 for rule in rules where rule.type == .shortcut && rule.enabled {
                     if let action = evaluateShortcutRule(rule, heldFlags: heldFlags) {
-                        appLogger.info("🔀 ⌨️ Shortcut rule matched: \(ShortcutFormatter.format(keyCode: nil, modifiers: rule.shortcutModifiers), privacy: .public)")
+                        appLogger.info("🔀 ⌨️ Shortcut rule matched: \(ShortcutFormatter.format(keyCode: rule.shortcutKeyCode, modifiers: rule.shortcutModifiers), privacy: .public)")
                         return action
                     }
                 }
@@ -100,12 +101,11 @@ class Router {
         }
     }
 
-    /// Evaluates a shortcut rule: matches when the held modifier flags exactly equal the rule's combo.
+    /// Evaluates a shortcut rule: matches when ⌘+⌥ are held and the rule's key is physically pressed.
     private static func evaluateShortcutRule(_ rule: Rule, heldFlags: NSEvent.ModifierFlags) -> RouteAction? {
-        guard let rawMods = rule.shortcutModifiers else { return nil }
-        let ruleFlags = NSEvent.ModifierFlags(rawValue: UInt(rawMods))
-            .intersection([.command, .option, .shift, .control])
-        guard !ruleFlags.isEmpty, heldFlags == ruleFlags else { return nil }
+        guard let keyCode = rule.shortcutKeyCode else { return nil }
+        guard heldFlags.isSuperset(of: [.command, .option]) else { return nil }
+        guard CGEventSource.keyState(.combinedSessionState, key: CGKeyCode(keyCode)) else { return nil }
         return .openInBrowser(bundleId: rule.targetBrowserId, matchedRule: rule)
     }
     

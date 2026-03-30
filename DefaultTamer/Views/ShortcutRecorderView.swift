@@ -2,8 +2,8 @@
 //  ShortcutRecorderView.swift
 //  Default Tamer
 //
-//  A compact SwiftUI control that captures a modifier-key combo.
-//  Click to begin recording; hold modifier keys (⌘ ⌥ ⌃ ⇧), then release — the combo is saved.
+//  A compact SwiftUI control that captures a ⌘⌥ + key shortcut.
+//  Click to begin recording; hold ⌘⌥ then press A–Z or 0–9 — the combo is saved.
 //  Esc cancels; Delete/Backspace clears the saved shortcut.
 //
 
@@ -44,7 +44,7 @@ struct ShortcutRecorderView: NSViewRepresentable {
         init(_ parent: ShortcutRecorderView) { self.parent = parent }
 
         func recorded(keyCode: Int?, modifiers: Int) {
-            parent.keyCode   = nil   // key codes are not used in routing; always nil
+            parent.keyCode   = keyCode
             parent.modifiers = modifiers
         }
 
@@ -69,6 +69,15 @@ final class ShortcutField: NSView {
     private var committed         = false   // guards against double-commit
     private var flagsMonitor: Any?
     private var keyMonitor: Any?
+
+    // Valid alphanumeric key codes (ANSI layout): A–Z and 0–9 top row.
+    // These are the only keys accepted as the variable component of a ⌘⌥ shortcut.
+    private static let validKeyCodes: Set<UInt16> = [
+        // Letters (ANSI virtual key codes)
+        0, 11, 8, 2, 14, 3, 5, 4, 34, 38, 40, 37, 46, 45, 31, 35, 12, 15, 1, 17, 32, 9, 13, 7, 16, 6,
+        // Digits 0–9 (top row, not numpad)
+        29, 18, 19, 20, 21, 23, 22, 26, 28, 25
+    ]
 
     // MARK: Display
 
@@ -139,7 +148,7 @@ final class ShortcutField: NSView {
         committed    = false
         capturedModifiers = []
         hadModifiers = false
-        stringValue  = "Hold ⌘⌥ + more modifiers…"
+        stringValue  = "Hold ⌘⌥, press A–Z or 0–9"
         textColor    = .secondaryLabelColor
         updateBorderColor()
 
@@ -175,25 +184,18 @@ final class ShortcutField: NSView {
     private func handleFlagsChanged(_ flags: NSEvent.ModifierFlags) {
         let relevant = flags.intersection([.command, .option, .shift, .control])
         if !relevant.isEmpty {
-            // Track the peak combo: only expand, never shrink when keys are released
-            // one at a time (there is always a slight stagger between key releases).
-            if capturedModifiers.isEmpty || relevant.isSuperset(of: capturedModifiers) {
-                capturedModifiers = relevant
-            }
+            capturedModifiers = relevant
             hadModifiers = true
-            stringValue = ShortcutFormatter.format(keyCode: nil, modifiers: Int(capturedModifiers.rawValue))
-            textColor   = .labelColor
-        } else if hadModifiers && !committed {
-            // All modifiers released without a key press.
-            // Require both ⌘ and ⌥ — reject anything weaker.
-            guard capturedModifiers.isSuperset(of: [.command, .option]) else {
-                showRejection()
-                return
+            if relevant.isSuperset(of: [.command, .option]) {
+                stringValue = "⌘⌥ — press A–Z or 0–9"
+                textColor   = .labelColor
+            } else {
+                stringValue = "Hold ⌘⌥…"
+                textColor   = .secondaryLabelColor
             }
-            committed = true
-            let mods  = Int(capturedModifiers.rawValue)
+        } else if hadModifiers {
+            // All modifiers released without pressing a valid key — cancel silently.
             endRecording()
-            coordinator?.recorded(keyCode: nil, modifiers: mods)
             refreshLabel()
         }
     }
@@ -209,27 +211,22 @@ final class ShortcutField: NSView {
             refreshLabel()
         default:
             guard !committed else { return }
-            // Letter/number keys are NOT in NSEvent.modifierFlags so they can’t be used
-            // to distinguish shortcut rules at link-click time. Beep and stay in
-            // recording mode so the user knows to use modifiers only.
-            NSSound.beep()
+            // Require ⌘+⌥ to be held and the key to be alphanumeric (A–Z, 0–9).
+            guard capturedModifiers.isSuperset(of: [.command, .option]),
+                  Self.validKeyCodes.contains(keyCode) else {
+                NSSound.beep()
+                return
+            }
+            committed = true
+            // Store always exactly ⌘+⌥ as the modifier combo; the key is what differentiates rules.
+            let mods = Int(NSEvent.ModifierFlags([.command, .option]).rawValue)
+            endRecording()
+            coordinator?.recorded(keyCode: Int(keyCode), modifiers: mods)
+            refreshLabel()
         }
     }
 
     // MARK: Helpers
-
-    /// Called when the recorded combo doesn’t meet the ⌘+⌥ requirement.
-    /// Shows an inline rejection message for 1.8 s then resets without committing.
-    private func showRejection() {
-        endRecording()
-        stringValue = "⌘ + ⌥ required"
-        textColor   = .systemOrange
-        layer?.borderColor = NSColor.systemOrange.cgColor
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
-            self?.refreshLabel()
-            self?.updateBorderColor()
-        }
-    }
 
     private func updateBorderColor() {
         let base = NSColor.separatorColor

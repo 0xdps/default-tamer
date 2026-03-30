@@ -10,8 +10,19 @@ import SwiftUI
 struct LicensingTab: View {
     @EnvironmentObject var licensing: LicensingManager
     @EnvironmentObject var appState: AppState
+    @ObservedObject private var promoManager = PromoManager.shared
     @State private var isUpgrading = false
     @State private var showSignOutConfirmation = false
+
+    // Promo code
+    @State private var promoCode = ""
+    @State private var isValidatingPromo = false
+    @State private var promoResult: PromoValidationResult?
+
+    private var validatedPromoCode: String? {
+        guard let result = promoResult, result.valid else { return nil }
+        return promoCode.trimmingCharacters(in: .whitespaces)
+    }
 
     var body: some View {
         ScrollView {
@@ -33,6 +44,32 @@ struct LicensingTab: View {
             Button("Cancel", role: .cancel) { }
         } message: {
             Text("You'll need to sign in again to access Power features on this device.")
+        }
+        // When the tab appears, fetch the latest promo immediately (bypasses the 24h
+        // throttle so the tab always shows the current state) and apply any already-
+        // published value in case the fetch completed before this view was created.
+        .onAppear {
+            applyActivePromoIfNeeded(promoManager.activePromo)
+            promoManager.checkNow()
+        }
+        // Auto-fill + validate whenever PromoManager publishes a new active promo
+        // (from the daily poll or a deep link tap).
+        .onReceive(promoManager.$activePromo) { promo in
+            applyActivePromoIfNeeded(promo)
+        }
+    }
+
+    private func applyActivePromoIfNeeded(_ promo: PromoConfig?) {
+        guard let code = promo?.code, !code.isEmpty else { return }
+        let current = promoCode.trimmingCharacters(in: .whitespaces)
+        guard current.isEmpty || current.lowercased() != code.lowercased() else { return }
+        // Validate silently first — only show the promo in the UI if the server
+        // confirms it's active. This avoids flashing an error for expired/inactive codes.
+        Task {
+            let result = await licensing.validatePromoCode(code)
+            guard result.valid else { return }
+            promoCode = code
+            promoResult = result
         }
     }
 
@@ -151,7 +188,10 @@ struct LicensingTab: View {
                 Button {
                     isUpgrading = true
                     Task {
-                        await licensing.startUpgrade(fallbackBrowserId: appState.settings.fallbackBrowserId)
+                        await licensing.startUpgrade(
+                            promoCode: validatedPromoCode,
+                            fallbackBrowserId: appState.settings.fallbackBrowserId
+                        )
                         isUpgrading = false
                     }
                 } label: {
@@ -185,6 +225,8 @@ struct LicensingTab: View {
                 }
                 .buttonStyle(.bordered)
             }
+
+            promoCodeSection
         }
     }
 
@@ -215,7 +257,10 @@ struct LicensingTab: View {
                 Button {
                     isUpgrading = true
                     Task {
-                        await licensing.startUpgrade(fallbackBrowserId: appState.settings.fallbackBrowserId)
+                        await licensing.startUpgrade(
+                            promoCode: validatedPromoCode,
+                            fallbackBrowserId: appState.settings.fallbackBrowserId
+                        )
                         isUpgrading = false
                     }
                 } label: {
@@ -241,6 +286,67 @@ struct LicensingTab: View {
                 .buttonStyle(.bordered)
                 .help("Sign in to restore an existing Power plan on this device")
             }
+
+            promoCodeSection
+        }
+    }
+
+    // MARK: - Promo code
+
+    private var promoCodeSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                TextField("Promo code", text: $promoCode)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(maxWidth: 160)
+                    .disabled(isValidatingPromo)
+                    .onChange(of: promoCode) { _ in promoResult = nil }
+                    .onSubmit { applyPromoCode() }
+
+                if isValidatingPromo {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Button("Apply") { applyPromoCode() }
+                        .buttonStyle(.bordered)
+                        .disabled(promoCode.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+
+                if promoResult?.valid == true {
+                    Button {
+                        promoCode = ""
+                        promoResult = nil
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Remove promo code")
+                }
+            }
+
+            if let result = promoResult {
+                if result.valid {
+                    Label("Promo code applied ✓", systemImage: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                } else {
+                    Label(result.errorMessage, systemImage: "xmark.circle.fill")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
+            }
+        }
+    }
+
+    private func applyPromoCode() {
+        let trimmed = promoCode.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        isValidatingPromo = true
+        promoResult = nil
+        Task {
+            let result = await licensing.validatePromoCode(trimmed)
+            promoResult = result
+            isValidatingPromo = false
         }
     }
 
