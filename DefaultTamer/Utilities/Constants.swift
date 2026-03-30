@@ -120,6 +120,15 @@ struct AnalyticsConfig {
     static let websiteID = "babc74c5-5c94-4f0b-9a47-6b0b0fa12384"
 }
 
+struct FeedbackConfig {
+    static let submitURL = "https://api.inbounce.app/submit"
+    #if DEBUG
+    static let token = "e31470b50d73ca656538332fc32f500dd93d809f48423699bb8cc8adbe84d291"
+    #else
+    static let token = "2f70a7b331d693fc3b61ad69ca0dcd6b10a30483a7bfffa5b3753cea0eb511d8"
+    #endif
+}
+
 struct ExternalLinks {
     static let github = "https://github.com/0xdps/default-tamer"
     static let issues = "https://github.com/0xdps/default-tamer/issues"

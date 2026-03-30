@@ -1087,6 +1087,7 @@ struct AboutTab: View {
     @EnvironmentObject var updateManager: UpdateManager
     @StateObject private var checkForUpdatesViewModel = CheckForUpdatesViewModel()
     @State private var isIconHovered = false
+    @State private var showFeedback = false
     
     var body: some View {
         VStack(spacing: 20) {
@@ -1152,39 +1153,40 @@ struct AboutTab: View {
             Spacer()
             
             // Centered links
-            VStack(spacing: 12) {
+            VStack(spacing: 10) {
+                // Row 1
                 HStack(spacing: 16) {
                     Spacer()
-                    
                     Link(destination: URL(string: ExternalLinks.github)!) {
                         Label("View on GitHub", systemImage: "link")
                     }
-                    
-                    Divider()
-                        .frame(height: 20)
-                    
+                    Divider().frame(height: 20)
                     Link(destination: URL(string: ExternalLinks.issues)!) {
                         Label("Report an Issue", systemImage: "exclamationmark.bubble")
                     }
-                    
-                    Divider()
-                        .frame(height: 20)
-                    
+                    Divider().frame(height: 20)
                     Link(destination: URL(string: ExternalLinks.buyMeACoffee)!) {
                         Label("Buy Me a Coffee", systemImage: "cup.and.saucer.fill")
                     }
                     .foregroundColor(.orange)
-
-                    Divider()
-                        .frame(height: 20)
-
+                    Spacer()
+                }
+                // Row 2
+                HStack(spacing: 16) {
+                    Spacer()
                     Link(destination: URL(string: ExternalLinks.privacy)!) {
                         Label("Privacy Policy", systemImage: "hand.raised")
                     }
-                    
+                    Divider().frame(height: 20)
+                    Button {
+                        showFeedback = true
+                    } label: {
+                        Label("Send Feedback", systemImage: "bubble.left.and.bubble.right")
+                    }
+                    .buttonStyle(.plain)
                     Spacer()
                 }
-                
+
                 Text("© 2026 Default Tamer")
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -1192,6 +1194,9 @@ struct AboutTab: View {
         }
         .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .sheet(isPresented: $showFeedback) {
+            FeedbackView(isPresented: $showFeedback)
+        }
         .onAppear {
             checkForUpdatesViewModel.updater = updateManager.updater
         }
