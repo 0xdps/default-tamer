@@ -32,7 +32,6 @@ class AppState: ObservableObject {
     @Published var pendingTabSelection: PreferenceTab? = nil // For coordinating tab selection from menu bar
 
     private var cancellables = Set<AnyCancellable>()
-    @Published var pendingTabSelection: Int? = nil // For coordinating tab selection from menu bar
 
     init() {
         settings = persistence.loadSettings()
