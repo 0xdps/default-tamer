@@ -1,0 +1,2 @@
+# Download redirect: /download/DefaultTamer-vX.Y.Z.dmg → GitHub release
+/download/DefaultTamer-v:version.dmg https://github.com/0xdps/default-tamer/releases/download/v:version/DefaultTamer-v:version.dmg 301
