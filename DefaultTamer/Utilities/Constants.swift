@@ -116,7 +116,7 @@ struct NetworkConstants {
 }
 
 struct AnalyticsConfig {
-    static let umamiURL = "https://manage.anately.sh" 
+    static let umamiURL = "https://analytics.0xlabs.space" 
     static let websiteID = "babc74c5-5c94-4f0b-9a47-6b0b0fa12384"
 }
 
