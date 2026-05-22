@@ -59,15 +59,16 @@ targets:
         ENABLE_HARDENED_RUNTIME: YES
         COMBINE_HIDPI_IMAGES: YES
         CODE_SIGN_ENTITLEMENTS: DefaultTamer/DefaultTamer.entitlements
-        DEVELOPMENT_TEAM: BZ2JB93F6F
+        DEVELOPMENT_TEAM: ""
         CODE_SIGNING_REQUIRED: YES
         CODE_SIGNING_ALLOWED: YES
         MARKETING_VERSION: "0.0.1"
         CURRENT_PROJECT_VERSION: "1"
       configs:
         Debug:
-          CODE_SIGN_IDENTITY: "Apple Development"
-          CODE_SIGN_STYLE: Automatic
+          CODE_SIGN_IDENTITY: "-"
+          CODE_SIGN_STYLE: Manual
+          DEVELOPMENT_TEAM: ""
         Release:
           CODE_SIGN_IDENTITY: "Developer ID Application"
           CODE_SIGN_STYLE: Manual

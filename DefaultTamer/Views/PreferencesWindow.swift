@@ -5,15 +5,15 @@
 //  Main preferences/settings window with tabs
 //
 
-import SwiftUI
 import Sparkle
+import SwiftUI
 
 struct PreferencesWindow: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var updateManager: UpdateManager
     @State private var selectedTab: PreferenceTab = .general
     @StateObject private var toastManager = ToastManager.shared
-    
+
     private var windowTitle: String {
         switch selectedTab {
         case .general:
@@ -26,13 +26,13 @@ struct PreferencesWindow: View {
             return "Default Tamer / About"
         }
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Toolbar area handled by .toolbar modifier
-            
+
             Divider()
-            
+
             // Main content
             Group {
                 switch selectedTab {
@@ -63,14 +63,14 @@ struct PreferencesWindow: View {
                 }
                 .keyboardShortcut("1", modifiers: .command)
                 .help("General settings and preferences")
-                
+
                 Button(action: { selectedTab = .rules }) {
                     Label("Rules", systemImage: "arrow.triangle.branch")
                         .foregroundColor(selectedTab == .rules ? .accentColor : .primary)
                 }
                 .keyboardShortcut("2", modifiers: .command)
                 .help("Manage routing rules")
-                
+
                 // Only show Activity tab when diagnostics is enabled
                 if appState.settings.diagnosticsEnabled {
                     Button(action: { selectedTab = .activity }) {
@@ -80,7 +80,7 @@ struct PreferencesWindow: View {
                     .keyboardShortcut("3", modifiers: .command)
                     .help("View routing activity logs")
                 }
-                
+
                 Button(action: { selectedTab = .about }) {
                     Label("About", systemImage: "info.circle")
                         .foregroundColor(selectedTab == .about ? .accentColor : .primary)
@@ -94,7 +94,8 @@ struct PreferencesWindow: View {
             if let tab = notification.object as? PreferenceTab {
                 selectedTab = tab
             } else if let tabIndex = notification.object as? Int,
-                      let tab = PreferenceTab(rawValue: tabIndex) {
+                      let tab = PreferenceTab(rawValue: tabIndex)
+            {
                 // Legacy integer-based callers
                 selectedTab = tab
             }
@@ -133,7 +134,7 @@ enum PreferenceTab: Int {
 struct GeneralTab: View {
     @EnvironmentObject var appState: AppState
     @State private var showResetConfirmation = false
-    
+
     var body: some View {
         Form {
             Section {
@@ -141,12 +142,12 @@ struct GeneralTab: View {
                     get: { appState.settings.launchAtLogin },
                     set: { _ in appState.toggleLaunchAtLogin() }
                 ))
-                
+
                 Toggle("Enable routing", isOn: Binding(
                     get: { appState.settings.enabled },
                     set: { _ in appState.toggleEnabled() }
                 ))
-                
+
                 Toggle("Show menu bar icon", isOn: .constant(true))
                     .disabled(true)
                     .help("Menu bar icon provides quick access to settings and rules")
@@ -154,7 +155,7 @@ struct GeneralTab: View {
                 Text("Startup")
                     .font(.headline)
             }
-            
+
             Section {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
@@ -164,9 +165,9 @@ struct GeneralTab: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     Spacer()
-                    
+
                     Picker("", selection: Binding(
                         get: { appState.settings.fallbackBrowserId },
                         set: { appState.setFallbackBrowser($0) }
@@ -186,7 +187,7 @@ struct GeneralTab: View {
                     }
                     .labelsHidden()
                     .fixedSize()
-                    
+
                     Button(action: {
                         appState.browserManager.refreshBrowsers()
                     }) {
@@ -201,11 +202,44 @@ struct GeneralTab: View {
                     .disabled(appState.browserManager.isRefreshingBrowsers)
                     .help("Refresh browser list")
                 }
+
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Secondary Browser")
+                            .font(.subheadline)
+                        Text("Open ⌥ Option+click links directly in this browser instead of showing the chooser pop-up")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+
+                    Spacer()
+
+                    Picker("", selection: Binding(
+                        get: { appState.settings.secondaryBrowserId ?? "" },
+                        set: { appState.setSecondaryBrowser($0.isEmpty ? nil : $0) }
+                    )) {
+                        Text("Show Chooser Pop-up").tag("")
+                        ForEach(appState.browserManager.availableBrowsers) { browser in
+                            Label {
+                                Text(browser.displayName)
+                            } icon: {
+                                if let icon = browser.getIcon() {
+                                    Image(nsImage: icon)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                }
+                            }
+                            .tag(browser.id)
+                        }
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                }
             } header: {
                 Text("Default Browser")
                     .font(.headline)
             }
-            
+
             // Diagnostics and User Feedback
 
             Section {
@@ -215,9 +249,9 @@ struct GeneralTab: View {
                 )) {
                     Text("Share anonymous usage stats") + Text(" (recommended)").foregroundColor(.secondary)
                 }
-                
+
                 TelemetryConsentDescription()
-                
+
                 Toggle(isOn: Binding(
                     get: { appState.settings.diagnosticsEnabled },
                     set: { _ in appState.toggleDiagnostics() }
@@ -261,7 +295,7 @@ struct GeneralTab: View {
         .formStyle(.grouped)
         .padding()
         .alert("Reset to Factory Defaults?", isPresented: $showResetConfirmation) {
-            Button("Cancel", role: .cancel) { }
+            Button("Cancel", role: .cancel) {}
             Button("Reset Everything", role: .destructive) {
                 appState.resetToDefaults()
             }
@@ -279,7 +313,7 @@ struct RulesTab: View {
     @State private var showAddRule = false
     @State private var showExportSheet = false
     @State private var showImportSheet = false
-    
+
     var body: some View {
         HStack(spacing: 0) {
             // Left side - rules list
@@ -304,14 +338,14 @@ struct RulesTab: View {
                         }
                         .buttonStyle(.bordered)
                         .help("Import/Export")
-                        
+
                         Button(action: { showAddRule = true }) {
                             Image(systemName: "plus")
                                 .frame(width: 16, height: 16)
                         }
                         .buttonStyle(.bordered)
                         .help("Add Rule")
-                        
+
                         Button(action: deleteSelectedRule) {
                             Image(systemName: "minus")
                                 .frame(width: 16, height: 16)
@@ -322,10 +356,9 @@ struct RulesTab: View {
                     }
                 }
                 .padding()
-                
-                
+
                 Divider()
-                
+
                 // Rules list
                 if appState.rules.isEmpty {
                     VStack(spacing: 8) {
@@ -348,9 +381,9 @@ struct RulesTab: View {
                         }
                     }
                 }
-                
+
                 Divider()
-                
+
                 // Footer
                 HStack {
                     Text("\(appState.rules.count) rule\(appState.rules.count == 1 ? "" : "s")")
@@ -362,9 +395,9 @@ struct RulesTab: View {
                 .padding(.vertical, 8)
             }
             .frame(width: 250)
-            
+
             Divider()
-            
+
             // Right side - rule details
             if let rule = selectedRule {
                 RuleDetailView(rule: rule)
@@ -389,7 +422,7 @@ struct RulesTab: View {
             }
         }
     }
-    
+
     private func deleteSelectedRule() {
         guard let rule = selectedRule else { return }
         appState.deleteRule(rule)
@@ -406,7 +439,7 @@ struct ExportRulesSheet: View {
     @State private var isExporting = false
     @State private var showError = false
     @State private var errorMessage = ""
-    
+
     var body: some View {
         VStack(spacing: 20) {
             // Header
@@ -414,29 +447,29 @@ struct ExportRulesSheet: View {
                 Image(systemName: "square.and.arrow.up")
                     .font(.system(size: 40))
                     .foregroundColor(.accentColor)
-                
+
                 Text("Export Rules")
                     .font(.title2)
-                
+
                 Text("\(rules.count) rule\(rules.count == 1 ? "" : "s")")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             Divider()
-            
+
             // Format selection
             VStack(alignment: .leading, spacing: 12) {
                 Text("Export Format")
                     .font(.headline)
-                
+
                 Picker("", selection: $selectedFormat) {
                     ForEach([ExportFormat.json, ExportFormat.csv], id: \.self) { format in
                         Text(format.displayName).tag(format)
                     }
                 }
                 .pickerStyle(.radioGroup)
-                
+
                 Group {
                     if selectedFormat == .json {
                         Text("JSON format preserves all rule details and is recommended for backup and transfer between Default Tamer installations.")
@@ -450,18 +483,18 @@ struct ExportRulesSheet: View {
                 }
                 .padding(.leading, 20)
             }
-            
+
             Spacer()
-            
+
             // Action buttons
             HStack {
                 Button("Cancel") {
                     dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
-                
+
                 Spacer()
-                
+
                 Button("Export...") {
                     exportRules()
                 }
@@ -472,15 +505,15 @@ struct ExportRulesSheet: View {
         .padding()
         .frame(width: 450, height: 320)
         .alert("Export Error", isPresented: $showError) {
-            Button("OK", role: .cancel) { }
+            Button("OK", role: .cancel) {}
         } message: {
             Text(errorMessage)
         }
     }
-    
+
     private func exportRules() {
         isExporting = true
-        
+
         do {
             let data: Data
             switch selectedFormat {
@@ -489,13 +522,13 @@ struct ExportRulesSheet: View {
             case .csv:
                 data = try RuleImportExport.exportToCSV(rules)
             }
-            
+
             // Show save panel
             let panel = NSSavePanel()
             panel.allowedContentTypes = [selectedFormat.contentType]
             panel.nameFieldStringValue = "DefaultTamer-Rules.\(selectedFormat.fileExtension)"
             panel.message = "Choose where to save your rules"
-            
+
             panel.begin { response in
                 if response == .OK, let url = panel.url {
                     do {
@@ -528,7 +561,7 @@ struct ImportRulesSheet: View {
     @State private var isImporting = false
     @State private var showError = false
     @State private var errorMessage = ""
-    
+
     var body: some View {
         VStack(spacing: 20) {
             // Header
@@ -536,36 +569,36 @@ struct ImportRulesSheet: View {
                 Image(systemName: "square.and.arrow.down")
                     .font(.system(size: 40))
                     .foregroundColor(.accentColor)
-                
+
                 Text("Import Rules")
                     .font(.title2)
-                
+
                 if !appState.rules.isEmpty {
                     Text("\(appState.rules.count) existing rule\(appState.rules.count == 1 ? "" : "s")")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
             }
-            
+
             Divider()
-            
+
             // Import mode selection
             VStack(alignment: .leading, spacing: 12) {
                 Text("Import Mode")
                     .font(.headline)
-                
+
                 Picker("", selection: $selectedMode) {
                     ForEach([ImportMode.merge, ImportMode.append, ImportMode.replace], id: \.self) { mode in
                         Text(mode.displayName).tag(mode)
                     }
                 }
                 .pickerStyle(.radioGroup)
-                
+
                 Text(selectedMode.description)
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .padding(.leading, 20)
-                
+
                 if selectedMode == .replace && !appState.rules.isEmpty {
                     HStack(spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")
@@ -577,18 +610,18 @@ struct ImportRulesSheet: View {
                     .padding(.leading, 20)
                 }
             }
-            
+
             Spacer()
-            
+
             // Action buttons
             HStack {
                 Button("Cancel") {
                     dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
-                
+
                 Spacer()
-                
+
                 Button("Choose File...") {
                     importRules()
                 }
@@ -599,26 +632,26 @@ struct ImportRulesSheet: View {
         .padding()
         .frame(width: 450, height: 350)
         .alert("Import Error", isPresented: $showError) {
-            Button("OK", role: .cancel) { }
+            Button("OK", role: .cancel) {}
         } message: {
             Text(errorMessage)
         }
     }
-    
+
     private func importRules() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.json, .commaSeparatedText]
         panel.allowsMultipleSelection = false
         panel.message = "Choose a rules file to import"
-        
+
         panel.begin { response in
             guard response == .OK, let url = panel.url else { return }
-            
+
             isImporting = true
-            
+
             do {
                 let data = try Data(contentsOf: url)
-                
+
                 // Detect format by file extension
                 let importedRules: [Rule]
                 if url.pathExtension.lowercased() == "json" {
@@ -634,10 +667,10 @@ struct ImportRulesSheet: View {
                         existingRules: appState.rules
                     )
                 }
-                
+
                 // Apply imported rules
                 appState.replaceRules(importedRules)
-                
+
                 let message: String
                 switch selectedMode {
                 case .replace:
@@ -648,11 +681,11 @@ struct ImportRulesSheet: View {
                     let newCount = importedRules.count - appState.rules.count
                     message = "Merged \(newCount) new rules"
                 }
-                
+
                 Task { @MainActor in
                     ToastManager.shared.success(message)
                 }
-                
+
                 dismiss()
             } catch let error as AppError {
                 errorMessage = error.errorDescription ?? error.localizedDescription
@@ -664,7 +697,7 @@ struct ImportRulesSheet: View {
                 errorMessage = "Failed to import rules: \(error.localizedDescription)"
                 showError = true
             }
-            
+
             isImporting = false
         }
     }
@@ -675,17 +708,17 @@ struct ImportRulesSheet: View {
 struct ActivityTab: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var viewModel = ActivityViewModel()
-    
+
     var body: some View {
         if !appState.settings.diagnosticsEnabled {
             VStack(spacing: 12) {
                 Image(systemName: "chart.bar.xaxis")
                     .font(.system(size: 48))
                     .foregroundColor(.secondary)
-                
+
                 Text("Activity Logging Disabled")
                     .font(.headline)
-                
+
                 Text("Enable diagnostics in the General tab to track URL routing")
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -696,9 +729,9 @@ struct ActivityTab: View {
             VStack(spacing: 0) {
                 // Toolbar
                 ActivityToolbar(viewModel: viewModel)
-                
+
                 Divider()
-                
+
                 // Table
                 if viewModel.logs.isEmpty {
                     EmptyActivityView()
@@ -717,7 +750,7 @@ struct ActivityTab: View {
 
 struct ActivityToolbar: View {
     @ObservedObject var viewModel: ActivityViewModel
-    
+
     var body: some View {
         HStack(spacing: 16) {
             // Search
@@ -729,7 +762,7 @@ struct ActivityToolbar: View {
                     .onChange(of: viewModel.searchText) { _ in
                         viewModel.applyFilters()
                     }
-                
+
                 if !viewModel.searchText.isEmpty {
                     Button(action: { viewModel.searchText = "" }) {
                         Image(systemName: "xmark.circle.fill")
@@ -742,17 +775,17 @@ struct ActivityToolbar: View {
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(6)
             .frame(maxWidth: 300)
-            
+
             Spacer()
-            
+
             // Stats
             Text("\(viewModel.logs.count) logs")
                 .font(.caption)
                 .foregroundColor(.secondary)
-            
+
             Divider()
                 .frame(height: 20)
-            
+
             // Time filter
             Picker("", selection: $viewModel.timeFilter) {
                 Text("All Time").tag(ActivityViewModel.TimeFilter.all)
@@ -765,7 +798,7 @@ struct ActivityToolbar: View {
             .onChange(of: viewModel.timeFilter) { _ in
                 viewModel.applyFilters()
             }
-            
+
             // Browser filter
             if !viewModel.availableBrowsers.isEmpty {
                 Picker("", selection: $viewModel.browserFilter) {
@@ -780,18 +813,18 @@ struct ActivityToolbar: View {
                     viewModel.applyFilters()
                 }
             }
-            
+
             Divider()
                 .frame(height: 20)
-            
+
             // Actions
             Menu {
                 Button("Refresh") {
                     viewModel.loadLogs()
                 }
-                
+
                 Divider()
-                
+
                 Button("Clear Logs...") {
                     viewModel.showClearConfirmation = true
                 }
@@ -805,7 +838,7 @@ struct ActivityToolbar: View {
         .padding(.horizontal)
         .padding(.vertical, 8)
         .alert("Clear Activity Logs?", isPresented: $viewModel.showClearConfirmation) {
-            Button("Cancel", role: .cancel) { }
+            Button("Cancel", role: .cancel) {}
             Button("Clear All", role: .destructive) {
                 viewModel.clearAllLogs()
             }
@@ -819,7 +852,7 @@ struct ActivityToolbar: View {
 
 struct ActivityTableView: View {
     let logs: [RouteLog]
-    
+
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
@@ -844,9 +877,9 @@ struct ActivityTableView: View {
                 .padding(.horizontal)
                 .padding(.vertical, 8)
                 .background(Color(NSColor.controlBackgroundColor))
-                
+
                 Divider()
-                
+
                 // Rows
                 ForEach(logs) { log in
                     ActivityRowView(log: log)
@@ -859,7 +892,7 @@ struct ActivityTableView: View {
 
 struct ActivityRowView: View {
     let log: RouteLog
-    
+
     var body: some View {
         HStack(spacing: 0) {
             // Time
@@ -871,7 +904,7 @@ struct ActivityRowView: View {
                     .foregroundColor(.secondary)
             }
             .frame(width: 120, alignment: .leading)
-            
+
             // URL
             VStack(alignment: .leading, spacing: 2) {
                 Text(log.urlHost)
@@ -883,17 +916,17 @@ struct ActivityRowView: View {
                     .truncationMode(.middle)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             // Source
             VStack(alignment: .leading, spacing: 2) {
                 if let sourceApp = log.sourceApp {
                     // Try to get app name, fallback to bundle ID
                     let appName = SourceAppDetector.getAppName(for: sourceApp) ?? sourceApp
-                    
+
                     Text(appName)
                         .font(.caption)
                         .foregroundColor(.primary)
-                    
+
                     Text(sourceApp)
                         .font(.system(.caption2, design: .monospaced))
                         .foregroundColor(.secondary)
@@ -905,7 +938,7 @@ struct ActivityRowView: View {
                 }
             }
             .frame(width: 120, alignment: .leading)
-            
+
             // Rule
             Group {
                 if log.fallbackUsed {
@@ -939,7 +972,7 @@ struct ActivityRowView: View {
                 }
             }
             .frame(width: 110, alignment: .leading)
-            
+
             // Browser
             Text(log.targetBrowserName)
                 .font(.caption)
@@ -958,10 +991,10 @@ struct EmptyActivityView: View {
             Image(systemName: "chart.bar.xaxis")
                 .font(.system(size: 48))
                 .foregroundColor(.secondary)
-            
+
             Text("No Activity Yet")
                 .font(.title2)
-            
+
             Text("Activity logs will appear here when URLs are routed")
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -981,14 +1014,14 @@ class ActivityViewModel: ObservableObject {
     @Published var browserFilter: String?
     @Published var showClearConfirmation = false
     @Published var availableBrowsers: [String] = []
-    
+
     enum TimeFilter {
         case all, today, week, month
-        
+
         var startDate: Date? {
             let calendar = Calendar.current
             let now = Date()
-            
+
             switch self {
             case .all:
                 return nil
@@ -1001,42 +1034,42 @@ class ActivityViewModel: ObservableObject {
             }
         }
     }
-    
+
     func loadLogs() {
         allLogs = ActivityDatabase.shared.fetchRecentLogs(limit: DatabaseConstants.defaultFetchLimit)
-        
+
         // Extract unique browsers for filter
         let uniqueBrowsers = Set(allLogs.map { $0.targetBrowserName })
         availableBrowsers = Array(uniqueBrowsers).sorted()
-        
+
         applyFilters()
     }
-    
+
     func applyFilters() {
         var filtered = allLogs
-        
+
         // Time filter
         if let startDate = timeFilter.startDate {
             filtered = filtered.filter { $0.timestamp >= startDate }
         }
-        
+
         // Browser filter
         if let browser = browserFilter {
             filtered = filtered.filter { $0.targetBrowserName == browser }
         }
-        
+
         // Search filter
         if !searchText.isEmpty {
             let search = searchText.lowercased()
             filtered = filtered.filter { log in
                 log.url.lowercased().contains(search) ||
-                log.urlHost.lowercased().contains(search)
+                    log.urlHost.lowercased().contains(search)
             }
         }
-        
+
         logs = filtered
     }
-    
+
     func clearAllLogs() {
         ActivityDatabase.shared.deleteAllLogs()
         loadLogs()
@@ -1050,7 +1083,7 @@ struct AboutTab: View {
     @EnvironmentObject var updateManager: UpdateManager
     @StateObject private var checkForUpdatesViewModel = CheckForUpdatesViewModel()
     @State private var isIconHovered = false
-    
+
     var body: some View {
         VStack(spacing: 20) {
             if let appIcon = NSImage(named: "AppIcon") {
@@ -1065,18 +1098,18 @@ struct AboutTab: View {
                         isIconHovered = hovering
                     }
             }
-            
+
             VStack(spacing: 8) {
                 Text("Default Tamer")
                     .font(.title)
                     .fontWeight(.bold)
-                
+
                 // Version with Check for Updates button inline
                 HStack(spacing: 12) {
                     Text("Version \(AppVersion.current)")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-                    
+
                     Button(action: {
                         updateManager.checkForUpdates(forced: true)
                     }) {
@@ -1093,12 +1126,12 @@ struct AboutTab: View {
                     .help("Check for updates")
                 }
             }
-            
+
             Text("Route your links to the right browser, every time")
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-            
+
             HStack(spacing: 4) {
                 Text("Made by")
                     .font(.caption)
@@ -1111,28 +1144,28 @@ struct AboutTab: View {
                 Link("defaulttamer.app", destination: URL(string: ExternalLinks.website)!)
                     .font(.caption)
             }
-            
+
             Spacer()
-            
+
             // Centered links
             VStack(spacing: 12) {
                 HStack(spacing: 16) {
                     Spacer()
-                    
+
                     Link(destination: URL(string: ExternalLinks.github)!) {
                         Label("View on GitHub", systemImage: "link")
                     }
-                    
+
                     Divider()
                         .frame(height: 20)
-                    
+
                     Link(destination: URL(string: ExternalLinks.issues)!) {
                         Label("Report an Issue", systemImage: "exclamationmark.bubble")
                     }
-                    
+
                     Divider()
                         .frame(height: 20)
-                    
+
                     Link(destination: URL(string: ExternalLinks.buyMeACoffee)!) {
                         Label("Buy Me a Coffee", systemImage: "cup.and.saucer.fill")
                     }
@@ -1144,10 +1177,10 @@ struct AboutTab: View {
                     Link(destination: URL(string: ExternalLinks.privacy)!) {
                         Label("Privacy Policy", systemImage: "hand.raised")
                     }
-                    
+
                     Spacer()
                 }
-                
+
                 Text("© 2026 Default Tamer")
                     .font(.caption)
                     .foregroundColor(.secondary)
