@@ -1,0 +1,25 @@
+.gitmodules
+  s_d60e50ba7e8ea7::t_0d810239ac08cf 2
+  s_d60e50ba7e8ea7::t_912783ce0a9f69 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "e66d9948ae9870f76eb6de09d8adf910e1731aa5",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_d60e50ba7e8ea7": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "b7111e9c-e22d-4436-88c2-a2d770d5529b",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}
