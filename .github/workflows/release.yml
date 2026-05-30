@@ -173,7 +173,7 @@ jobs:
       
       - name: Create DMG
         run: |
-          bash private/scripts/create-dmg.sh build/DefaultTamer.app dist/DefaultTamer-v${{ steps.version.outputs.version }}.dmg
+          bash DefaultTamerScript/scripts/create-dmg.sh build/DefaultTamer.app dist/DefaultTamer-v${{ steps.version.outputs.version }}.dmg
 
       - name: Verify DMG signatures before notarization
         run: |
