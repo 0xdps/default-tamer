@@ -1,0 +1,51 @@
+DefaultTamerWeb/src/pages/index.astro
+  4a5b01db658de342 3-7,311
+DefaultTamerWeb/src/pages/download.astro
+  4a5b01db658de342 6-9,111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.5",
+  "base_commit_sha": "b8329ccceba8f471f78a7721fb8cd5bf0d057a9e",
+  "prompts": {
+    "082906fd6f1b59af": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "de5de678-79b6-4b7e-a9be-2a5461acb3db",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 24,
+      "overriden_lines": 0
+    },
+    "4a5b01db658de342": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "beee256c-d6f5-491d-af3e-de9d47f4a012",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 11,
+      "total_deletions": 2,
+      "accepted_lines": 11,
+      "overriden_lines": 0
+    },
+    "6760e3a1822f8d30": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "11d5cedd-fd38-41dd-a0a6-23bfa7031039",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}

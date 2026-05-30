@@ -1,0 +1,50 @@
+DefaultTamerWeb/src/pages/auth/callback.astro
+  622d509bcd7d2250 1-12,34-87,90-92,94-96,98-100,117-130,132-136
+project.yml
+  622d509bcd7d2250 51-53
+DefaultTamer/Models/LicensePlan.swift
+  622d509bcd7d2250 1-31,33,36-40,42-58
+DefaultTamer/Views/PlusFeatureBadge.swift
+  622d509bcd7d2250 1-22
+DefaultTamer/Views/PreferencesWindow.swift
+  622d509bcd7d2250 14,28-29,55-56,58,97-103,143
+DefaultTamer/Utilities/Constants.swift
+  622d509bcd7d2250 131-135,137-139,143,146-151,156,172-173,176-190
+DefaultTamer/Info.plist
+  622d509bcd7d2250 57-64
+DefaultTamerWeb/src/pages/pricing.astro
+  622d509bcd7d2250 1-310
+DefaultTamer/Views/LicensingView.swift
+  622d509bcd7d2250 1-12,14,16-46,50,52-97,103-106,108,110,117,121-128,130-134,136-139,143-153,161-165,167-174,182-183,189,192,198,203-205,216-271
+DefaultTamer/Views/AddRuleSheet.swift
+  622d509bcd7d2250 12,207-212,488,707-712
+DefaultTamer/AppDelegate.swift
+  622d509bcd7d2250 128-130,286-287
+DefaultTamerWeb/src/components/Header.astro
+  622d509bcd7d2250 25-30
+DefaultTamer/Services/LicensingManager.swift
+  622d509bcd7d2250 1-69,72-84,86,89-90,93-95,120,135-147,150-159,163-165,168-169,171,174-177,227,244-246,253,259-260,288,302-303,310-311,318,323,325-326,329,331,333-334,336,339-340,342-345
+DefaultTamer/Views/RulesWindow.swift
+  622d509bcd7d2250 35,309,428
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "86b7738e0b57dd34f98478c0015ed1af54dcde47",
+  "prompts": {
+    "622d509bcd7d2250": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "09141db6-4c3b-415b-8ca3-1da725e73d2d",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>",
+      "messages": [],
+      "total_additions": 2698,
+      "total_deletions": 135,
+      "accepted_lines": 2340,
+      "overriden_lines": 69,
+      "messages_url": "https://usegitai.com/cas/cb47009a0a24f31ded08d6d5090ed608f7487c188c5586f938829301ce0a0fd2"
+    }
+  }
+}

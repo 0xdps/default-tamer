@@ -1,0 +1,24 @@
+DefaultTamer/Services/PersistenceManager.swift
+  c97eb784c86aa366 69-73,141-145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "80cf795e5cc9aa4226217d1b67795e1bdc66440f",
+  "prompts": {
+    "c97eb784c86aa366": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f88adbe0-bd0a-4d7b-b931-52b0e590b9f4",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 0,
+      "accepted_lines": 94,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/7efc4dfb5ae25bb73545b14ddd02c59a73eb473398a3aac4cf4d42a428e30f6f"
+    }
+  }
+}

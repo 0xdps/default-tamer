@@ -1,0 +1,23 @@
+DefaultTamerWeb/src/pages/release-notes.astro
+  95313a55c14bdb0c 42-46,48,50-52,54-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.5",
+  "base_commit_sha": "c82f25481aa448fd236531e1220f091697019b0f",
+  "prompts": {
+    "95313a55c14bdb0c": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f4ec04df-2aea-44a7-b9f2-058d0bc00205",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 14,
+      "total_deletions": 7,
+      "accepted_lines": 14,
+      "overriden_lines": 0
+    }
+  }
+}

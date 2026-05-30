@@ -1,0 +1,23 @@
+.github/workflows/release.yml
+  d322ea79993d9001 11-13,24-31,81-90,92-97
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "b6d4697056e972cb0581f67bd35228cd0336d3e8",
+  "prompts": {
+    "d322ea79993d9001": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "3bf460df-9a14-45e3-a327-974189bad20f",
+        "model": "copilot/auto"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>",
+      "messages": [],
+      "total_additions": 28,
+      "total_deletions": 3,
+      "accepted_lines": 28,
+      "overriden_lines": 0
+    }
+  }
+}

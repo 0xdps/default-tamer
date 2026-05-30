@@ -1,0 +1,49 @@
+.github/workflows/release.yml
+  6760e3a1822f8d30 207-208,210,212,215-221,223-225,239
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.5",
+  "base_commit_sha": "c2526bfd8e6708f1054ef7c7cc075d5e894efce7",
+  "prompts": {
+    "6760e3a1822f8d30": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "11d5cedd-fd38-41dd-a0a6-23bfa7031039",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 15,
+      "total_deletions": 4,
+      "accepted_lines": 15,
+      "overriden_lines": 0
+    },
+    "75206f15dd3ba98d": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "7be2c1e7-4e17-4f05-a3d1-98570ab00b05",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 28,
+      "total_deletions": 0,
+      "accepted_lines": 28,
+      "overriden_lines": 0
+    },
+    "95313a55c14bdb0c": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f4ec04df-2aea-44a7-b9f2-058d0bc00205",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 15,
+      "total_deletions": 4,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}

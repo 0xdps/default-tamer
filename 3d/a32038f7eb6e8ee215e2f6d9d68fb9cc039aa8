@@ -1,0 +1,24 @@
+SECURITY.md
+  c97eb784c86aa366 1-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "3da32038f7eb6e8ee215e2f6d9d68fb9cc039aa8",
+  "prompts": {
+    "c97eb784c86aa366": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f88adbe0-bd0a-4d7b-b931-52b0e590b9f4",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>",
+      "messages": [],
+      "total_additions": 35,
+      "total_deletions": 0,
+      "accepted_lines": 119,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/e708f4014b905fe36b057810921ff73ef30a295a78759d566873c01a60ecf47a"
+    }
+  }
+}

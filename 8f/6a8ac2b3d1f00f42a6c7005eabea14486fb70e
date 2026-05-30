@@ -1,0 +1,69 @@
+DefaultTamerWeb/vercel.json
+  0712517833a26184 6-10,18-35
+DefaultTamerWeb/src/components/Footer.astro
+  0712517833a26184 45,63
+DefaultTamerWeb/src/pages/404.astro
+  0712517833a26184 16
+DefaultTamerWeb/tailwind.config.mjs
+  0712517833a26184 25
+DefaultTamerWeb/src/pages/download.astro
+  0712517833a26184 84,93
+DefaultTamerWeb/src/pages/index.astro
+  0712517833a26184 57,232,300
+DefaultTamerWeb/src/layouts/BaseLayout.astro
+  0712517833a26184 31,33-34,36,38-43
+DefaultTamerWeb/src/components/Header.astro
+  0712517833a26184 10-13
+.github/copilot-instructions.md
+  0712517833a26184 156,177
+DefaultTamerWeb/src/pages/docs/index.astro
+  0712517833a26184 234
+DefaultTamerWeb/src/pages/changelog.astro
+  0712517833a26184 134
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.5",
+  "base_commit_sha": "8f6a8ac2b3d1f00f42a6c7005eabea14486fb70e",
+  "prompts": {
+    "0712517833a26184": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "713df29f-a83c-410b-a636-342bc429cc4c",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 51,
+      "total_deletions": 15,
+      "accepted_lines": 51,
+      "overriden_lines": 0
+    },
+    "082906fd6f1b59af": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "de5de678-79b6-4b7e-a9be-2a5461acb3db",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 24,
+      "overriden_lines": 0
+    },
+    "6760e3a1822f8d30": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "11d5cedd-fd38-41dd-a0a6-23bfa7031039",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}

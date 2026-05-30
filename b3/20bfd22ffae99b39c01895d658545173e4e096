@@ -1,0 +1,26 @@
+DefaultTamer/Services/AppState.swift
+  c97eb784c86aa366 11,20,30-32,38-47
+DefaultTamer/Services/BrowserManager.swift
+  c97eb784c86aa366 50-51,57,72,81,85,95-96,99-100,104-115,117,119-123,125-127,151,155,166-167,169,172-178,181-192,194-211,213-214,216-217,220-227,229,231-247,249-250,252-254,257,260-267,269-270,274-279,281,283-287,289
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "b320bfd22ffae99b39c01895d658545173e4e096",
+  "prompts": {
+    "c97eb784c86aa366": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f88adbe0-bd0a-4d7b-b931-52b0e590b9f4",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>",
+      "messages": [],
+      "total_additions": 236,
+      "total_deletions": 239,
+      "accepted_lines": 153,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/3b9820804efa33ee2114b588d85ac0066b69e85cc5f6a95b3831846a088c847a"
+    }
+  }
+}

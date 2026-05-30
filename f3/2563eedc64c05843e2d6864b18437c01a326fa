@@ -1,0 +1,14 @@
+DefaultTamerWeb/public/_redirects
+  h_d60f3499e5a1c3 1-2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "f32563eedc64c05843e2d6864b18437c01a326fa",
+  "prompts": {},
+  "humans": {
+    "h_d60f3499e5a1c3": {
+      "author": "Devendra Pratap Singh"
+    }
+  }
+}
