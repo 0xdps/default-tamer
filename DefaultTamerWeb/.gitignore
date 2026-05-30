@@ -8,6 +8,9 @@ node_modules/
 
 # wrangler local dev state
 .wrangler/
+.dev.vars*
+!.dev.vars.example
+!.env.example
 
 # logs
 npm-debug.log*
@@ -24,9 +27,3 @@ pnpm-debug.log*
 
 # jetbrains setting folders
 .idea/
-
-# wrangler files
-.wrangler
-.dev.vars*
-!.dev.vars.example
-!.env.example
