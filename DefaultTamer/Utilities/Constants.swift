@@ -129,6 +129,29 @@ struct FeedbackConfig {
     #endif
 }
 
+// MARK: - Seat-based device management
+
+struct SeatAPIConstants {
+    #if DEBUG
+    static let baseURL     = "http://localhost:4321"
+    // Staging NubeAuth price IDs for 1 / 2 / 5 seat plans
+    static let price1Seat  = "PRC0ADuG3k15Q"  // reuse existing staging price for 1 seat
+    static let price2Seats = "PRC0staging2"   // TODO: create in NubeAuth staging dashboard
+    static let price5Seats = "PRC0staging5"   // TODO: create in NubeAuth staging dashboard
+    #else
+    static let baseURL     = "https://www.defaulttamer.app"
+    // Production NubeAuth price IDs — fill after creating plans in NubeAuth dashboard
+    static let price1Seat  = "PRC0prod1"      // TODO: replace with production price ID
+    static let price2Seats = "PRC0prod2"      // TODO: replace with production price ID
+    static let price5Seats = "PRC0prod5"      // TODO: replace with production price ID
+    #endif
+
+    static var accountURL:   URL { URL(string: "\(baseURL)/account")! }
+    static var activateURL:  URL { URL(string: "\(baseURL)/api/seats/activate")! }
+    static var heartbeatURL: URL { URL(string: "\(baseURL)/api/seats/heartbeat")! }
+    static var deactivateURL: URL { URL(string: "\(baseURL)/api/seats/deactivate")! }
+}
+
 struct ExternalLinks {
     static let github = "https://github.com/0xdps/default-tamer"
     static let issues = "https://github.com/0xdps/default-tamer/issues"
@@ -205,13 +228,13 @@ struct NubeAuthConstants {
     /// OAuth + checkout URL — used when the user is NOT yet signed in.
     /// Authenticates via Google and triggers a payment checkout in one browser flow.
     /// Pass `promoCode` to pre-apply a validated discount coupon at the payment step.
-    static func oauthUpgradeURL(returnTo: String, promoCode: String? = nil) -> URL {
+    static func oauthUpgradeURL(priceId: String = powerPriceId, returnTo: String, promoCode: String? = nil) -> URL {
         var components = URLComponents(string: "\(gatewayURL)/v1/auth/start")!
         var queryItems = [
             URLQueryItem(name: "provider",   value: "google"),
             URLQueryItem(name: "app_id",     value: appId),
             URLQueryItem(name: "audience",   value: "app"),
-            URLQueryItem(name: "price_id",   value: powerPriceId),
+            URLQueryItem(name: "price_id",   value: priceId),
             URLQueryItem(name: "return_to",  value: returnTo),
             URLQueryItem(name: "cancel_url", value: pricingURL),
         ]

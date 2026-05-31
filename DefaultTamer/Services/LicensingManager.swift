@@ -88,15 +88,27 @@ struct PromoValidationResult {
 
 // MARK: - LicensingManager
 
+/// The activation state of this device's seat in the user's plan.
+enum ActivationState: Equatable {
+    case idle
+    case activating
+    case activated(seatsUsed: Int, seatsTotal: Int)
+    case overLimit(seatsUsed: Int, seatsTotal: Int)
+    case deactivatedRemotely
+    case error(String)
+}
+
 @MainActor
 final class LicensingManager: ObservableObject {
     static let shared = LicensingManager()
 
     @Published private(set) var status: LicenseStatus?
     @Published private(set) var isValidating = false
+    @Published private(set) var activationState: ActivationState = .idle
 
-    private let sessionTokenKey = "sessionToken"
-    private let userIdKey       = "userId"
+    private let sessionTokenKey  = "sessionToken"
+    private let userIdKey        = "userId"
+    private let activationIdKey  = "activationId"
     private var lastValidated: Date?
 
     private init() {}
@@ -220,16 +232,16 @@ final class LicensingManager: ObservableObject {
     /// discount. It is forwarded to the payment provider in both the direct-checkout
     /// and OAuth+checkout paths.
     @discardableResult
-    func startUpgrade(promoCode: String? = nil, fallbackBrowserId: String? = nil) async -> Bool {
+    func startUpgrade(priceId: String = NubeAuthConstants.powerPriceId, promoCode: String? = nil, fallbackBrowserId: String? = nil) async -> Bool {
         if let sessionToken = Keychain.load(key: sessionTokenKey) {
-            if let checkoutURL = await createCheckoutSession(sessionToken: sessionToken, promoCode: promoCode) {
+            if let checkoutURL = await createCheckoutSession(priceId: priceId, sessionToken: sessionToken, promoCode: promoCode) {
                 open(checkoutURL, in: fallbackBrowserId)
                 return true
             }
             appLogger.warning("Direct checkout failed; falling back to OAuth+payment URL")
         }
 
-        open(NubeAuthConstants.oauthUpgradeURL(returnTo: NubeAuthConstants.authCallbackURL, promoCode: promoCode),
+        open(NubeAuthConstants.oauthUpgradeURL(priceId: priceId, returnTo: NubeAuthConstants.authCallbackURL, promoCode: promoCode),
              in: fallbackBrowserId)
         return true
     }
@@ -280,11 +292,27 @@ final class LicensingManager: ObservableObject {
         Task { await exchangeCode(code, isPaymentCallback: isPaymentCallback) }
     }
 
-    /// Signs out — removes stored session token and clears license state.
+    /// Signs out — deactivates this device's seat, removes stored credentials, clears license state.
     func signOut() {
+        // Capture values before clearing keychain so the network request has what it needs.
+        let capturedToken = Keychain.load(key: sessionTokenKey)
+        let capturedDeviceId = PersistenceManager.shared.installID
+        if let capturedToken {
+            Task {
+                var req = URLRequest(url: SeatAPIConstants.deactivateURL)
+                req.httpMethod = "POST"
+                req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                req.setValue("Bearer \(capturedToken)", forHTTPHeaderField: "Authorization")
+                req.timeoutInterval = 15
+                req.httpBody = try? JSONSerialization.data(withJSONObject: ["device_id": capturedDeviceId])
+                try? await URLSession.shared.data(for: req)
+            }
+        }
         Keychain.delete(key: sessionTokenKey)
         Keychain.delete(key: userIdKey)
+        Keychain.delete(key: activationIdKey)
         status = nil
+        activationState = .idle
     }
 
     // MARK: - Private
@@ -292,7 +320,7 @@ final class LicensingManager: ObservableObject {
     /// Calls `POST /v1/payment/checkout` with the stored session token to create a
     /// checkout session directly (no re-authentication needed).
     /// Returns the payment provider's redirect URL on success, or `nil` on failure.
-    private func createCheckoutSession(sessionToken: String, promoCode: String? = nil) async -> URL? {
+    private func createCheckoutSession(priceId: String = NubeAuthConstants.powerPriceId, sessionToken: String, promoCode: String? = nil) async -> URL? {
         var request = URLRequest(url: NubeAuthConstants.billingCheckoutURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -300,7 +328,7 @@ final class LicensingManager: ObservableObject {
         request.timeoutInterval = 30
 
         var body: [String: String] = [
-            "priceId":    NubeAuthConstants.powerPriceId,
+            "priceId":    priceId,
             "appId":      NubeAuthConstants.appId,
             "successUrl": NubeAuthConstants.upgradeSuccessURL,
             "cancelUrl":  NubeAuthConstants.pricingURL,
@@ -353,6 +381,109 @@ final class LicensingManager: ObservableObject {
             }
         }
         appLogger.warning("Subscription still inactive after \(maxAttempts) attempts")
+    }
+
+    // MARK: - Seat device management
+
+    /// Activates this device's seat via POST /api/seats/activate.
+    private func activateDevice(sessionToken: String) async {
+        let deviceId   = PersistenceManager.shared.installID
+        let deviceName = Host.current().localizedName ?? "Mac"
+
+        activationState = .activating
+
+        var request = URLRequest(url: SeatAPIConstants.activateURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(sessionToken)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 30
+
+        let body: [String: String] = ["device_id": deviceId, "device_name": deviceName]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse else { return }
+
+            struct ActivateResponse: Decodable {
+                let activationId: String
+                let seatsUsed: Int
+                let seatsTotal: Int
+            }
+            struct LimitResponse: Decodable {
+                let seatsUsed: Int
+                let seatsTotal: Int
+            }
+
+            switch http.statusCode {
+            case 200:
+                let result = try JSONDecoder().decode(ActivateResponse.self, from: data)
+                Keychain.save(key: activationIdKey, value: result.activationId)
+                activationState = .activated(seatsUsed: result.seatsUsed, seatsTotal: result.seatsTotal)
+                appLogger.info("✅ Device activated — \(result.seatsUsed)/\(result.seatsTotal) seats")
+            case 403:
+                if let limit = try? JSONDecoder().decode(LimitResponse.self, from: data) {
+                    activationState = .overLimit(seatsUsed: limit.seatsUsed, seatsTotal: limit.seatsTotal)
+                } else {
+                    activationState = .overLimit(seatsUsed: 0, seatsTotal: 0)
+                }
+                appLogger.warning("Seat limit reached — cannot activate this device")
+            default:
+                activationState = .error("Activation failed (\(http.statusCode))")
+                appLogger.error("Device activation HTTP \(http.statusCode, privacy: .public)")
+            }
+        } catch {
+            activationState = .error(error.localizedDescription)
+            appLogger.error("Device activation failed: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    /// Updates last_seen_at via POST /api/seats/heartbeat.
+    /// Sets activationState to .deactivatedRemotely if the server returns 404.
+    private func heartbeatDevice(sessionToken: String) async {
+        let deviceId = PersistenceManager.shared.installID
+
+        var request = URLRequest(url: SeatAPIConstants.heartbeatURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(sessionToken)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 30
+
+        let body: [String: String] = ["device_id": deviceId]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse else { return }
+
+            struct HeartbeatResponse: Decodable {
+                let active: Bool
+                let seatsUsed: Int
+                let seatsTotal: Int
+            }
+
+            switch http.statusCode {
+            case 200:
+                if let result = try? JSONDecoder().decode(HeartbeatResponse.self, from: data) {
+                    if result.active {
+                        activationState = .activated(seatsUsed: result.seatsUsed, seatsTotal: result.seatsTotal)
+                    } else {
+                        Keychain.delete(key: activationIdKey)
+                        activationState = .deactivatedRemotely
+                    }
+                }
+            case 404:
+                Keychain.delete(key: activationIdKey)
+                activationState = .deactivatedRemotely
+                appLogger.info("Device deactivated remotely — seat released")
+            default:
+                // Non-fatal: leave existing state unchanged so app stays usable offline
+                appLogger.error("Heartbeat HTTP \(http.statusCode, privacy: .public)")
+            }
+        } catch {
+            // Non-fatal: keep existing activation state
+            appLogger.error("Heartbeat failed: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     /// Exchange the one-time code for a long-lived session token via POST /v1/auth/token.
@@ -451,6 +582,13 @@ final class LicensingManager: ObservableObject {
                     validUntil: validUntil
                 )
                 appLogger.info("✅ Subscription active — plan: \(plan.displayName, privacy: .public)")
+
+                // Activate or heartbeat this device's seat
+                if Keychain.load(key: activationIdKey) != nil {
+                    await heartbeatDevice(sessionToken: sessionToken)
+                } else {
+                    await activateDevice(sessionToken: sessionToken)
+                }
             } else {
                 status = LicenseStatus(licenseId: "", plan: .free, features: [], validUntil: nil)
                 appLogger.info("Subscription inactive or free plan")

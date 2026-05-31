@@ -86,11 +86,79 @@ struct LicensingTab: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
         } else if let status = licensing.status, status.plan.isPaid {
-            activePlanSection(status: status)
+            VStack(alignment: .leading, spacing: 16) {
+                activePlanSection(status: status)
+                activationStateCard
+            }
         } else if licensing.status != nil {
             freePlanSection
         } else {
             notSignedInSection
+        }
+    }
+
+    // Activation state supplemental card (shown below activePlanSection when relevant)
+    @ViewBuilder
+    private var activationStateCard: some View {
+        switch licensing.activationState {
+        case .overLimit(let used, let total):
+            HStack(spacing: 12) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.orange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(used) of \(total) seats in use")
+                        .font(.subheadline).fontWeight(.semibold)
+                    Text("This device couldn't be activated. Free a seat from another device.")
+                        .font(.caption).foregroundColor(.secondary)
+                }
+                Spacer()
+                Button {
+                    NSWorkspace.shared.open(SeatAPIConstants.accountURL)
+                } label: {
+                    Text("Manage")
+                        .font(.subheadline).fontWeight(.semibold)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.orange)
+            }
+            .padding(14)
+            .background(Color.orange.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.orange.opacity(0.25), lineWidth: 1)
+            )
+
+        case .deactivatedRemotely:
+            HStack(spacing: 12) {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundColor(.red)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("This device was deactivated")
+                        .font(.subheadline).fontWeight(.semibold)
+                    Text("Your license is active but this device was removed remotely.")
+                        .font(.caption).foregroundColor(.secondary)
+                }
+                Spacer()
+                Button {
+                    licensing.validateOnLaunch()
+                } label: {
+                    Text("Re-activate")
+                        .font(.subheadline).fontWeight(.semibold)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.orange)
+            }
+            .padding(14)
+            .background(Color.red.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.red.opacity(0.25), lineWidth: 1)
+            )
+
+        default:
+            EmptyView()
         }
     }
 
@@ -128,6 +196,20 @@ struct LicensingTab: View {
                     Text("Lifetime — no expiry")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
+                }
+
+                // Seat usage badge
+                switch licensing.activationState {
+                case .activated(let used, let total):
+                    Text("\(used) of \(total) seat\(total == 1 ? "" : "s") active")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                case .activating:
+                    Text("Activating seat…")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                default:
+                    EmptyView()
                 }
             }
 
@@ -185,29 +267,12 @@ struct LicensingTab: View {
             }
 
             HStack(spacing: 10) {
-                Button {
-                    isUpgrading = true
-                    Task {
-                        await licensing.startUpgrade(
-                            promoCode: validatedPromoCode,
-                            fallbackBrowserId: appState.settings.fallbackBrowserId
-                        )
-                        isUpgrading = false
-                    }
-                } label: {
-                    if isUpgrading {
-                        HStack(spacing: 6) {
-                            ProgressView().controlSize(.small).tint(.white)
-                            Text("Opening…")
-                        }
-                    } else {
-                        Label("Upgrade to Power", systemImage: "bolt.fill")
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(.orange)
-                .disabled(isUpgrading)
+                upgradeButton(priceId: SeatAPIConstants.price1Seat, label: "Power — 1 Device")
+                upgradeButton(priceId: SeatAPIConstants.price2Seats, label: "Power — 2 Devices")
+                upgradeButton(priceId: SeatAPIConstants.price5Seats, label: "Power — 5 Devices")
+            }
 
+            HStack(spacing: 10) {
                 Button {
                     licensing.validateOnLaunch()
                 } label: {
@@ -254,30 +319,12 @@ struct LicensingTab: View {
             }
 
             HStack(spacing: 10) {
-                Button {
-                    isUpgrading = true
-                    Task {
-                        await licensing.startUpgrade(
-                            promoCode: validatedPromoCode,
-                            fallbackBrowserId: appState.settings.fallbackBrowserId
-                        )
-                        isUpgrading = false
-                    }
-                } label: {
-                    if isUpgrading {
-                        HStack(spacing: 6) {
-                            ProgressView().controlSize(.small).tint(.white)
-                            Text("Opening…")
-                        }
-                    } else {
-                        Label("Get Power Plan", systemImage: "bolt.fill")
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(.orange)
-                .disabled(isUpgrading)
-                .help("Sign in with Google and purchase the Power plan")
+                upgradeButton(priceId: SeatAPIConstants.price1Seat, label: "Power — 1 Device")
+                upgradeButton(priceId: SeatAPIConstants.price2Seats, label: "2 Devices")
+                upgradeButton(priceId: SeatAPIConstants.price5Seats, label: "5 Devices")
+            }
 
+            HStack(spacing: 10) {
                 Button {
                     licensing.startOAuth(fallbackBrowserId: appState.settings.fallbackBrowserId)
                 } label: {
@@ -292,6 +339,31 @@ struct LicensingTab: View {
     }
 
     // MARK: - Promo code
+
+    /// A bordered-prominent button that opens checkout for the given seat tier.
+    @ViewBuilder
+    private func upgradeButton(priceId: String, label: String) -> some View {
+        Button {
+            isUpgrading = true
+            Task {
+                await licensing.startUpgrade(
+                    priceId: priceId,
+                    promoCode: validatedPromoCode,
+                    fallbackBrowserId: appState.settings.fallbackBrowserId
+                )
+                isUpgrading = false
+            }
+        } label: {
+            if isUpgrading {
+                ProgressView().controlSize(.small).tint(.white)
+            } else {
+                Label(label, systemImage: "bolt.fill")
+            }
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(.orange)
+        .disabled(isUpgrading)
+    }
 
     private var promoCodeSection: some View {
         VStack(alignment: .leading, spacing: 6) {
