@@ -133,22 +133,29 @@ struct FeedbackConfig {
 
 struct SeatAPIConstants {
     #if DEBUG
-    static let baseURL     = "http://localhost:4321"
-    // Staging NubeAuth price IDs for 1 / 2 / 5 seat plans
-    static let price1Seat  = "PRC0ADuG3k15Q"  // reuse existing staging price for 1 seat
-    static let price2Seats = "PRC0staging2"   // TODO: create in NubeAuth staging dashboard
-    static let price5Seats = "PRC0staging5"   // TODO: create in NubeAuth staging dashboard
+    static let baseURL = "http://localhost:4321"
     #else
-    static let baseURL     = "https://www.defaulttamer.app"
-    // Production NubeAuth price IDs — fill after creating plans in NubeAuth dashboard
-    static let price1Seat  = "PRC0prod1"      // TODO: replace with production price ID
-    static let price2Seats = "PRC0prod2"      // TODO: replace with production price ID
-    static let price5Seats = "PRC0prod5"      // TODO: replace with production price ID
+    static let baseURL = "https://www.defaulttamer.app"
     #endif
 
-    static var accountURL:   URL { URL(string: "\(baseURL)/account")! }
-    static var activateURL:  URL { URL(string: "\(baseURL)/api/seats/activate")! }
-    static var heartbeatURL: URL { URL(string: "\(baseURL)/api/seats/heartbeat")! }
+    // MARK: Auth
+    static var authStartURL:    URL { URL(string: "\(baseURL)/api/auth/start")! }
+    static var exchangeURL:     URL { URL(string: "\(baseURL)/api/auth/exchange?context=app")! }
+
+    // MARK: Subscription & payment
+    static var subscriptionURL:   URL { URL(string: "\(baseURL)/api/subscription")! }
+    static var promoValidateURL:  URL { URL(string: "\(baseURL)/api/promo/validate")! }
+    static func pricingURL(promoCode: String? = nil) -> URL {
+        guard let p = promoCode else { return URL(string: "\(baseURL)/pricing")! }
+        var components = URLComponents(string: "\(baseURL)/pricing")!
+        components.queryItems = [URLQueryItem(name: "promo", value: p)]
+        return components.url!
+    }
+
+    // MARK: Seat management
+    static var accountURL:    URL { URL(string: "\(baseURL)/account")! }
+    static var activateURL:   URL { URL(string: "\(baseURL)/api/seats/activate")! }
+    static var heartbeatURL:  URL { URL(string: "\(baseURL)/api/seats/heartbeat")! }
     static var deactivateURL: URL { URL(string: "\(baseURL)/api/seats/deactivate")! }
 }
 
@@ -168,85 +175,4 @@ struct ExternalLinks {
     #endif
 }
 
-struct NubeAuthConstants {
 
-    // -------------------------------------------------------------------------
-    // Environment-specific values
-    // Debug builds  → staging endpoints + localhost website
-    // Release builds → production endpoints + live website
-    // -------------------------------------------------------------------------
-
-    #if DEBUG
-    static let gatewayURL      = "https://api.staging.nubeauth.com"
-    static let appId           = "APP0D4FPSe4Ev"
-    static let powerPriceId    = "PRC0ADuG3k15Q"
-    static let authCallbackURL = "http://localhost:4321/auth/callback"
-    static let pricingURL      = "http://localhost:4321/pricing"
-    #else
-    static let gatewayURL      = "https://api.nubeauth.com"
-    static let appId           = "APP0production"       // TODO: replace with production app ID
-    static let powerPriceId    = "PRC0production"       // TODO: replace with production price ID
-    static let authCallbackURL = "https://www.defaulttamer.app/auth/callback"
-    static let pricingURL      = "https://www.defaulttamer.app/pricing"
-    #endif
-
-    // -------------------------------------------------------------------------
-    // Derived URLs — shared across environments
-    // -------------------------------------------------------------------------
-
-    /// OAuth start URL — activates an existing license (no payment step).
-    /// Used when the user already has a Power license and just needs to link it to this device.
-    static var oauthStartURL: URL {
-        var components = URLComponents(string: "\(gatewayURL)/v1/auth/start")!
-        components.queryItems = [
-            URLQueryItem(name: "provider",  value: "google"),
-            URLQueryItem(name: "app_id",    value: appId),
-            URLQueryItem(name: "audience",  value: "app"),
-            URLQueryItem(name: "return_to", value: authCallbackURL),
-        ]
-        return components.url!
-    }
-
-    /// Direct billing checkout endpoint — the app calls this with Bearer auth to skip
-    /// re-authentication when the user is already signed in.
-    static var billingCheckoutURL: URL {
-        URL(string: "\(gatewayURL)/v1/payment/checkout")!
-    }
-
-    /// Success URL for direct (already-signed-in) checkout.
-    /// The callback page detects `?upgraded=true` (no code), shows a success state,
-    /// then opens `defaulttamer://upgraded` so the app re-checks the subscription.
-    static var upgradeSuccessURL: String { authCallbackURL + "?upgraded=true" }
-
-    /// Promo code validation endpoint — call this before opening the browser to give
-    /// the user immediate feedback if a code is invalid, exhausted, or expired.
-    /// No auth required; pass X-Nube-User-Id if the user is already signed in.
-    static var validatePromoURL: URL {
-        URL(string: "\(gatewayURL)/v1/payment/validate-promo")!
-    }
-
-    /// OAuth + checkout URL — used when the user is NOT yet signed in.
-    /// Authenticates via Google and triggers a payment checkout in one browser flow.
-    /// Pass `promoCode` to pre-apply a validated discount coupon at the payment step.
-    static func oauthUpgradeURL(priceId: String = powerPriceId, returnTo: String, promoCode: String? = nil) -> URL {
-        var components = URLComponents(string: "\(gatewayURL)/v1/auth/start")!
-        var queryItems = [
-            URLQueryItem(name: "provider",   value: "google"),
-            URLQueryItem(name: "app_id",     value: appId),
-            URLQueryItem(name: "audience",   value: "app"),
-            URLQueryItem(name: "price_id",   value: priceId),
-            URLQueryItem(name: "return_to",  value: returnTo),
-            URLQueryItem(name: "cancel_url", value: pricingURL),
-        ]
-        if let promoCode {
-            queryItems.append(URLQueryItem(name: "promo_code", value: promoCode))
-        }
-        components.queryItems = queryItems
-        return components.url!
-    }
-
-    /// License check endpoint
-    static var licenseCheckURL: URL {
-        URL(string: "\(gatewayURL)/v1/license/check")!
-    }
-}

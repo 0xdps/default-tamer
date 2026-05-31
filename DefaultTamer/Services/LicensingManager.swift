@@ -2,15 +2,20 @@
 //  LicensingManager.swift
 //  Default Tamer
 //
-//  Manages Power plan licensing via NubeAuth OAuth.
+//  Manages Power plan licensing.
+//
+//  All NubeAuth communication is proxied through the Default Tamer backend
+//  (/api/auth, /api/subscription, /api/checkout, /api/promo) so the app
+//  contains no NubeAuth URLs, app IDs, or price IDs.
 //
 //  Flow:
-//  1. User taps "Sign in with Google" → startOAuth() opens browser to NubeAuth
-//  2. NubeAuth redirects to https://www.defaulttamer.app/auth/callback?code=...
-//  3. Website bridge opens defaulttamer://auth?code=... deep link
-//  4. AppDelegate calls handleOAuthCallback(_:) → exchangeCode() → POST /v1/auth/token
-//  5. App stores the returned sessionToken and calls GET /v1/me/subscription
-//  6. validateOnLaunch() re-checks the subscription on every app launch.
+//  1. User taps upgrade/sign-in → opens browser to /api/auth/start
+//  2. Backend redirects to NubeAuth OAuth
+//  3. NubeAuth redirects to defaulttamer.app/auth/callback?code=...
+//  4. Website opens defaulttamer://auth?code=...
+//  5. App calls POST /api/auth/exchange?context=app → stores sessionToken
+//  6. App calls GET /api/subscription to check license status
+//  7. validateOnLaunch() re-checks on every app launch
 //
 
 import AppKit
@@ -106,7 +111,7 @@ final class LicensingManager: ObservableObject {
     @Published private(set) var isValidating = false
     @Published private(set) var activationState: ActivationState = .idle
 
-    private let sessionTokenKey  = "sessionToken"
+    private let appTokenKey      = "appToken"
     private let userIdKey        = "userId"
     private let activationIdKey  = "activationId"
     private var lastValidated: Date?
@@ -123,10 +128,10 @@ final class LicensingManager: ObservableObject {
         status?.has(feature) ?? false
     }
 
-    /// Called at app startup. If a session token is stored, validates the subscription server-side.
+    /// Called at app startup. Validates the stored app token against the backend.
     func validateOnLaunch() {
-        guard let sessionToken = Keychain.load(key: sessionTokenKey) else { return }
-        Task { await checkSubscription(sessionToken: sessionToken) }
+        guard let appToken = Keychain.load(key: appTokenKey) else { return }
+        Task { await checkSubscription(appToken: appToken) }
     }
 
     /// Called when the app returns to the foreground.
@@ -136,52 +141,29 @@ final class LicensingManager: ObservableObject {
         validateOnLaunch()
     }
 
-    /// Opens the NubeAuth OAuth flow to activate an existing license (no payment).
-    /// Use this when the user already has a Power plan and just needs to link it to this device.
-    /// Opens in the user's configured fallback browser; falls back to the system default.
+    /// Opens the auth flow to activate an existing license (sign in, no payment).
     func startOAuth(fallbackBrowserId: String? = nil) {
-        open(NubeAuthConstants.oauthStartURL, in: fallbackBrowserId)
+        open(SeatAPIConstants.authStartURL, in: fallbackBrowserId)
     }
 
-    /// Validates a promo code against the NubeAuth billing API before opening any browser.
-    /// Returns the result synchronously so the caller can show immediate feedback.
-    /// Passes `X-Nube-User-Id` when the user is already signed in to enable
-    /// `existing_customer` / `already_redeemed` server-side checks.
+    /// Validates a promo code via the backend before opening any browser.
+    /// Returns the result so the caller can show immediate feedback.
     func validatePromoCode(_ code: String) async -> PromoValidationResult {
-        var request = URLRequest(url: NubeAuthConstants.validatePromoURL)
+        var request = URLRequest(url: SeatAPIConstants.promoValidateURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 15
 
-        let userId = Keychain.load(key: userIdKey)
-        if let userId {
-            request.setValue(userId, forHTTPHeaderField: "X-Nube-User-Id")
+        if let appToken = Keychain.load(key: appTokenKey) {
+            request.setValue("Bearer \(appToken)", forHTTPHeaderField: "Authorization")
         }
 
-        let body: [String: String] = [
-            "code":    code,
-            "priceId": NubeAuthConstants.powerPriceId,
-            "appId":   NubeAuthConstants.appId,
-        ]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-
-        print("━━━ [PromoValidate] REQUEST ━━━")
-        print("  URL:     \(NubeAuthConstants.validatePromoURL.absoluteString)")
-        print("  code:    \(code)")
-        print("  priceId: \(NubeAuthConstants.powerPriceId)")
-        print("  appId:   \(NubeAuthConstants.appId)")
-        print("  userId:  \(userId ?? "(none)")")
-        appLogger.info("[PromoValidate] POST \(NubeAuthConstants.validatePromoURL.absoluteString, privacy: .public) code=\(code, privacy: .public) priceId=\(NubeAuthConstants.powerPriceId, privacy: .public) appId=\(NubeAuthConstants.appId, privacy: .public) userId=\(userId ?? "(none)", privacy: .public)")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["code": code])
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
-            let rawBody = String(data: data, encoding: .utf8) ?? "<non-utf8>"
-
-            print("━━━ [PromoValidate] RESPONSE ━━━")
-            print("  HTTP:    \(statusCode)")
-            print("  Body:    \(rawBody)")
-            appLogger.info("[PromoValidate] HTTP \(statusCode) body=\(rawBody, privacy: .public)")
+            appLogger.info("[PromoValidate] HTTP \(statusCode, privacy: .public)")
 
             struct Response: Decodable {
                 let valid: Bool
@@ -192,26 +174,16 @@ final class LicensingManager: ObservableObject {
                 let promotion: Promotion?
             }
 
-            do {
-                let result = try JSONDecoder().decode(Response.self, from: data)
-                print("  Decoded: valid=\(result.valid) reason=\(result.reason ?? "nil") promotion=\(result.promotion?.name ?? "nil")")
-                appLogger.info("[PromoValidate] decoded valid=\(result.valid) reason=\(result.reason ?? "nil", privacy: .public)")
-                return PromoValidationResult(
-                    valid: result.valid,
-                    discountCents: result.discountCents,
-                    adjustedTotal: result.adjustedTotal,
-                    reason: result.reason,
-                    promotionName: result.promotion?.name
-                )
-            } catch {
-                print("  DECODE ERROR: \(error)")
-                appLogger.error("[PromoValidate] decode error: \(error.localizedDescription, privacy: .public)")
-                return PromoValidationResult(valid: false, discountCents: nil, adjustedTotal: nil, reason: nil, promotionName: nil)
-            }
+            let result = try JSONDecoder().decode(Response.self, from: data)
+            return PromoValidationResult(
+                valid: result.valid,
+                discountCents: result.discountCents,
+                adjustedTotal: result.adjustedTotal,
+                reason: result.reason,
+                promotionName: result.promotion?.name
+            )
         } catch {
-            print("━━━ [PromoValidate] NETWORK ERROR ━━━")
-            print("  \(error)")
-            appLogger.error("[PromoValidate] network error: \(error.localizedDescription, privacy: .public)")
+            appLogger.error("[PromoValidate] failed: \(error.localizedDescription, privacy: .public)")
             return PromoValidationResult(valid: false, discountCents: nil, adjustedTotal: nil, reason: nil, promotionName: nil)
         }
     }
@@ -231,30 +203,20 @@ final class LicensingManager: ObservableObject {
     /// Pass `promoCode` after validating it with `validatePromoCode(_:)` to apply a
     /// discount. It is forwarded to the payment provider in both the direct-checkout
     /// and OAuth+checkout paths.
-    @discardableResult
-    func startUpgrade(priceId: String = NubeAuthConstants.powerPriceId, promoCode: String? = nil, fallbackBrowserId: String? = nil) async -> Bool {
-        if let sessionToken = Keychain.load(key: sessionTokenKey) {
-            if let checkoutURL = await createCheckoutSession(priceId: priceId, sessionToken: sessionToken, promoCode: promoCode) {
-                open(checkoutURL, in: fallbackBrowserId)
-                return true
-            }
-            appLogger.warning("Direct checkout failed; falling back to OAuth+payment URL")
-        }
-
-        open(NubeAuthConstants.oauthUpgradeURL(priceId: priceId, returnTo: NubeAuthConstants.authCallbackURL, promoCode: promoCode),
-             in: fallbackBrowserId)
-        return true
+    /// Opens the pricing page. Pass promoCode to pre-fill it on the website.
+    func startUpgrade(promoCode: String? = nil, fallbackBrowserId: String? = nil) {
+        open(SeatAPIConstants.pricingURL(promoCode: promoCode), in: fallbackBrowserId)
     }
 
     /// Called when the OS delivers `defaulttamer://upgraded` after a successful
     /// direct-checkout payment. Re-checks the subscription so the UI updates to Power.
     /// Retries up to 5 times to handle the async Stripe webhook processing delay.
     func handleUpgradeCallback() {
-        guard let sessionToken = Keychain.load(key: sessionTokenKey) else {
-            appLogger.warning("handleUpgradeCallback — no session token found, ignoring")
+        guard let appToken = Keychain.load(key: appTokenKey) else {
+            appLogger.warning("handleUpgradeCallback — no app token found, ignoring")
             return
         }
-        Task { await checkSubscriptionWithRetry(sessionToken: sessionToken) }
+        Task { await checkSubscriptionWithRetry(appToken: appToken) }
     }
 
 
@@ -270,8 +232,8 @@ final class LicensingManager: ObservableObject {
     }
 
     /// Called by AppDelegate when the OS delivers a `defaulttamer://auth` deep-link.
-    /// Reads the one-time exchange code, calls POST /v1/auth/token to get a session
-    /// token, stores it in Keychain, then validates the subscription status.
+    /// Reads the one-time exchange code, calls POST /api/auth/exchange?context=app to
+    /// get a session token, stores it in Keychain, then validates the subscription status.
     func handleOAuthCallback(_ url: URL) {
         guard url.scheme == "defaulttamer", url.host == "auth" else { return }
 
@@ -295,7 +257,7 @@ final class LicensingManager: ObservableObject {
     /// Signs out — deactivates this device's seat, removes stored credentials, clears license state.
     func signOut() {
         // Capture values before clearing keychain so the network request has what it needs.
-        let capturedToken = Keychain.load(key: sessionTokenKey)
+        let capturedToken = Keychain.load(key: appTokenKey)
         let capturedDeviceId = PersistenceManager.shared.installID
         if let capturedToken {
             Task {
@@ -308,7 +270,7 @@ final class LicensingManager: ObservableObject {
                 try? await URLSession.shared.data(for: req)
             }
         }
-        Keychain.delete(key: sessionTokenKey)
+        Keychain.delete(key: appTokenKey)
         Keychain.delete(key: userIdKey)
         Keychain.delete(key: activationIdKey)
         status = nil
@@ -317,63 +279,11 @@ final class LicensingManager: ObservableObject {
 
     // MARK: - Private
 
-    /// Calls `POST /v1/payment/checkout` with the stored session token to create a
-    /// checkout session directly (no re-authentication needed).
-    /// Returns the payment provider's redirect URL on success, or `nil` on failure.
-    private func createCheckoutSession(priceId: String = NubeAuthConstants.powerPriceId, sessionToken: String, promoCode: String? = nil) async -> URL? {
-        var request = URLRequest(url: NubeAuthConstants.billingCheckoutURL)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(sessionToken)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = 30
 
-        var body: [String: String] = [
-            "priceId":    priceId,
-            "appId":      NubeAuthConstants.appId,
-            "successUrl": NubeAuthConstants.upgradeSuccessURL,
-            "cancelUrl":  NubeAuthConstants.pricingURL,
-        ]
-        if let promoCode {
-            body["promoCode"] = promoCode
-        }
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-
-        do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard let http = response as? HTTPURLResponse else { return nil }
-
-            if http.statusCode == 401 {
-                appLogger.info("Billing checkout — session expired, clearing token")
-                Keychain.delete(key: sessionTokenKey)
-                Keychain.delete(key: userIdKey)
-                status = nil
-                return nil
-            }
-
-            guard http.statusCode == 200 else {
-                appLogger.error("Billing checkout HTTP \(http.statusCode, privacy: .public)")
-                return nil
-            }
-
-            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let rawURL = json["checkoutUrl"] as? String,
-               let url = URL(string: rawURL) {
-                appLogger.info("✅ Checkout session created")
-                return url
-            }
-            appLogger.error("Billing checkout — could not parse checkoutUrl from response")
-            return nil
-        } catch {
-            appLogger.error("Billing checkout failed: \(error.localizedDescription, privacy: .public)")
-            return nil
-        }
-    }
-
-    /// Polls /v1/me/subscription up to `maxAttempts` times with `delaySeconds` between
     /// retries. Used after payment callbacks to tolerate async Stripe webhook processing.
-    private func checkSubscriptionWithRetry(sessionToken: String, maxAttempts: Int = 5, delaySeconds: UInt64 = 3) async {
+    private func checkSubscriptionWithRetry(appToken: String, maxAttempts: Int = 5, delaySeconds: UInt64 = 3) async {
         for attempt in 1...maxAttempts {
-            await checkSubscription(sessionToken: sessionToken)
+            await checkSubscription(appToken: appToken)
             if status?.plan.isPaid == true { return }
             if attempt < maxAttempts {
                 appLogger.info("Subscription not active yet (attempt \(attempt)/\(maxAttempts)), retrying in \(delaySeconds)s…")
@@ -386,7 +296,7 @@ final class LicensingManager: ObservableObject {
     // MARK: - Seat device management
 
     /// Activates this device's seat via POST /api/seats/activate.
-    private func activateDevice(sessionToken: String) async {
+    private func activateDevice(appToken: String) async {
         let deviceId   = PersistenceManager.shared.installID
         let deviceName = Host.current().localizedName ?? "Mac"
 
@@ -395,7 +305,7 @@ final class LicensingManager: ObservableObject {
         var request = URLRequest(url: SeatAPIConstants.activateURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(sessionToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(appToken)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 30
 
         let body: [String: String] = ["device_id": deviceId, "device_name": deviceName]
@@ -440,13 +350,13 @@ final class LicensingManager: ObservableObject {
 
     /// Updates last_seen_at via POST /api/seats/heartbeat.
     /// Sets activationState to .deactivatedRemotely if the server returns 404.
-    private func heartbeatDevice(sessionToken: String) async {
+    private func heartbeatDevice(appToken: String) async {
         let deviceId = PersistenceManager.shared.installID
 
         var request = URLRequest(url: SeatAPIConstants.heartbeatURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(sessionToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(appToken)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 30
 
         let body: [String: String] = ["device_id": deviceId]
@@ -486,23 +396,16 @@ final class LicensingManager: ObservableObject {
         }
     }
 
-    /// Exchange the one-time code for a long-lived session token via POST /v1/auth/token.
+    /// Exchange the one-time code for a session token via POST /api/auth/exchange.
     private func exchangeCode(_ code: String, isPaymentCallback: Bool = false) async {
         isValidating = true
         defer { isValidating = false }
 
-        guard let url = URL(string: "\(NubeAuthConstants.gatewayURL)/v1/auth/token") else { return }
-
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: SeatAPIConstants.exchangeURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 30
-
-        let body: [String: String] = [
-            "code":   code,
-            "app_id": NubeAuthConstants.appId,
-        ]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["code": code])
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
@@ -513,34 +416,31 @@ final class LicensingManager: ObservableObject {
             }
 
             struct TokenResponse: Decodable {
-                let sessionToken: String
+                let appToken: String
                 let userId: String
-                let appId: String
             }
 
             let result = try JSONDecoder().decode(TokenResponse.self, from: data)
-            Keychain.save(key: sessionTokenKey, value: result.sessionToken)
+            Keychain.save(key: appTokenKey, value: result.appToken)
             Keychain.save(key: userIdKey, value: result.userId)
-            appLogger.info("✅ Token exchange OK — userId: \(result.userId, privacy: .public)")
+            appLogger.info("✅ Token exchange OK")
 
             if isPaymentCallback {
-                await checkSubscriptionWithRetry(sessionToken: result.sessionToken)
+                await checkSubscriptionWithRetry(appToken: result.appToken)
             } else {
-                await checkSubscription(sessionToken: result.sessionToken)
+                await checkSubscription(appToken: result.appToken)
             }
         } catch {
             appLogger.error("Token exchange failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
-    /// Fetch /v1/me/subscription using the stored Bearer session token.
+    /// Fetches subscription status from GET /api/subscription.
     private func checkSubscription(sessionToken: String) async {
         isValidating = true
         defer { isValidating = false }
 
-        guard let url = URL(string: "\(NubeAuthConstants.gatewayURL)/v1/me/subscription") else { return }
-
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: SeatAPIConstants.subscriptionURL)
         request.setValue("Bearer \(sessionToken)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 30
 
@@ -550,7 +450,7 @@ final class LicensingManager: ObservableObject {
 
             if http.statusCode == 401 {
                 appLogger.info("Session expired — clearing stored token")
-                Keychain.delete(key: sessionTokenKey)
+                Keychain.delete(key: appTokenKey)
                 Keychain.delete(key: userIdKey)
                 status = nil
                 return
@@ -573,21 +473,19 @@ final class LicensingManager: ObservableObject {
                     fmt.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
                     validUntil = fmt.date(from: iso)
                 }
-                // All Power features are unlocked when the subscription is active.
                 let allFeatures = LicenseFeature.allCases.map(\.rawValue)
                 status = LicenseStatus(
-                    licenseId: sessionToken,
+                    licenseId: appToken,
                     plan: plan,
                     features: allFeatures,
                     validUntil: validUntil
                 )
                 appLogger.info("✅ Subscription active — plan: \(plan.displayName, privacy: .public)")
 
-                // Activate or heartbeat this device's seat
                 if Keychain.load(key: activationIdKey) != nil {
-                    await heartbeatDevice(sessionToken: sessionToken)
+                    await heartbeatDevice(appToken: appToken)
                 } else {
-                    await activateDevice(sessionToken: sessionToken)
+                    await activateDevice(appToken: appToken)
                 }
             } else {
                 status = LicenseStatus(licenseId: "", plan: .free, features: [], validUntil: nil)

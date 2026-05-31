@@ -11,7 +11,6 @@ struct LicensingTab: View {
     @EnvironmentObject var licensing: LicensingManager
     @EnvironmentObject var appState: AppState
     @ObservedObject private var promoManager = PromoManager.shared
-    @State private var isUpgrading = false
     @State private var showSignOutConfirmation = false
 
     // Promo code
@@ -267,9 +266,7 @@ struct LicensingTab: View {
             }
 
             HStack(spacing: 10) {
-                upgradeButton(priceId: SeatAPIConstants.price1Seat, label: "Power — 1 Device")
-                upgradeButton(priceId: SeatAPIConstants.price2Seats, label: "Power — 2 Devices")
-                upgradeButton(priceId: SeatAPIConstants.price5Seats, label: "Power — 5 Devices")
+                upgradeButton
             }
 
             HStack(spacing: 10) {
@@ -319,9 +316,7 @@ struct LicensingTab: View {
             }
 
             HStack(spacing: 10) {
-                upgradeButton(priceId: SeatAPIConstants.price1Seat, label: "Power — 1 Device")
-                upgradeButton(priceId: SeatAPIConstants.price2Seats, label: "2 Devices")
-                upgradeButton(priceId: SeatAPIConstants.price5Seats, label: "5 Devices")
+                upgradeButton
             }
 
             HStack(spacing: 10) {
@@ -340,29 +335,18 @@ struct LicensingTab: View {
 
     // MARK: - Promo code
 
-    /// A bordered-prominent button that opens checkout for the given seat tier.
-    @ViewBuilder
-    private func upgradeButton(priceId: String, label: String) -> some View {
+    /// Button that opens the pricing page (with active promo pre-applied if available).
+    private var upgradeButton: some View {
         Button {
-            isUpgrading = true
-            Task {
-                await licensing.startUpgrade(
-                    priceId: priceId,
-                    promoCode: validatedPromoCode,
-                    fallbackBrowserId: appState.settings.fallbackBrowserId
-                )
-                isUpgrading = false
-            }
+            licensing.startUpgrade(
+                promoCode: validatedPromoCode,
+                fallbackBrowserId: appState.settings.fallbackBrowserId
+            )
         } label: {
-            if isUpgrading {
-                ProgressView().controlSize(.small).tint(.white)
-            } else {
-                Label(label, systemImage: "bolt.fill")
-            }
+            Label("Get Power Plan", systemImage: "bolt.fill")
         }
         .buttonStyle(.borderedProminent)
         .tint(.orange)
-        .disabled(isUpgrading)
     }
 
     private var promoCodeSection: some View {
