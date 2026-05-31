@@ -1,3 +1,6 @@
 [submodule "DefaultTamerScript"]
 	path = DefaultTamerScript
 	url = https://github.com/0xdps/default-tamer-scripts.git
+[submodule "DefaultTamerWeb"]
+	path = DefaultTamerWeb
+	url = https://github.com/0xdps/default-tamer-web.git
