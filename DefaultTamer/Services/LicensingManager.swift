@@ -201,11 +201,9 @@ final class LicensingManager: ObservableObject {
     /// `defaulttamer://auth?code=…` deep-link handled by `handleOAuthCallback`.
     ///
     /// Pass `promoCode` after validating it with `validatePromoCode(_:)` to apply a
-    /// discount. It is forwarded to the payment provider in both the direct-checkout
-    /// and OAuth+checkout paths.
-    /// Opens the pricing page. Pass promoCode to pre-fill it on the website.
+    /// discount. It is pre-filled on the website's upgrade page.
     func startUpgrade(promoCode: String? = nil, fallbackBrowserId: String? = nil) {
-        open(SeatAPIConstants.pricingURL(promoCode: promoCode), in: fallbackBrowserId)
+        open(SeatAPIConstants.upgradeURL(promoCode: promoCode), in: fallbackBrowserId)
     }
 
     /// Called when the OS delivers `defaulttamer://upgraded` after a successful

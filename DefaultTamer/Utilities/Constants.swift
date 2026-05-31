@@ -137,10 +137,12 @@ struct SeatAPIConstants {
     // MARK: Subscription & payment
     static var subscriptionURL:   URL { URL(string: "\(baseURL)/api/subscription")! }
     static var promoValidateURL:  URL { URL(string: "\(baseURL)/api/promo/validate")! }
-    static func pricingURL(promoCode: String? = nil) -> URL {
-        guard let p = promoCode else { return URL(string: "\(baseURL)/pricing")! }
-        var components = URLComponents(string: "\(baseURL)/pricing")!
-        components.queryItems = [URLQueryItem(name: "promo", value: p)]
+    /// Opens the /upgrade funnel page, which handles auth + seat-tier selection + checkout.
+    static func upgradeURL(promoCode: String? = nil) -> URL {
+        var items: [URLQueryItem] = []
+        if let p = promoCode { items.append(URLQueryItem(name: "promo", value: p)) }
+        var components = URLComponents(string: "\(baseURL)/upgrade")!
+        if !items.isEmpty { components.queryItems = items }
         return components.url!
     }
 
