@@ -65,6 +65,16 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>DTAnalyticsURL</key>
+	<string>$(DT_ANALYTICS_URL)</string>
+	<key>DTAnalyticsWebsiteID</key>
+	<string>$(DT_ANALYTICS_WEBSITE_ID)</string>
+	<key>DTBaseURL</key>
+	<string>$(DT_BASE_URL)</string>
+	<key>DTFeedbackToken</key>
+	<string>$(DT_FEEDBACK_TOKEN)</string>
+	<key>DTPromoURL</key>
+	<string>$(DT_PROMO_URL)</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>LSUIElement</key>

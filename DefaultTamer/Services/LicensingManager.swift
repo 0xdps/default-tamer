@@ -436,12 +436,12 @@ final class LicensingManager: ObservableObject {
     }
 
     /// Fetches subscription status from GET /api/subscription.
-    private func checkSubscription(sessionToken: String) async {
+    private func checkSubscription(appToken: String) async {
         isValidating = true
         defer { isValidating = false }
 
         var request = URLRequest(url: SeatAPIConstants.subscriptionURL)
-        request.setValue("Bearer \(sessionToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(appToken)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 30
 
         do {

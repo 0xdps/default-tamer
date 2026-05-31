@@ -116,27 +116,19 @@ struct NetworkConstants {
 }
 
 struct AnalyticsConfig {
-    static let umamiURL = "https://analytics.0xlabs.space" 
-    static let websiteID = "babc74c5-5c94-4f0b-9a47-6b0b0fa12384"
+    static let umamiURL: String = Bundle.main.infoDictionary?["DTAnalyticsURL"] as? String ?? "https://analytics.0xlabs.space"
+    static let websiteID: String = Bundle.main.infoDictionary?["DTAnalyticsWebsiteID"] as? String ?? "babc74c5-5c94-4f0b-9a47-6b0b0fa12384"
 }
 
 struct FeedbackConfig {
     static let submitURL = "https://api.inbounce.app/submit"
-    #if DEBUG
-    static let token = "e31470b50d73ca656538332fc32f500dd93d809f48423699bb8cc8adbe84d291"
-    #else
-    static let token = "2f70a7b331d693fc3b61ad69ca0dcd6b10a30483a7bfffa5b3753cea0eb511d8"
-    #endif
+    static let token: String = Bundle.main.infoDictionary?["DTFeedbackToken"] as? String ?? ""
 }
 
 // MARK: - Seat-based device management
 
 struct SeatAPIConstants {
-    #if DEBUG
-    static let baseURL = "http://localhost:4321"
-    #else
-    static let baseURL = "https://www.defaulttamer.app"
-    #endif
+    static let baseURL: String = Bundle.main.infoDictionary?["DTBaseURL"] as? String ?? "https://www.defaulttamer.app"
 
     // MARK: Auth
     static var authStartURL:    URL { URL(string: "\(baseURL)/api/auth/start")! }
@@ -163,16 +155,11 @@ struct ExternalLinks {
     static let github = "https://github.com/0xdps/default-tamer"
     static let issues = "https://github.com/0xdps/default-tamer/issues"
     static let buyMeACoffee = "https://buymeacoffee.com/0xdps"
-    static let website = "https://www.defaulttamer.app"
-    static let privacy = "https://www.defaulttamer.app/privacy"
+    static var website: String { SeatAPIConstants.baseURL }
+    static var privacy: String { "\(SeatAPIConstants.baseURL)/privacy" }
     static let developerWebsite = "https://dps.codes"
     /// Promo config — polled once per day to check for active discount codes.
-    /// Points to the local dev server in debug and the live site in production.
-    #if DEBUG
-    static let promoConfigURL = "http://localhost:4321/promo.json"
-    #else
-    static let promoConfigURL = "https://www.defaulttamer.app/promo.json"
-    #endif
+    static let promoConfigURL: String = Bundle.main.infoDictionary?["DTPromoURL"] as? String ?? "https://www.defaulttamer.app/promo.json"
 }
 
 
