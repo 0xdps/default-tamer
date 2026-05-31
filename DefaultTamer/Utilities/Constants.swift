@@ -121,8 +121,7 @@ struct AnalyticsConfig {
 }
 
 struct FeedbackConfig {
-    static let submitURL = "https://api.inbounce.app/submit"
-    static let token: String = Bundle.main.infoDictionary?["DTFeedbackToken"] as? String ?? ""
+    static var submitURL: String { "\(SeatAPIConstants.baseURL)/api/feedback" }
 }
 
 // MARK: - Seat-based device management

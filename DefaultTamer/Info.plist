@@ -71,8 +71,6 @@
 	<string>$(DT_ANALYTICS_WEBSITE_ID)</string>
 	<key>DTBaseURL</key>
 	<string>$(DT_BASE_URL)</string>
-	<key>DTFeedbackToken</key>
-	<string>$(DT_FEEDBACK_TOKEN)</string>
 	<key>DTPromoURL</key>
 	<string>$(DT_PROMO_URL)</string>
 	<key>LSMinimumSystemVersion</key>

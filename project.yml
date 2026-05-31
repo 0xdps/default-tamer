@@ -35,7 +35,6 @@ targets:
         DTPromoURL: "$(DT_PROMO_URL)"
         DTAnalyticsURL: "$(DT_ANALYTICS_URL)"
         DTAnalyticsWebsiteID: "$(DT_ANALYTICS_WEBSITE_ID)"
-        DTFeedbackToken: "$(DT_FEEDBACK_TOKEN)"
         CFBundleDocumentTypes:
           - CFBundleTypeName: HTML Document
             CFBundleTypeRole: Viewer
@@ -76,14 +75,12 @@ targets:
         DT_PROMO_URL: "https://www.defaulttamer.app/promo.json"
         DT_ANALYTICS_URL: "https://analytics.0xlabs.space"
         DT_ANALYTICS_WEBSITE_ID: "babc74c5-5c94-4f0b-9a47-6b0b0fa12384"
-        DT_FEEDBACK_TOKEN: "2f70a7b331d693fc3b61ad69ca0dcd6b10a30483a7bfffa5b3753cea0eb511d8"
       configs:
         Debug:
           CODE_SIGN_IDENTITY: "Apple Development"
           CODE_SIGN_STYLE: Automatic
           DT_BASE_URL: "http://localhost:4321"
           DT_PROMO_URL: "http://localhost:4321/promo.json"
-          DT_FEEDBACK_TOKEN: "e31470b50d73ca656538332fc32f500dd93d809f48423699bb8cc8adbe84d291"
         Release:
           CODE_SIGN_IDENTITY: "Developer ID Application"
           CODE_SIGN_STYLE: Manual

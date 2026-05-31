@@ -61,7 +61,6 @@ struct FeedbackManager {
         var request = URLRequest(url: URL(string: FeedbackConfig.submitURL)!)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(FeedbackConfig.token)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 15
 
         let payload: [String: Any] = [
