@@ -1,6 +1,6 @@
 # Developer Guide
 
-**Prerequisites:** macOS 13.0+, Xcode 14.0+, [`just`](https://github.com/casey/just)
+**Prerequisites:** macOS 15.0+, Xcode 14.0+, [`just`](https://github.com/casey/just)
 
 ```bash
 git clone --recurse-submodules https://github.com/0xdps/default-tamer.git

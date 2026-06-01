@@ -2,7 +2,7 @@ name: DefaultTamer
 options:
   bundleIdPrefix: com.defaulttamer
   deploymentTarget:
-    macOS: 13.0
+    macOS: 15.0
 packages:
   SQLite:
     url: https://github.com/stephencelis/SQLite.swift
@@ -14,7 +14,7 @@ targets:
   DefaultTamer:
     type: application
     platform: macOS
-    deploymentTarget: 13.0
+    deploymentTarget: 15.0
     info:
       path: DefaultTamer/Info.plist
       properties:
@@ -61,7 +61,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.defaulttamer.app
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        MACOSX_DEPLOYMENT_TARGET: 13.0
+        MACOSX_DEPLOYMENT_TARGET: 15.0
         SWIFT_VERSION: 5.9
         ENABLE_HARDENED_RUNTIME: YES
         COMBINE_HIDPI_IMAGES: YES
@@ -84,6 +84,12 @@ targets:
         Release:
           CODE_SIGN_IDENTITY: "Developer ID Application"
           CODE_SIGN_STYLE: Manual
+          SWIFT_OPTIMIZATION_LEVEL: -Osize
+          SWIFT_COMPILATION_MODE: wholemodule
+          DEAD_CODE_STRIPPING: YES
+          STRIP_INSTALLED_PRODUCT: YES
+          STRIP_SWIFT_SYMBOLS: YES
+          LLVM_LTO: YES_THIN
     dependencies:
       - package: SQLite
         product: SQLite
@@ -92,7 +98,7 @@ targets:
   DefaultTamerTests:
     type: bundle.unit-test
     platform: macOS
-    deploymentTarget: 13.0
+    deploymentTarget: 15.0
     sources:
       - DefaultTamerTests
     settings:

@@ -49,7 +49,7 @@ Be respectful, inclusive, and constructive in all interactions.
 
 ### Prerequisites
 
-- macOS 13.0 or later
+- macOS 15.0 or later
 - Xcode 14.0 or later
 - [`just`](https://github.com/casey/just): `brew install just`
 
