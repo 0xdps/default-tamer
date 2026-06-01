@@ -29,14 +29,18 @@ private enum Keychain {
 
     static func save(key: String, value: String) {
         let data = Data(value.utf8)
-        let query: [String: Any] = [
-            kSecClass as String:            kSecClassGenericPassword,
-            kSecAttrService as String:      service,
-            kSecAttrAccount as String:      key,
-            kSecValueData as String:        data,
+        let search: [String: Any] = [
+            kSecClass as String:       kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: key,
         ]
-        SecItemDelete(query as CFDictionary)
-        SecItemAdd(query as CFDictionary, nil)
+        let update: [String: Any] = [kSecValueData as String: data]
+        let status = SecItemUpdate(search as CFDictionary, update as CFDictionary)
+        if status == errSecItemNotFound {
+            var add = search
+            add[kSecValueData as String] = data
+            SecItemAdd(add as CFDictionary, nil)
+        }
     }
 
     static func load(key: String) -> String? {
@@ -203,7 +207,22 @@ final class LicensingManager: ObservableObject {
     /// Pass `promoCode` after validating it with `validatePromoCode(_:)` to apply a
     /// discount. It is pre-filled on the website's upgrade page.
     func startUpgrade(promoCode: String? = nil, fallbackBrowserId: String? = nil) {
-        open(SeatAPIConstants.upgradeURL(promoCode: promoCode), in: fallbackBrowserId)
+        guard let appToken = Keychain.load(key: appTokenKey) else {
+            // No stored session — open browser to sign in and purchase.
+            open(SeatAPIConstants.upgradeURL(promoCode: promoCode), in: fallbackBrowserId)
+            return
+        }
+        // User has a stored session. Re-check subscription first — covers the case
+        // where they just paid in the browser and the app hasn't polled yet,
+        // or where they already own the plan on another Mac and have seats available.
+        // checkSubscription calls activateDevice automatically when the plan is active,
+        // so if it succeeds the UI updates without ever opening a browser.
+        Task {
+            await checkSubscription(appToken: appToken)
+            guard status?.plan.isPaid != true else { return }
+            // Still no active plan — open the upgrade/purchase page.
+            open(SeatAPIConstants.upgradeURL(promoCode: promoCode), in: fallbackBrowserId)
+        }
     }
 
     /// Called when the OS delivers `defaulttamer://upgraded` after a successful

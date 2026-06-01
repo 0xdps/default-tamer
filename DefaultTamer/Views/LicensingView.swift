@@ -13,9 +13,8 @@ struct LicensingTab: View {
     @ObservedObject private var promoManager = PromoManager.shared
     @State private var showSignOutConfirmation = false
 
-    // Promo code
+    // Promo code (auto-applied from deep links; no manual UI)
     @State private var promoCode = ""
-    @State private var isValidatingPromo = false
     @State private var promoResult: PromoValidationResult?
 
     private var validatedPromoCode: String? {
@@ -287,8 +286,6 @@ struct LicensingTab: View {
                 }
                 .buttonStyle(.bordered)
             }
-
-            promoCodeSection
         }
     }
 
@@ -315,21 +312,7 @@ struct LicensingTab: View {
                 }
             }
 
-            HStack(spacing: 10) {
-                upgradeButton
-            }
-
-            HStack(spacing: 10) {
-                Button {
-                    licensing.startOAuth(fallbackBrowserId: appState.settings.fallbackBrowserId)
-                } label: {
-                    Label("Sign In", systemImage: "person.fill")
-                }
-                .buttonStyle(.bordered)
-                .help("Sign in to restore an existing Power plan on this device")
-            }
-
-            promoCodeSection
+            upgradeButton
         }
     }
 
@@ -347,63 +330,6 @@ struct LicensingTab: View {
         }
         .buttonStyle(.borderedProminent)
         .tint(.orange)
-    }
-
-    private var promoCodeSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                TextField("Promo code", text: $promoCode)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(maxWidth: 160)
-                    .disabled(isValidatingPromo)
-                    .onChange(of: promoCode) { _ in promoResult = nil }
-                    .onSubmit { applyPromoCode() }
-
-                if isValidatingPromo {
-                    ProgressView().controlSize(.small)
-                } else {
-                    Button("Apply") { applyPromoCode() }
-                        .buttonStyle(.bordered)
-                        .disabled(promoCode.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
-
-                if promoResult?.valid == true {
-                    Button {
-                        promoCode = ""
-                        promoResult = nil
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .help("Remove promo code")
-                }
-            }
-
-            if let result = promoResult {
-                if result.valid {
-                    Label("Promo code applied ✓", systemImage: "checkmark.circle.fill")
-                        .font(.caption)
-                        .foregroundColor(.green)
-                } else {
-                    Label(result.errorMessage, systemImage: "xmark.circle.fill")
-                        .font(.caption)
-                        .foregroundColor(.red)
-                }
-            }
-        }
-    }
-
-    private func applyPromoCode() {
-        let trimmed = promoCode.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return }
-        isValidatingPromo = true
-        promoResult = nil
-        Task {
-            let result = await licensing.validatePromoCode(trimmed)
-            promoResult = result
-            isValidatingPromo = false
-        }
     }
 
     // MARK: - Features grid
