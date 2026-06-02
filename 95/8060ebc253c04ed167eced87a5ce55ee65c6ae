@@ -1,28 +1,7 @@
-CONTRIBUTING.md
-  s_ac551f88568683::t_b26dcf7ed825a2 52
-.github/pull_request_template.md
-  s_ac551f88568683::t_b26dcf7ed825a2 36
-project.yml
-  s_ac551f88568683::t_f628deb0a3faeb 5,17,64,101
-  s_ac551f88568683::t_26bc23fe0527f9 87-92
-DEVELOPER.md
-  s_ac551f88568683::t_0bcf9237a968e6 3
-README.md
-  s_ac551f88568683::t_b26dcf7ed825a2 5
 ---
 {
   "schema_version": "authorship/3.0.0",
   "git_ai_version": "1.5.2",
   "base_commit_sha": "958060ebc253c04ed167eced87a5ce55ee65c6ae",
-  "prompts": {},
-  "sessions": {
-    "s_ac551f88568683": {
-      "agent_id": {
-        "tool": "github-copilot",
-        "id": "2df7e411-9197-4090-b87c-5dfafeb5d924",
-        "model": "gpt-5-mini"
-      },
-      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
-    }
-  }
+  "prompts": {}
 }
