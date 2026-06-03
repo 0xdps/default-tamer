@@ -129,10 +129,6 @@ struct FeedbackConfig {
 struct SeatAPIConstants {
     static let baseURL: String = Bundle.main.infoDictionary?["DTBaseURL"] as? String ?? "https://www.defaulttamer.app"
 
-    // MARK: Auth
-    static var authStartURL:    URL { URL(string: "\(baseURL)/api/auth/start")! }
-    static var exchangeURL:     URL { URL(string: "\(baseURL)/api/auth/exchange?context=app")! }
-
     // MARK: Subscription & payment
     static var subscriptionURL:   URL { URL(string: "\(baseURL)/api/subscription")! }
     static var promoValidateURL:  URL { URL(string: "\(baseURL)/api/promo/validate")! }
@@ -144,6 +140,8 @@ struct SeatAPIConstants {
         if !items.isEmpty { components.queryItems = items }
         return components.url!
     }
+    /// Opens /upgrade?restore=true — sign in to activate an existing Power plan.
+    static var restoreURL: URL { URL(string: "\(baseURL)/upgrade?restore=true")! }
 
     // MARK: Seat management
     static var accountURL:    URL { URL(string: "\(baseURL)/account")! }

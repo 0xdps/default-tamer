@@ -305,15 +305,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             appLogger.info("📥 Received URL: \(url.absoluteString, privacy: .public)")
         }
 
-        // Route `defaulttamer://auth` deep-links to LicensingManager (sign-in / code exchange)
-        if url.scheme == "defaulttamer", url.host == "auth" {
-            LicensingManager.shared.handleOAuthCallback(url)
+        // Route `defaulttamer://activate?token=...` deep-links — issued by /upgrade after sign-in/payment
+        if url.scheme == "defaulttamer", url.host == "activate" {
+            let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            let token = components?.queryItems?.first(where: { $0.name == "token" })?.value ?? ""
+            let isUpgraded = components?.queryItems?.contains(where: { $0.name == "upgraded" && $0.value == "true" }) ?? false
+            if !token.isEmpty {
+                LicensingManager.shared.handleActivation(token: token, isPaymentCallback: isUpgraded)
+            }
             return
         }
 
-        // Route `defaulttamer://upgraded` deep-links — direct checkout payment confirmed
+        // Route `defaulttamer://upgraded` — legacy no-op (kept for compatibility)
         if url.scheme == "defaulttamer", url.host == "upgraded" {
-            LicensingManager.shared.handleUpgradeCallback()
             return
         }
 

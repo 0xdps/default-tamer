@@ -145,11 +145,6 @@ final class LicensingManager: ObservableObject {
         validateOnLaunch()
     }
 
-    /// Opens the auth flow to activate an existing license (sign in, no payment).
-    func startOAuth(fallbackBrowserId: String? = nil) {
-        open(SeatAPIConstants.authStartURL, in: fallbackBrowserId)
-    }
-
     /// Validates a promo code via the backend before opening any browser.
     /// Returns the result so the caller can show immediate feedback.
     func validatePromoCode(_ code: String) async -> PromoValidationResult {
@@ -197,15 +192,36 @@ final class LicensingManager: ObservableObject {
     /// If the user is already signed in, calls `POST /v1/payment/checkout` directly
     /// to skip re-authentication and opens the returned Stripe/Dodo checkout page.
     /// On success the payment provider redirects to the website callback page with
-    /// `?upgraded=true`, which opens `defaulttamer://upgraded` and triggers a
-    /// subscription re-check.
-    ///
-    /// If the user is NOT signed in, falls back to the combined OAuth + payment URL
-    /// so they authenticate and pay in a single browser flow. Success returns a
-    /// `defaulttamer://auth?code=…` deep-link handled by `handleOAuthCallback`.
-    ///
-    /// Pass `promoCode` after validating it with `validatePromoCode(_:)` to apply a
-    /// discount. It is pre-filled on the website's upgrade page.
+    /// Called when `/upgrade` issues a `defaulttamer://activate?token=...` deep link.
+    /// Stores the app token in Keychain and checks (or retries) subscription status.
+    func handleActivation(token: String, isPaymentCallback: Bool) {
+        Keychain.save(key: appTokenKey, value: token)
+        Task {
+            if isPaymentCallback {
+                await checkSubscriptionWithRetry(appToken: token)
+            } else {
+                await checkSubscription(appToken: token)
+            }
+        }
+    }
+
+    /// Opens `/upgrade` in a browser so the user can sign in and activate an existing Power plan.
+    /// Same pre-check as `startUpgrade`: if a stored token already has an active plan, skip browser.
+    func startActivation(fallbackBrowserId: String? = nil) {
+        guard let appToken = Keychain.load(key: appTokenKey) else {
+            open(SeatAPIConstants.restoreURL, in: fallbackBrowserId)
+            return
+        }
+        Task {
+            await checkSubscription(appToken: appToken)
+            guard status?.plan.isPaid != true else { return }
+            open(SeatAPIConstants.restoreURL, in: fallbackBrowserId)
+        }
+    }
+
+    /// Opens `/upgrade` in a browser to purchase or activate a Power plan.
+    /// Performs a subscription pre-check first: if a stored token already has an active plan,
+    /// `checkSubscription` will call `activateDevice` and update the UI without opening a browser.
     func startUpgrade(promoCode: String? = nil, fallbackBrowserId: String? = nil) {
         guard let appToken = Keychain.load(key: appTokenKey) else {
             // No stored session — open browser to sign in and purchase.
@@ -225,18 +241,6 @@ final class LicensingManager: ObservableObject {
         }
     }
 
-    /// Called when the OS delivers `defaulttamer://upgraded` after a successful
-    /// direct-checkout payment. Re-checks the subscription so the UI updates to Power.
-    /// Retries up to 5 times to handle the async Stripe webhook processing delay.
-    func handleUpgradeCallback() {
-        guard let appToken = Keychain.load(key: appTokenKey) else {
-            appLogger.warning("handleUpgradeCallback — no app token found, ignoring")
-            return
-        }
-        Task { await checkSubscriptionWithRetry(appToken: appToken) }
-    }
-
-
     // Open a URL in a specific browser, falling back to NSWorkspace if the browser can't be launched.
     private func open(_ url: URL, in browserId: String?) {
         if let browserId, !browserId.isEmpty,
@@ -246,29 +250,6 @@ final class LicensingManager: ObservableObject {
         } else {
             NSWorkspace.shared.open(url)
         }
-    }
-
-    /// Called by AppDelegate when the OS delivers a `defaulttamer://auth` deep-link.
-    /// Reads the one-time exchange code, calls POST /api/auth/exchange?context=app to
-    /// get a session token, stores it in Keychain, then validates the subscription status.
-    func handleOAuthCallback(_ url: URL) {
-        guard url.scheme == "defaulttamer", url.host == "auth" else { return }
-
-        let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-
-        if let error = components?.queryItems?.first(where: { $0.name == "error" })?.value {
-            appLogger.error("OAuth error from deep-link: \(error, privacy: .public)")
-            return
-        }
-
-        guard let code = components?.queryItems?.first(where: { $0.name == "code" })?.value,
-              !code.isEmpty else {
-            appLogger.error("defaulttamer://auth — missing or empty code")
-            return
-        }
-
-        let isPaymentCallback = components?.queryItems?.contains(where: { $0.name == "upgraded" && $0.value == "true" }) ?? false
-        Task { await exchangeCode(code, isPaymentCallback: isPaymentCallback) }
     }
 
     /// Signs out — deactivates this device's seat, removes stored credentials, clears license state.
@@ -410,45 +391,6 @@ final class LicensingManager: ObservableObject {
         } catch {
             // Non-fatal: keep existing activation state
             appLogger.error("Heartbeat failed: \(error.localizedDescription, privacy: .public)")
-        }
-    }
-
-    /// Exchange the one-time code for a session token via POST /api/auth/exchange.
-    private func exchangeCode(_ code: String, isPaymentCallback: Bool = false) async {
-        isValidating = true
-        defer { isValidating = false }
-
-        var request = URLRequest(url: SeatAPIConstants.exchangeURL)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 30
-        request.httpBody = try? JSONSerialization.data(withJSONObject: ["code": code])
-
-        do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-                appLogger.error("Token exchange HTTP \(statusCode, privacy: .public)")
-                return
-            }
-
-            struct TokenResponse: Decodable {
-                let appToken: String
-                let userId: String
-            }
-
-            let result = try JSONDecoder().decode(TokenResponse.self, from: data)
-            Keychain.save(key: appTokenKey, value: result.appToken)
-            Keychain.save(key: userIdKey, value: result.userId)
-            appLogger.info("✅ Token exchange OK")
-
-            if isPaymentCallback {
-                await checkSubscriptionWithRetry(appToken: result.appToken)
-            } else {
-                await checkSubscription(appToken: result.appToken)
-            }
-        } catch {
-            appLogger.error("Token exchange failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 

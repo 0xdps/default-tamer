@@ -306,13 +306,22 @@ struct LicensingTab: View {
                     Text("Power Plan")
                         .font(.title3)
                         .fontWeight(.semibold)
-                    Text("Advanced routing for power users")
+                    Text("Unlock advanced routing on this Mac")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
             }
 
-            upgradeButton
+            HStack(spacing: 10) {
+                upgradeButton
+                Button {
+                    licensing.startActivation(fallbackBrowserId: appState.settings.fallbackBrowserId)
+                } label: {
+                    Label("I already have Power", systemImage: "person.fill")
+                }
+                .buttonStyle(.bordered)
+                .help("Sign in to activate your existing Power plan on this Mac")
+            }
         }
     }
 

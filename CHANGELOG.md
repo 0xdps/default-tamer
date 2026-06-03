@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `LicensingManager.handleActivation(token:isPaymentCallback:)`: stores the app JWT from the `defaulttamer://activate` deep link into Keychain, then calls `checkSubscription` (or `checkSubscriptionWithRetry` when `isPaymentCallback` is true)
+- `LicensingManager.startActivation(fallbackBrowserId:)`: opens `/upgrade?restore=true` with the same pre-check optimisation as `startUpgrade`
+- `SeatAPIConstants.restoreURL`: static URL for `/upgrade?restore=true`
+- "I already have Power" secondary button in `LicensingView.notSignedInSection`, calls `startActivation`
+- `AppDelegate` handler for `defaulttamer://activate?token=...&upgraded=true` deep link
+
+### Changed
+
+- `/auth/callback.astro` rewritten as pure SSR — no HTML rendered, no client JS; server exchanges OAuth code, sets `dt_session` cookie, and 302-redirects to `next` from `dt_flow` cookie; errors 302-redirect to `/upgrade?error=...`
+- `/upgrade.astro` redesigned: when signed in, issues an `appToken` via `signAppToken` SSR; State B fires `defaulttamer://activate?token=...` deep link directly instead of redirecting to `/api/auth/start`; State C buy button calls `POST /api/checkout` with `Authorization: Bearer <appToken>` header embedded from SSR; added State C-restore (`?restore=true`) and error (`?error=...`) states; `dt_flow` cookie no longer carries a `context` field
+- `POST /api/checkout` `successUrl` changed from `/auth/callback?upgraded=true` to `/upgrade?upgraded=true`
+- `AppDelegate` `defaulttamer://upgraded` handler is now a no-op (kept for safety); `defaulttamer://auth` handler replaced by `defaulttamer://activate`
+- `notSignedInSection` subtitle updated to "Unlock advanced routing on this Mac"
+
+### Removed
+
+- `GET/POST /api/auth/start` endpoint (`start.ts`) — no longer called by anything
+- `POST /api/auth/exchange` endpoint (`exchange.ts`) — Mac app no longer exchanges OAuth codes; web callback does it SSR
+- `LicensingManager.handleOAuthCallback(_:)` — replaced by `handleActivation`
+- `LicensingManager.handleUpgradeCallback()` — superseded by `handleActivation(isPaymentCallback: true)`
+- `LicensingManager.exchangeCode(_:isPaymentCallback:)` — code exchange now happens server-side in `callback.astro`
+- `LicensingManager.startOAuth(fallbackBrowserId:)` — dead code
+- `SeatAPIConstants.authStartURL` and `SeatAPIConstants.exchangeURL`
+
 ## [0.0.7] - 2026-03-19
 
 ### Fixed
