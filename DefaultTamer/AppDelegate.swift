@@ -305,13 +305,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             appLogger.info("📥 Received URL: \(url.absoluteString, privacy: .public)")
         }
 
-        // Route `defaulttamer://activate?token=...` deep-links — issued by /upgrade after sign-in/payment
+        // Route `defaulttamer://activate?token=...&did=...` deep-links — issued by /upgrade
         if url.scheme == "defaulttamer", url.host == "activate" {
             let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-            let token = components?.queryItems?.first(where: { $0.name == "token" })?.value ?? ""
+            let token     = components?.queryItems?.first(where: { $0.name == "token" })?.value ?? ""
             let isUpgraded = components?.queryItems?.contains(where: { $0.name == "upgraded" && $0.value == "true" }) ?? false
+            let did        = components?.queryItems?.first(where: { $0.name == "did" })?.value
             if !token.isEmpty {
-                LicensingManager.shared.handleActivation(token: token, isPaymentCallback: isUpgraded)
+                LicensingManager.shared.handleActivation(token: token, isPaymentCallback: isUpgraded, confirmedDeviceId: did)
             }
             return
         }

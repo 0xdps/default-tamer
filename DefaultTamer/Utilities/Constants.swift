@@ -133,15 +133,25 @@ struct SeatAPIConstants {
     static var subscriptionURL:   URL { URL(string: "\(baseURL)/api/subscription")! }
     static var promoValidateURL:  URL { URL(string: "\(baseURL)/api/promo/validate")! }
     /// Opens the /upgrade funnel page, which handles auth + seat-tier selection + checkout.
+    /// Passes the install UUID as `did` so the web can include it in the activation deep link.
     static func upgradeURL(promoCode: String? = nil) -> URL {
         var items: [URLQueryItem] = []
         if let p = promoCode { items.append(URLQueryItem(name: "promo", value: p)) }
+        items.append(URLQueryItem(name: "did", value: PersistenceManager.shared.installID))
         var components = URLComponents(string: "\(baseURL)/upgrade")!
-        if !items.isEmpty { components.queryItems = items }
+        components.queryItems = items
         return components.url!
     }
     /// Opens /upgrade?restore=true — sign in to activate an existing Power plan.
-    static var restoreURL: URL { URL(string: "\(baseURL)/upgrade?restore=true")! }
+    /// Also passes the install UUID so the deep link can echo it back.
+    static var restoreURL: URL {
+        var components = URLComponents(string: "\(baseURL)/upgrade")!
+        components.queryItems = [
+            URLQueryItem(name: "restore", value: "true"),
+            URLQueryItem(name: "did",     value: PersistenceManager.shared.installID),
+        ]
+        return components.url!
+    }
 
     // MARK: Seat management
     static var accountURL:    URL { URL(string: "\(baseURL)/account")! }

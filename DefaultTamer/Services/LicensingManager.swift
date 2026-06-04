@@ -9,17 +9,17 @@
 //  contains no NubeAuth URLs, app IDs, or price IDs.
 //
 //  Flow:
-//  1. User taps upgrade/sign-in → opens browser to /api/auth/start
-//  2. Backend redirects to NubeAuth OAuth
-//  3. NubeAuth redirects to defaulttamer.app/auth/callback?code=...
-//  4. Website opens defaulttamer://auth?code=...
-//  5. App calls POST /api/auth/exchange?context=app → stores sessionToken
-//  6. App calls GET /api/subscription to check license status
-//  7. validateOnLaunch() re-checks on every app launch
+//  1. User taps "Get Power Plan" / "I already have Power" → opens /upgrade in browser
+//  2. Website handles OAuth (Google) and issues a 1-year appToken JWT
+//  3. Website fires defaulttamer://activate?token=<appToken>[&upgraded=true]
+//  4. App stores appToken in Keychain, calls GET /api/subscription
+//  5. If plan is active: calls POST /api/seats/activate with device metadata
+//  6. validateOnLaunch() / validateOnForeground() re-checks silently
 //
 
 import AppKit
 import Foundation
+import IOKit
 import Security
 
 // MARK: - Keychain helper
@@ -192,10 +192,16 @@ final class LicensingManager: ObservableObject {
     /// If the user is already signed in, calls `POST /v1/payment/checkout` directly
     /// to skip re-authentication and opens the returned Stripe/Dodo checkout page.
     /// On success the payment provider redirects to the website callback page with
-    /// Called when `/upgrade` issues a `defaulttamer://activate?token=...` deep link.
-    /// Stores the app token in Keychain and checks (or retries) subscription status.
-    func handleActivation(token: String, isPaymentCallback: Bool) {
+    /// Called when `/upgrade` issues a `defaulttamer://activate?token=...&did=...` deep link.
+    /// `confirmedDeviceId` is the install UUID the web echoed back; if present and matching
+    /// our own installID it confirms the session belongs to this device. We always use our
+    /// own PersistenceManager.installID for the actual API call — the echoed value is only
+    /// used for a consistency sanity-log.
+    func handleActivation(token: String, isPaymentCallback: Bool, confirmedDeviceId: String? = nil) {
         Keychain.save(key: appTokenKey, value: token)
+        if let did = confirmedDeviceId, !did.isEmpty, did != PersistenceManager.shared.installID {
+            appLogger.warning("⚠️ activate deep link did=\(did, privacy: .public) does not match local installID — ignoring mismatch")
+        }
         Task {
             if isPaymentCallback {
                 await checkSubscriptionWithRetry(appToken: token)
@@ -278,6 +284,20 @@ final class LicensingManager: ObservableObject {
     // MARK: - Private
 
 
+    /// Reads the hardware model identifier from IOKit, e.g. "MacBookPro18,1".
+    /// Returns nil if the value cannot be read (sandboxing or VM environments).
+    private static func hardwareModelIdentifier() -> String? {
+        let service = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("IOPlatformExpertDevice"))
+        guard service != IO_OBJECT_NULL else { return nil }
+        defer { IOObjectRelease(service) }
+        let cfKey = "model" as CFString
+        guard let data = IORegistryEntryCreateCFProperty(service, cfKey, kCFAllocatorDefault, 0)?
+                .takeRetainedValue() as? Data,
+              let raw = String(data: data, encoding: .utf8) else { return nil }
+        // Strip any trailing null byte that IOKit sometimes includes.
+        return raw.trimmingCharacters(in: .controlCharacters.union(.init(charactersIn: "\0")))
+    }
+
     /// retries. Used after payment callbacks to tolerate async Stripe webhook processing.
     private func checkSubscriptionWithRetry(appToken: String, maxAttempts: Int = 5, delaySeconds: UInt64 = 3) async {
         for attempt in 1...maxAttempts {
@@ -306,7 +326,18 @@ final class LicensingManager: ObservableObject {
         request.setValue("Bearer \(appToken)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 30
 
-        let body: [String: String] = ["device_id": deviceId, "device_name": deviceName]
+        var body: [String: String] = [
+            "device_id":   deviceId,
+            "device_name": deviceName,
+            "app_version": AppVersion.current,
+        ]
+        // macOS version — e.g. "15.4.1"
+        let osVersion = ProcessInfo.processInfo.operatingSystemVersion
+        body["macos_version"] = "\(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)"
+        // Hardware model identifier — e.g. "MacBookPro18,1"
+        if let modelId = Self.hardwareModelIdentifier() {
+            body["model_identifier"] = modelId
+        }
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
         do {
@@ -357,7 +388,17 @@ final class LicensingManager: ObservableObject {
         request.setValue("Bearer \(appToken)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 30
 
-        let body: [String: String] = ["device_id": deviceId]
+        // Send metadata on every heartbeat so the server always has the latest values
+        // (covers OS upgrades, app updates, etc. without requiring a full re-activation).
+        var body: [String: String] = [
+            "device_id":   deviceId,
+            "app_version": AppVersion.current,
+        ]
+        let osVersion = ProcessInfo.processInfo.operatingSystemVersion
+        body["macos_version"] = "\(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)"
+        if let modelId = Self.hardwareModelIdentifier() {
+            body["model_identifier"] = modelId
+        }
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
         do {
