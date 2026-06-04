@@ -255,6 +255,12 @@ class AppState: ObservableObject {
     // MARK: - URL Handling
     
     func handleURL(_ url: URL, sourceApp: String? = nil, modifierFlags: NSEvent.ModifierFlags? = nil) {
+        if url.isBrowserOpenableFile {
+            appLogger.info("Local browser-openable file received, using fallback: \(url.lastPathComponent, privacy: .public)")
+            executeRouteAction(.openInFallback, url: url, sourceApp: sourceApp)
+            return
+        }
+
         guard url.isHTTP else {
             appLogger.error("Non-HTTP URL received: \(url.absoluteString)")
             return

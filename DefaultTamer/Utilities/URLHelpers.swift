@@ -8,6 +8,10 @@
 import Foundation
 
 extension URL {
+    private static let browserOpenableFileExtensions: Set<String> = [
+        "html", "htm", "shtml", "xhtml", "shtm", "xhtm"
+    ]
+
     /// Normalized host (lowercase, www. prefix handling)
     var normalizedHost: String? {
         guard let host = self.host?.lowercased() else {
@@ -22,6 +26,14 @@ extension URL {
     /// Validates if URL is http or https
     var isHTTP: Bool {
         return scheme == "http" || scheme == "https"
+    }
+
+    /// True for local document types that Default Tamer registers to receive from Finder
+    /// and should hand straight to the fallback browser.
+    var isBrowserOpenableFile: Bool {
+        guard isFileURL else { return false }
+        let ext = pathExtension.lowercased()
+        return Self.browserOpenableFileExtensions.contains(ext)
     }
 }
 

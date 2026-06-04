@@ -23,6 +23,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     private var chooserCancellable: AnyCancellable?
     private var firstRunCancellable: AnyCancellable?
 
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        // Register Apple Event handlers here — this is the earliest point where
+        // NSAppleEventManager is ready, and it fires before any queued events
+        // (including kAEOpenDocuments from Finder) are dispatched.
+        NSAppleEventManager.shared().setEventHandler(
+            self,
+            andSelector: #selector(handleOpenDocumentsEvent(_:withReplyEvent:)),
+            forEventClass: AEEventClass(kCoreEventClass),
+            andEventID: AEEventID(kAEOpenDocuments)
+        )
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide from Dock and hide default window
         NSApp.setActivationPolicy(.accessory)
@@ -91,6 +103,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             forEventClass: AEEventClass(kInternetEventClass),
             andEventID: AEEventID(kAEGetURL)
         )
+        // Note: kAEOpenDocuments is registered in init() for earlier delivery.
+
+        // Ensure Default Tamer is the LaunchServices handler for HTML documents
+        // so Finder double-clicks route through kAEOpenDocuments to us.
+        appState.browserManager.claimHTMLDocumentHandlerIfNeeded()
 
         // Observe chooser state to present/dismiss chooser window
         chooserCancellable = appState.$showChooser
@@ -356,6 +373,80 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
         Task { @MainActor in
             appState.handleURL(url, sourceApp: sourceAppBundleId, modifierFlags: capturedFlags)
+        }
+    }
+
+    func application(_ sender: NSApplication, openFiles filenames: [String]) {
+        let urls = filenames.map { URL(fileURLWithPath: $0) }
+        let browserOpenableURLs = urls.filter { $0.isBrowserOpenableFile }
+
+        guard !browserOpenableURLs.isEmpty else {
+            appLogger.error("No browser-openable files received from Finder")
+            sender.reply(toOpenOrPrint: .failure)
+            return
+        }
+
+        for url in browserOpenableURLs {
+            appLogger.info("📄 Received local file from Finder (openFiles): \(url.lastPathComponent, privacy: .public)")
+            appState.handleURL(url, sourceApp: BundleIdentifiers.finder)
+        }
+
+        sender.reply(toOpenOrPrint: .success)
+    }
+
+    @objc func handleOpenDocumentsEvent(_ event: NSAppleEventDescriptor, withReplyEvent replyEvent: NSAppleEventDescriptor) {
+        appLogger.info("handleOpenDocuments: received kAEOpenDocuments event")
+
+        guard let fileList = event.paramDescriptor(forKeyword: AEKeyword(keyDirectObject)) else {
+            appLogger.error("handleOpenDocuments: no direct object in Apple Event")
+            return
+        }
+
+        appLogger.info("handleOpenDocuments: descriptor type=\(fileList.descriptorType, privacy: .public) items=\(fileList.numberOfItems, privacy: .public)")
+
+        var urls: [URL] = []
+
+        // Iterate list items, or treat the descriptor itself as a single item.
+        // fileURLValue resolves typeAlias, typeBookmarkData, typeFSRef, and
+        // typeFileURL descriptors uniformly — no need to branch on descriptorType.
+        let count = fileList.numberOfItems
+        if count > 0 {
+            for i in 1...count {
+                guard let item = fileList.atIndex(i) else { continue }
+                if let fileURL = item.fileURLValue {
+                    urls.append(fileURL)
+                } else if let s = item.stringValue, !s.isEmpty {
+                    // Fallback: coerce to URL if it looks like a path or file URL
+                    if s.hasPrefix("/") {
+                        urls.append(URL(fileURLWithPath: s))
+                    } else if s.hasPrefix("file://"), let u = URL(string: s) {
+                        urls.append(u)
+                    }
+                }
+            }
+        } else {
+            if let fileURL = fileList.fileURLValue {
+                urls.append(fileURL)
+            } else if let s = fileList.stringValue, !s.isEmpty {
+                if s.hasPrefix("/") {
+                    urls.append(URL(fileURLWithPath: s))
+                } else if s.hasPrefix("file://"), let u = URL(string: s) {
+                    urls.append(u)
+                }
+            }
+        }
+
+        appLogger.info("handleOpenDocuments: resolved \(urls.count, privacy: .public) URL(s)")
+
+        let browserOpenable = urls.filter { $0.isBrowserOpenableFile }
+        guard !browserOpenable.isEmpty else {
+            appLogger.error("handleOpenDocuments: no browser-openable files (resolved \(urls.count) total, paths: \(urls.map(\.lastPathComponent).joined(separator: ", "), privacy: .public))")
+            return
+        }
+
+        for url in browserOpenable {
+            appLogger.info("📄 Received local file from Finder: \(url.lastPathComponent, privacy: .public)")
+            appState.handleURL(url, sourceApp: BundleIdentifiers.finder)
         }
     }
 

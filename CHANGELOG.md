@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `AppDelegate` `defaulttamer://upgraded` handler is now a no-op (kept for safety); `defaulttamer://auth` handler replaced by `defaulttamer://activate`
 - `notSignedInSection` subtitle updated to "Unlock advanced routing on this Mac"
 
+### Fixed
+
+- Local HTML document opens from Finder (`.html`, `.htm`, `.shtml`, `.xhtml`, `.shtm`, `.xhtm`) now open in the fallback browser by handling Finder document-open events and routing browser-openable `file://` URLs past the HTTP-only guard
+
 ### Removed
 
 - `GET/POST /api/auth/start` endpoint (`start.ts`) — no longer called by anything

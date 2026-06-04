@@ -509,38 +509,62 @@ class BrowserManager: ObservableObject {
     
     // MARK: - Default Browser Management
     
+    /// UTIs for local HTML document types registered in Info.plist
+    private static let htmlContentTypes: [String] = ["public.html", "public.xhtml"]
+
     /// Check if DefaultTamer is currently set as the default browser for HTTP/HTTPS
     func isDefaultBrowser() -> Bool {
         guard let bundleId = Bundle.main.bundleIdentifier else { return false }
-        
+
         // Check http handler
         if let httpHandler = LSCopyDefaultHandlerForURLScheme("http" as CFString)?.takeRetainedValue() as String? {
             if httpHandler == bundleId {
                 return true
             }
         }
-        
+
         // Check https handler
         if let httpsHandler = LSCopyDefaultHandlerForURLScheme("https" as CFString)?.takeRetainedValue() as String? {
             if httpsHandler == bundleId {
                 return true
             }
         }
-        
+
         return false
     }
-    
+
     /// Request to set DefaultTamer as the default browser for HTTP/HTTPS
+    /// and as the default viewer for HTML document types.
     func requestSetAsDefault() -> Bool {
         guard let bundleId = Bundle.main.bundleIdentifier else { return false }
-        
-        // Set as default for http
-        LSSetDefaultHandlerForURLScheme("http" as CFString, bundleId as CFString)
-        
-        // Set as default for https
-        LSSetDefaultHandlerForURLScheme("https" as CFString, bundleId as CFString)
-        
-        debugLog("✅ Set DefaultTamer as default browser for http/https")
+        let cfBundleId = bundleId as CFString
+
+        // Set as default for http/https URL schemes
+        LSSetDefaultHandlerForURLScheme("http" as CFString, cfBundleId)
+        LSSetDefaultHandlerForURLScheme("https" as CFString, cfBundleId)
+
+        // Set as default viewer for HTML document UTIs so Finder double-clicks
+        // are routed through the kAEOpenDocuments Apple Event handler.
+        for uti in Self.htmlContentTypes {
+            LSSetDefaultRoleHandlerForContentType(uti as CFString, .viewer, cfBundleId)
+        }
+
+        debugLog("✅ Set DefaultTamer as default handler for http/https + HTML document types")
         return true
+    }
+
+    /// Check and, if needed, claim the HTML document handler role.
+    /// Called on launch after the user has set Default Tamer as default browser,
+    /// to ensure Finder double-clicks are also routed here.
+    func claimHTMLDocumentHandlerIfNeeded() {
+        guard let bundleId = Bundle.main.bundleIdentifier else { return }
+        let cfBundleId = bundleId as CFString
+        for uti in Self.htmlContentTypes {
+            let current = LSCopyDefaultRoleHandlerForContentType(uti as CFString, .viewer)?.takeRetainedValue() as String?
+            if current != bundleId {
+                LSSetDefaultRoleHandlerForContentType(uti as CFString, .viewer, cfBundleId)
+                debugLog("✅ Claimed HTML document handler for \(uti) (was: \(current ?? "nil"))")
+            }
+        }
     }
 }
