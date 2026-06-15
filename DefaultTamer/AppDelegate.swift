@@ -174,7 +174,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     private func checkAndPromptTelemetryConsent() {
         if appState.settings.telemetryEnabled == nil {
             let alert = NSAlert()
-            alert.messageText = "Help improve DefaultTamer"
+            alert.messageText = "Help improve Default Tamer"
             alert.informativeText = """
             Share anonymous usage stats to help improve the app.
             

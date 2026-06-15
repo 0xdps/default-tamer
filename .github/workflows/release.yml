@@ -10,14 +10,14 @@ jobs:
     runs-on: macos-latest
     env:
       XCODE_VERSION: "26.3"
-      EXPECTED_MACOSX_DEPLOYMENT_TARGET: "13.0"
+      EXPECTED_MACOSX_DEPLOYMENT_TARGET: "15.0"
     
     permissions:
       contents: write
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           submodules: true
           token: ${{ secrets.SCRIPTS_DEPLOY_TOKEN }}

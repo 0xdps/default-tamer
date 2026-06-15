@@ -14,11 +14,11 @@ This directory contains GitHub Actions workflows for automated building, testing
 **What it does:**
 
 - Checks out code
-- Sets up Xcode 15.0
+- Sets up Xcode 16
 - Installs XcodeGen
 - Generates Xcode project
 - Builds the app in Debug configuration
-- Runs tests (when available)
+- Runs tests
 - Uploads build artifacts
 
 **Status Badge:**
@@ -27,76 +27,54 @@ This directory contains GitHub Actions workflows for automated building, testing
 [![Build Status](https://github.com/0xdps/default-tamer/actions/workflows/build.yml/badge.svg)](https://github.com/0xdps/default-tamer/actions/workflows/build.yml)
 ```
 
-### 2. Deploy Website (`deploy-website.yml`)
+### 2. CodeQL (`codeql.yml`)
 
 **Triggers:**
 
-- Push to `trunk` or `main` branches (when `website/**` files change)
-- Manual workflow dispatch
+- Push to `trunk` or `main` branches
+- Pull requests to `trunk` or `main` branches
+- Weekly schedule (Mondays 08:00 UTC)
 
 **What it does:**
 
-- Deploys the `website` folder to GitHub Pages
-- Automatically updates the live website
-
-**Setup Required:**
-
-1. Go to Settings → Pages
-2. Source: GitHub Actions
-3. The website will be available at: `https://0xdps.github.io/default-tamer/`
+- Runs GitHub CodeQL static analysis on Swift code
+- Results appear in the Security tab
 
 ### 3. Release (`release.yml`)
 
 **Triggers:**
 
-- Push of version tags (e.g., `v1.0.0`)
+- Push of version tags matching `v*` (e.g., `v0.0.8`)
 
 **What it does:**
 
-- Builds Release configuration
-- Creates a DMG file
-- Creates a GitHub Release (draft)
-- Uploads DMG as release asset
+- Builds a universal (arm64 + x86_64) Release app
+- Signs with Developer ID certificate
+- Creates a notarized DMG
+- Publishes a GitHub Release with the DMG and release notes from `CHANGELOG.md`
 
 **Usage:**
 
 ```bash
-# Create and push a version tag
-git tag -a v1.0.0 -m "Release v1.0.0"
-git push origin v1.0.0
+# Bump VERSION.txt, promote [Unreleased] in CHANGELOG.md, then:
+git tag -a v0.0.8 -m "Release v0.0.8"
+git push origin v0.0.8
 ```
 
-## Setup Instructions
+## Required GitHub Secrets
 
-### For Build Workflow
+| Secret | Description |
+|--------|-------------|
+| `BUILD_CERTIFICATE_BASE64` | Developer ID Application certificate (base64-encoded .p12) |
+| `P12_PASSWORD` | Password for the .p12 certificate |
+| `KEYCHAIN_PASSWORD` | Temporary keychain password used during the build |
+| `DEVELOPER_ID_NAME` | Full name of the Developer ID signing identity |
+| `TEAM_ID` | Apple Developer Team ID |
+| `APPLE_ID_USER` | Apple ID email for notarization |
+| `APPLE_ID_TEAM` | Apple Developer Team ID for notarization |
+| `APPLE_ID_PASSWORD` | App-specific password for notarization |
+| `SCRIPTS_DEPLOY_TOKEN` | GitHub token with read access to the private scripts submodule |
 
-No additional setup required! The workflow will run automatically on push/PR.
-
-### For Website Deployment
-
-1. Enable GitHub Pages:
-   - Go to repository Settings → Pages
-   - Source: **GitHub Actions**
-   - Save
-
-2. The website will deploy automatically when you push changes to the `website/` folder
-
-### For Release Workflow
-
-1. **Update Team ID** (for code signing):
-   - Edit `ExportOptions.plist`
-   - Replace `YOUR_TEAM_ID` with your Apple Developer Team ID
-   - Or remove signing for development builds
-
-2. **Create a release:**
-
-   ```bash
-   git tag -a v1.0.0 -m "Release version 1.0.0"
-   git push origin v1.0.0
-   ```
-
-3. The workflow will create a draft release with the DMG
-4. Edit the release notes and publish when ready
 
 ## Adding Tests
 
@@ -125,23 +103,14 @@ DefaultTamerTests/
 - Ensure `project.yml` is up to date
 - Verify all dependencies are available
 
-### Website deployment fails
-
-- Ensure GitHub Pages is enabled
-- Check that `website/` folder exists
-- Verify workflow permissions
-
 ### Release fails
 
-- Update `ExportOptions.plist` with correct Team ID
-- Check code signing settings
+- Confirm all required secrets are set in repository Settings → Secrets
+- Ensure `VERSION.txt` is bumped and `[Unreleased]` is promoted in `CHANGELOG.md` before tagging
 - Ensure tag format is `vX.Y.Z`
 
-## Status Badges
-
-Add these to your README.md:
+## Status Badge
 
 ```markdown
 [![Build](https://github.com/0xdps/default-tamer/actions/workflows/build.yml/badge.svg)](https://github.com/0xdps/default-tamer/actions/workflows/build.yml)
-[![Website](https://github.com/0xdps/default-tamer/actions/workflows/deploy-website.yml/badge.svg)](https://github.com/0xdps/default-tamer/actions/workflows/deploy-website.yml)
 ```
