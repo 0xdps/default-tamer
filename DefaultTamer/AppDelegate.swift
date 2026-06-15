@@ -247,7 +247,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     }
 
     func menuDidClose(_ menu: NSMenu) {
-        DebugLog.menu("📂 menuDidClose")
+        appLogger.debug("📂 menuDidClose")
     }
 
     // MARK: - Actions

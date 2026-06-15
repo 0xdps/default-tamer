@@ -8,27 +8,8 @@
 import Foundation
 
 struct AppVersion {
-    /// Get current app version from Info.plist
-    /// This is automatically updated from VERSION.txt during release builds
     static var current: String {
-        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
-            return version
-        }
-        return "1.0.0"
-    }
-    
-    /// Get build number from Info.plist
-    /// This is also updated from VERSION.txt during release builds
-    static var build: String {
-        if let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
-            return build
-        }
-        return "1"
-    }
-    
-    /// Full version string (e.g., "1.0.1")
-    static var full: String {
-        return current
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.0"
     }
 }
 
