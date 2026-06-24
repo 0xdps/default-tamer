@@ -1,0 +1,34 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.5",
+  "base_commit_sha": "d73e454fab17a60438800e24fde1eacf7f29b960",
+  "prompts": {
+    "53443901246f1f17": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "b32b16bc-988f-4248-8b9a-56af092b6f3c",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 0,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "a9fc5035ff45e477": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "7970df3d-9d5f-4b9d-b496-b8b835055516",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 111,
+      "total_deletions": 48,
+      "accepted_lines": 106,
+      "overriden_lines": 0
+    }
+  }
+}

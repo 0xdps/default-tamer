@@ -1,0 +1,33 @@
+.github/workflows/README.md
+  s_45cd1800d28ee5::t_e599307f056639 108-109,112
+  s_45cd1800d28ee5::t_f842a654f91f17 17,21,30,34-36,40-41,47,51-54,59-61,64,66-76
+.github/workflows/build.yml
+  s_45cd1800d28ee5::t_603d3b06477deb 30,63
+.github/workflows/release.yml
+  s_45cd1800d28ee5::t_78bd8016e76534 13,20
+DefaultTamer/AppDelegate.swift
+  s_45cd1800d28ee5::t_4758fc3981a928 177
+.github/workflows/codeql.yml
+  s_45cd1800d28ee5::t_647b6b17c26dfc 26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "e29746a9bbccea4fd343be2da43ec221b1645e0d",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_45cd1800d28ee5": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "e5064e62-dd37-488d-af2d-21b29db81483",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

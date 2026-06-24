@@ -1,0 +1,16 @@
+DefaultTamer/Utilities/Constants.swift
+  h_d60f3499e5a1c3 119
+DefaultTamerWeb/src/layouts/BaseLayout.astro
+  h_d60f3499e5a1c3 99
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "e65bba9d15e66f0d30149dc7197ab684439597a2",
+  "prompts": {},
+  "humans": {
+    "h_d60f3499e5a1c3": {
+      "author": "Devendra Pratap Singh"
+    }
+  }
+}

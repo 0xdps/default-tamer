@@ -1,0 +1,25 @@
+DefaultTamerWeb/src/styles/global.css
+  beb586eea0b85ce6 54
+DefaultTamerWeb/src/pages/index.astro
+  beb586eea0b85ce6 95,100,106,112,114-136,172-174,176,178-188,190-196,199-203,301-302
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.7",
+  "base_commit_sha": "e9b1c67463b24adfcd24bb61d303e3fad71a35d8",
+  "prompts": {
+    "beb586eea0b85ce6": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "fe584c32-c27c-4c98-8981-c0f6dab74bdd",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 61,
+      "total_deletions": 32,
+      "accepted_lines": 58,
+      "overriden_lines": 0
+    }
+  }
+}

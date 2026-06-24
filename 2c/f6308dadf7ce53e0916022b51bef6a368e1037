@@ -1,0 +1,31 @@
+DefaultTamer/Services/LicensingManager.swift
+  s_b0ee06b5cae5ee::t_4f59ff4c86aded 287-300
+  s_b0ee06b5cae5ee::t_84b3063aa3da1d 195-200,202-204
+  s_b0ee06b5cae5ee::t_a0c11285f42e05 329-340,391-401
+  s_b0ee06b5cae5ee::t_ae34327307e224 12-17,22
+DefaultTamer/Utilities/Constants.swift
+  s_b0ee06b5cae5ee::t_84b3063aa3da1d 136,140,142,146-154
+DefaultTamer/AppDelegate.swift
+  s_b0ee06b5cae5ee::t_abd5c47779dafe 308,311,313,315
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "2cf6308dadf7ce53e0916022b51bef6a368e1037",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_b0ee06b5cae5ee": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "283556ff-68fb-4207-bac2-57c24a908f32",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

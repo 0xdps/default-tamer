@@ -1,0 +1,24 @@
+CHANGELOG.md
+  c97eb784c86aa366 12-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "2f4fb8ba14688b4c59f8066fa9163dd0f48859ee",
+  "prompts": {
+    "c97eb784c86aa366": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f88adbe0-bd0a-4d7b-b931-52b0e590b9f4",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>",
+      "messages": [],
+      "total_additions": 41,
+      "total_deletions": 14,
+      "accepted_lines": 95,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/c321d6b3bd100e61cd056f5b391d0c039bbbe3ec5fd561b556de283a1d7474a8"
+    }
+  }
+}

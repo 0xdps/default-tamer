@@ -1,0 +1,24 @@
+.github/workflows/codeql.yml
+  c97eb784c86aa366 1-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "9ae09e4f6a029f6f047e79f6f97cbdbd53d477e5",
+  "prompts": {
+    "c97eb784c86aa366": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f88adbe0-bd0a-4d7b-b931-52b0e590b9f4",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>",
+      "messages": [],
+      "total_additions": 57,
+      "total_deletions": 0,
+      "accepted_lines": 141,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/48f6c691438820c91734b9251b5e79f7f76fd29b72f6e6e1021c7b95dd7b5f0e"
+    }
+  }
+}

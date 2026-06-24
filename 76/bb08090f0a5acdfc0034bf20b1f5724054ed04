@@ -1,0 +1,45 @@
+DefaultTamerWeb/public/scripts/custom-interactions.js
+  4bdabd6b71b08d21 21-28
+  9897d8221316d956 1-20,29-30,32-88,90-93,95-96,99-100,102-146
+DefaultTamerWeb/src/components/Header.astro
+  9897d8221316d956 53,63-64,67,93-95
+DefaultTamerWeb/src/styles/global.css
+  4bdabd6b71b08d21 39-41,43-70,73-75
+DefaultTamerWeb/src/components/SearchPalette.astro
+  9897d8221316d956 23-24,55-57
+DefaultTamerWeb/src/layouts/BaseLayout.astro
+  4bdabd6b71b08d21 89-90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "76bb08090f0a5acdfc0034bf20b1f5724054ed04",
+  "prompts": {
+    "4bdabd6b71b08d21": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "51ecf28b-fd83-41e8-afbc-8fc2ee718188",
+        "model": "copilot/auto"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 114,
+      "total_deletions": 97,
+      "accepted_lines": 45,
+      "overriden_lines": 0
+    },
+    "9897d8221316d956": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "62b2202e-a70c-4f70-beaa-3c8132e476fb",
+        "model": "copilot/auto"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 206,
+      "total_deletions": 73,
+      "accepted_lines": 144,
+      "overriden_lines": 3
+    }
+  }
+}

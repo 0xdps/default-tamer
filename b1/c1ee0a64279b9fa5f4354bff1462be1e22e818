@@ -1,0 +1,19 @@
+DefaultTamer/Utilities/Constants.swift
+  s_b0ee06b5cae5ee::t_ae0c03ed6b665f 124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "b1c1ee0a64279b9fa5f4354bff1462be1e22e818",
+  "prompts": {},
+  "sessions": {
+    "s_b0ee06b5cae5ee": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "283556ff-68fb-4207-bac2-57c24a908f32",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

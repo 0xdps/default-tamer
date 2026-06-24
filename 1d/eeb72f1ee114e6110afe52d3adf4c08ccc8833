@@ -1,0 +1,24 @@
+DefaultTamer/Services/AnalyticsManager.swift
+  c97eb784c86aa366 44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "1deeb72f1ee114e6110afe52d3adf4c08ccc8833",
+  "prompts": {
+    "c97eb784c86aa366": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f88adbe0-bd0a-4d7b-b931-52b0e590b9f4",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/c25d36cf64da8896318f45631b65e164bb02a9e70641b3de9bcf40ec48878388"
+    }
+  }
+}

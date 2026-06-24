@@ -1,0 +1,29 @@
+DefaultTamerWeb/public/images/icons/github.svg
+  beb586eea0b85ce6 1
+DefaultTamerWeb/public/images/icons/slack.svg
+  beb586eea0b85ce6 1
+DefaultTamerWeb/src/pages/index.astro
+  beb586eea0b85ce6 119,124,129
+DefaultTamerWeb/public/images/icons/globe.svg
+  beb586eea0b85ce6 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.7",
+  "base_commit_sha": "9ee293d7256a3bce2d77b5e87e3105a5ba340783",
+  "prompts": {
+    "beb586eea0b85ce6": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "fe584c32-c27c-4c98-8981-c0f6dab74bdd",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 15,
+      "total_deletions": 13,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    }
+  }
+}

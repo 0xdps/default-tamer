@@ -1,0 +1,26 @@
+DefaultTamerWeb/postcss.config.mjs
+  s_d60e50ba7e8ea7::t_492aec591fef8e 1-6
+DefaultTamerWeb/astro.config.mjs
+  s_d60e50ba7e8ea7::t_b8a5e902977790 13
+DefaultTamerWeb/package.json
+  s_d60e50ba7e8ea7::t_155e22e22ca62b 15-16,20
+  s_d60e50ba7e8ea7::t_76e79c5f6c0d9d 17
+DefaultTamerWeb/src/content.config.ts
+  s_d60e50ba7e8ea7::t_88a4bfa9a6ebc1 1-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "7a7502c0fc55502e25b0eca656b4e251d906f712",
+  "prompts": {},
+  "sessions": {
+    "s_d60e50ba7e8ea7": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "b7111e9c-e22d-4436-88c2-a2d770d5529b",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

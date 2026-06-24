@@ -1,0 +1,24 @@
+DefaultTamerWeb/.gitignore
+  s_d60e50ba7e8ea7::t_fc354cd0ed0765 9-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "1916bc24561703840c62dd3e5f4479b0b512f175",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_d60e50ba7e8ea7": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "b7111e9c-e22d-4436-88c2-a2d770d5529b",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

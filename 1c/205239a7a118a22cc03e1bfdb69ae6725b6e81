@@ -1,0 +1,38 @@
+DefaultTamerWeb/src/pages/changelog.astro
+  ee0c50144d47d6f2 29,36-41
+DefaultTamerWeb/src/pages/release-notes.astro
+  95313a55c14bdb0c 33-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.5",
+  "base_commit_sha": "1c205239a7a118a22cc03e1bfdb69ae6725b6e81",
+  "prompts": {
+    "95313a55c14bdb0c": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f4ec04df-2aea-44a7-b9f2-058d0bc00205",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 14,
+      "total_deletions": 1,
+      "accepted_lines": 7,
+      "overriden_lines": 0
+    },
+    "ee0c50144d47d6f2": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "09432766-90a3-4d02-a0aa-3d6283061ea1",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 7,
+      "total_deletions": 1,
+      "accepted_lines": 7,
+      "overriden_lines": 0
+    }
+  }
+}

@@ -1,0 +1,29 @@
+DefaultTamerWeb/astro.config.mjs
+  8d71a1590a9d9561 9
+DefaultTamerWeb/src/layouts/BaseLayout.astro
+  8d71a1590a9d9561 92-122
+DefaultTamerWeb/src/components/SEO.astro
+  8d71a1590a9d9561 20
+DefaultTamerWeb/src/pages/index.astro
+  8d71a1590a9d9561 95-97
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "bd41ea921ea96afe53e0aa55ddf1a56f6019e089",
+  "prompts": {
+    "8d71a1590a9d9561": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "71b5e217-7e45-48f7-b117-3623e0b434ac",
+        "model": "copilot/auto"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 36,
+      "overriden_lines": 0
+    }
+  }
+}

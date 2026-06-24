@@ -1,0 +1,42 @@
+DefaultTamerTests/URLHelpersTests.swift
+  s_b0ee06b5cae5ee::t_8152269d7a44af 1-45
+DefaultTamer/AppDelegate.swift
+  s_b0ee06b5cae5ee::t_801af34a2b68c7 379-389,391-394,451-452
+  s_b0ee06b5cae5ee::t_5c4b7f73a1c55e 107,390,395-397,400-404,407-408,412-414,425-426,437,440-442,444-447,449-450
+  s_b0ee06b5cae5ee::t_59c91d6046b92f 398-399,405-406,409-411,418-424,430-435,438-439,443,448
+  s_b0ee06b5cae5ee::t_3982c8ecfc0356 108-110
+  s_b0ee06b5cae5ee::t_84f3153f02ae43 26-29
+  s_b0ee06b5cae5ee::t_8bc55c5d4b3ac5 415-417,427-429,436
+  s_b0ee06b5cae5ee::t_2e947bb49840d2 30-37
+  s_b0ee06b5cae5ee::t_58489dc0b916c4 106
+DefaultTamer/Services/BrowserManager.swift
+  s_b0ee06b5cae5ee::t_5e98ca9a4d6df8 512-514,518,525,532,535,537,540-552,555-568
+DefaultTamer/Services/AppState.swift
+  s_b0ee06b5cae5ee::t_fbe4e055712b21 258-263
+DefaultTamer/Utilities/URLHelpers.swift
+  s_b0ee06b5cae5ee::t_fbe4e055712b21 11-14,30-36
+CHANGELOG.md
+  s_b0ee06b5cae5ee::t_210ff3e97336bb 26-27,29
+  s_b0ee06b5cae5ee::t_73d72cadbc0606 28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "e59428e37d454a3f7efbf4689302b552332714ad",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_b0ee06b5cae5ee": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "283556ff-68fb-4207-bac2-57c24a908f32",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,50 @@
+DefaultTamerWeb/src/content/changelog/0.0.3.md
+  a9fc5035ff45e477 10-13
+DefaultTamer/Views/PreferencesWindow.swift
+  a9fc5035ff45e477 203-225,229-236
+CHANGELOG.md
+  a9fc5035ff45e477 17,22,29
+DefaultTamer/Services/UpdateManager.swift
+  a9fc5035ff45e477 39-53
+DefaultTamerWeb/src/pages/docs/index.astro
+  a9fc5035ff45e477 157-162,169
+DefaultTamer/Services/AppState.swift
+  a9fc5035ff45e477 66-75
+README.md
+  a9fc5035ff45e477 58
+DEVELOPER.md
+  a9fc5035ff45e477 1-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.5",
+  "base_commit_sha": "4e40af0c890243b09e01da417642ebc5e2359412",
+  "prompts": {
+    "53443901246f1f17": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "b32b16bc-988f-4248-8b9a-56af092b6f3c",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "a9fc5035ff45e477": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "7970df3d-9d5f-4b9d-b496-b8b835055516",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 106,
+      "overriden_lines": 0
+    }
+  }
+}

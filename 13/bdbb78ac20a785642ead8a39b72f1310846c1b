@@ -1,0 +1,37 @@
+DefaultTamerWeb/src/pages/index.astro
+  75206f15dd3ba98d 106,108-109,112-113,149-152,157-176,179,236,239,330-331,413-425
+  beb586eea0b85ce6 14,90-91,153-156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.7",
+  "base_commit_sha": "13bdbb78ac20a785642ead8a39b72f1310846c1b",
+  "prompts": {
+    "75206f15dd3ba98d": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "7be2c1e7-4e17-4f05-a3d1-98570ab00b05",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 48,
+      "total_deletions": 8,
+      "accepted_lines": 47,
+      "overriden_lines": 0
+    },
+    "beb586eea0b85ce6": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "fe584c32-c27c-4c98-8981-c0f6dab74bdd",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manir@gmail.com>",
+      "messages": [],
+      "total_additions": 7,
+      "total_deletions": 4,
+      "accepted_lines": 7,
+      "overriden_lines": 0
+    }
+  }
+}

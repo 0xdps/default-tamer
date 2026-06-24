@@ -1,0 +1,44 @@
+DefaultTamer/Views/AddRuleSheet.swift
+  72864f8a0cbcf681 176-180,209-227,300-311,721-723,752-767,828-835
+DefaultTamer/Services/BrowserManager.swift
+  72864f8a0cbcf681 341,343-350
+DefaultTamer/Views/FirstRunView.swift
+  72864f8a0cbcf681 117-118
+DefaultTamer/Views/PreferencesWindow.swift
+  72864f8a0cbcf681 45,151,191-195,225-243
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "5bca33d44cdfd9d38318e5b7a0ecf7fb668a88bd",
+  "prompts": {
+    "622d509bcd7d2250": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "09141db6-4c3b-415b-8ca3-1da725e73d2d",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1430,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/085348a2e858a181ef847da5a163a44f306d4093eb6a7baa13fd59d8c2471a02"
+    },
+    "72864f8a0cbcf681": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "0658d0b8-1c54-4d29-912c-1b4c4d74181a",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>",
+      "messages": [],
+      "total_additions": 184,
+      "total_deletions": 88,
+      "accepted_lines": 117,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/d9bb1b513a65cc0f5bff322842ab77bd6f970160babf182e80b3c52739bbe0bf"
+    }
+  }
+}
