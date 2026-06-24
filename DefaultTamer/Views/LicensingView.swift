@@ -90,6 +90,8 @@ struct LicensingTab: View {
             }
         } else if licensing.status != nil {
             freePlanSection
+        } else if case .serverUnreachable = licensing.activationState {
+            serverUnreachableSection
         } else {
             notSignedInSection
         }
@@ -285,6 +287,45 @@ struct LicensingTab: View {
                     Text("Sign Out")
                 }
                 .buttonStyle(.bordered)
+            }
+        }
+    }
+
+    // MARK: - Server unreachable
+
+    /// Shown when the licensing server cannot be reached and we have no cached
+    /// license status — prevents the UI from misleadingly showing "not signed in"
+    /// to users who have a stored session but are temporarily offline.
+    private var serverUnreachableSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .center, spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.orange.opacity(0.1))
+                        .frame(width: 52, height: 52)
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 22))
+                        .opacity(0.4)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Power Plan")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                    Text("Unable to verify license — check your connection")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            HStack(spacing: 10) {
+                Button {
+                    licensing.validateOnLaunch()
+                } label: {
+                    Label("Retry", systemImage: "arrow.clockwise")
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.orange)
             }
         }
     }

@@ -104,6 +104,7 @@ enum ActivationState: Equatable {
     case activated(seatsUsed: Int, seatsTotal: Int)
     case overLimit(seatsUsed: Int, seatsTotal: Int)
     case deactivatedRemotely
+    case serverUnreachable
     case error(String)
 }
 
@@ -115,12 +116,40 @@ final class LicensingManager: ObservableObject {
     @Published private(set) var isValidating = false
     @Published private(set) var activationState: ActivationState = .idle
 
-    private let appTokenKey      = "appToken"
-    private let userIdKey        = "userId"
-    private let activationIdKey  = "activationId"
+    private let appTokenKey       = "appToken"
+    private let userIdKey         = "userId"
+    private let activationIdKey   = "activationId"
+    private let cachedStatusKey   = "cachedLicenseStatus"
     private var lastValidated: Date?
+    private var heartbeatTimer: Timer?
 
-    private init() {}
+    private let defaults = UserDefaults.standard
+
+    private init() {
+        restoreCachedStatus()
+    }
+
+    // MARK: - Offline / cached status
+
+    /// Restores the last known license status from UserDefaults so the app
+    /// doesn't immediately show "not signed in" when offline.
+    private func restoreCachedStatus() {
+        guard let data = defaults.data(forKey: cachedStatusKey),
+              let cached = try? JSONDecoder().decode(LicenseStatus.self, from: data) else { return }
+        status = cached
+        appLogger.info("Restored cached license status: \(cached.plan.displayName, privacy: .public)")
+    }
+
+    /// Persists the current license status to UserDefaults for offline recovery.
+    private func cacheStatus(_ newStatus: LicenseStatus?) {
+        guard let newStatus else {
+            defaults.removeObject(forKey: cachedStatusKey)
+            return
+        }
+        if let data = try? JSONEncoder().encode(newStatus) {
+            defaults.set(data, forKey: cachedStatusKey)
+        }
+    }
 
     // MARK: - Public API
 
@@ -187,16 +216,15 @@ final class LicensingManager: ObservableObject {
         }
     }
 
-    /// Initiates a Power plan purchase.
+    /// Handles the activation deep link from the website.
     ///
-    /// If the user is already signed in, calls `POST /v1/payment/checkout` directly
-    /// to skip re-authentication and opens the returned Stripe/Dodo checkout page.
-    /// On success the payment provider redirects to the website callback page with
-    /// Called when `/upgrade` issues a `defaulttamer://activate?token=...&did=...` deep link.
-    /// `confirmedDeviceId` is the install UUID the web echoed back; if present and matching
-    /// our own installID it confirms the session belongs to this device. We always use our
-    /// own PersistenceManager.installID for the actual API call — the echoed value is only
-    /// used for a consistency sanity-log.
+    /// Stores the app JWT in Keychain, then validates the subscription. When
+    /// `isPaymentCallback` is true, uses a retry loop to tolerate Stripe webhook
+    /// processing delays (up to 5 attempts with 3-second delays).
+    ///
+    /// The optional `confirmedDeviceId` is the install UUID echoed back by the
+    /// web page; if present and mismatched, we log a warning but proceed anyway
+    /// using our own `PersistenceManager.installID` for the actual API call.
     func handleActivation(token: String, isPaymentCallback: Bool, confirmedDeviceId: String? = nil) {
         Keychain.save(key: appTokenKey, value: token)
         if let did = confirmedDeviceId, !did.isEmpty, did != PersistenceManager.shared.installID {
@@ -258,27 +286,38 @@ final class LicensingManager: ObservableObject {
         }
     }
 
-    /// Signs out — deactivates this device's seat, removes stored credentials, clears license state.
+    /// Signs out — deactivates this device's seat on the server, then removes
+    /// stored credentials and clears license state. The deactivation call is
+    /// awaited before local state is cleared so the server seat is released
+    /// first. If the network call fails, we still clear locally — the seat
+    /// will be reclaimed by the heartbeat timeout on the server side.
     func signOut() {
-        // Capture values before clearing keychain so the network request has what it needs.
         let capturedToken = Keychain.load(key: appTokenKey)
         let capturedDeviceId = PersistenceManager.shared.installID
-        if let capturedToken {
-            Task {
+        Task {
+            if let capturedToken {
                 var req = URLRequest(url: SeatAPIConstants.deactivateURL)
                 req.httpMethod = "POST"
                 req.setValue("application/json", forHTTPHeaderField: "Content-Type")
                 req.setValue("Bearer \(capturedToken)", forHTTPHeaderField: "Authorization")
-                req.timeoutInterval = 15
+                req.timeoutInterval = 8
                 req.httpBody = try? JSONSerialization.data(withJSONObject: ["device_id": capturedDeviceId])
-                try? await URLSession.shared.data(for: req)
+                do {
+                    let (_, response) = try await URLSession.shared.data(for: req)
+                    let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+                    appLogger.info("Sign-out deactivation HTTP \(statusCode, privacy: .public)")
+                } catch {
+                    appLogger.error("Sign-out deactivation failed (server will reclaim via heartbeat timeout): \(error.localizedDescription, privacy: .public)")
+                }
             }
+            // Clear local state after the deactivation attempt completes (or times out).
+            Keychain.delete(key: appTokenKey)
+            Keychain.delete(key: userIdKey)
+            Keychain.delete(key: activationIdKey)
+            status = nil
+            cacheStatus(nil)
+            activationState = .idle
         }
-        Keychain.delete(key: appTokenKey)
-        Keychain.delete(key: userIdKey)
-        Keychain.delete(key: activationIdKey)
-        status = nil
-        activationState = .idle
     }
 
     // MARK: - Private
@@ -298,7 +337,8 @@ final class LicensingManager: ObservableObject {
         return raw.trimmingCharacters(in: .controlCharacters.union(.init(charactersIn: "\0")))
     }
 
-    /// retries. Used after payment callbacks to tolerate async Stripe webhook processing.
+    /// Checks the subscription status with retries. Used after payment callbacks
+    /// to tolerate async Stripe webhook processing delays.
     private func checkSubscriptionWithRetry(appToken: String, maxAttempts: Int = 5, delaySeconds: UInt64 = 3) async {
         for attempt in 1...maxAttempts {
             await checkSubscription(appToken: appToken)
@@ -314,11 +354,25 @@ final class LicensingManager: ObservableObject {
     // MARK: - Seat device management
 
     /// Activates this device's seat via POST /api/seats/activate.
+    /// Retries up to 3 times on transient network failures.
     private func activateDevice(appToken: String) async {
+        activationState = .activating
+
+        for attempt in 1...3 {
+            let success = await tryActivateDevice(appToken: appToken)
+            if success { return }
+            if attempt < 3 {
+                appLogger.info("Device activation attempt \(attempt)/3 failed, retrying…")
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+            }
+        }
+        appLogger.error("Device activation failed after 3 attempts")
+    }
+
+    /// Single attempt at device activation. Returns true on success.
+    private func tryActivateDevice(appToken: String) async -> Bool {
         let deviceId   = PersistenceManager.shared.installID
         let deviceName = Host.current().localizedName ?? "Mac"
-
-        activationState = .activating
 
         var request = URLRequest(url: SeatAPIConstants.activateURL)
         request.httpMethod = "POST"
@@ -331,10 +385,8 @@ final class LicensingManager: ObservableObject {
             "device_name": deviceName,
             "app_version": AppVersion.current,
         ]
-        // macOS version — e.g. "15.4.1"
         let osVersion = ProcessInfo.processInfo.operatingSystemVersion
         body["macos_version"] = "\(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)"
-        // Hardware model identifier — e.g. "MacBookPro18,1"
         if let modelId = Self.hardwareModelIdentifier() {
             body["model_identifier"] = modelId
         }
@@ -342,7 +394,7 @@ final class LicensingManager: ObservableObject {
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let http = response as? HTTPURLResponse else { return }
+            guard let http = response as? HTTPURLResponse else { return false }
 
             struct ActivateResponse: Decodable {
                 let activationId: String
@@ -360,6 +412,8 @@ final class LicensingManager: ObservableObject {
                 Keychain.save(key: activationIdKey, value: result.activationId)
                 activationState = .activated(seatsUsed: result.seatsUsed, seatsTotal: result.seatsTotal)
                 appLogger.info("✅ Device activated — \(result.seatsUsed)/\(result.seatsTotal) seats")
+                startHeartbeatTimer()
+                return true
             case 403:
                 if let limit = try? JSONDecoder().decode(LimitResponse.self, from: data) {
                     activationState = .overLimit(seatsUsed: limit.seatsUsed, seatsTotal: limit.seatsTotal)
@@ -367,14 +421,61 @@ final class LicensingManager: ObservableObject {
                     activationState = .overLimit(seatsUsed: 0, seatsTotal: 0)
                 }
                 appLogger.warning("Seat limit reached — cannot activate this device")
+                return true  // Non-retryable: server definitively rejected
+            case 409:
+                // Conflict: this device may already be activated. Do a heartbeat to sync.
+                appLogger.info("Device activation returned 409 — running heartbeat to sync state")
+                await heartbeatDevice(appToken: appToken)
+                return true  // heartbeatDevice sets activationState; don't retry
+            case 503:
+                appLogger.warning("Device activation HTTP 503 (transient) — will retry")
+                return false // Retryable
             default:
                 activationState = .error("Activation failed (\(http.statusCode))")
                 appLogger.error("Device activation HTTP \(http.statusCode, privacy: .public)")
+                return true  // Non-retryable: unexpected status code
             }
         } catch {
+            let nsError = error as NSError
+            let isTransient = nsError.domain == NSURLErrorDomain &&
+                (nsError.code == NSURLErrorTimedOut ||
+                 nsError.code == NSURLErrorCannotConnectToHost ||
+                 nsError.code == NSURLErrorNetworkConnectionLost ||
+                 nsError.code == NSURLErrorNotConnectedToInternet ||
+                 nsError.code == NSURLErrorDNSLookupFailed)
+            if isTransient {
+                appLogger.warning("Device activation transient error: \(error.localizedDescription, privacy: .public)")
+                return false // Retryable
+            }
             activationState = .error(error.localizedDescription)
             appLogger.error("Device activation failed: \(error.localizedDescription, privacy: .public)")
+            return true  // Non-retryable
         }
+    }
+
+    // MARK: - Periodic heartbeat
+
+    /// Starts a timer that sends a heartbeat every 8 hours to keep the
+    /// device's seat active on the server and detect remote deactivations.
+    func startHeartbeatTimer() {
+        stopHeartbeatTimer()
+        heartbeatTimer = Timer.scheduledTimer(withTimeInterval: 28_800, repeats: true) { [weak self] _ in
+            guard let self, let appToken = Keychain.load(key: self.appTokenKey) else { return }
+            Task { @MainActor in
+                await self.heartbeatDevice(appToken: appToken)
+            }
+        }
+        // Allow the timer to fire while UI interactions are happening.
+        heartbeatTimer?.tolerance = 900
+        RunLoop.main.add(heartbeatTimer!, forMode: .common)
+        appLogger.info("Heartbeat timer started (every 8h)")
+    }
+
+    /// Stops the periodic heartbeat timer.
+    func stopHeartbeatTimer() {
+        heartbeatTimer?.invalidate()
+        heartbeatTimer = nil
+        appLogger.info("Heartbeat timer stopped")
     }
 
     /// Updates last_seen_at via POST /api/seats/heartbeat.
@@ -453,6 +554,7 @@ final class LicensingManager: ObservableObject {
                 Keychain.delete(key: appTokenKey)
                 Keychain.delete(key: userIdKey)
                 status = nil
+                cacheStatus(nil)
                 return
             }
 
@@ -474,27 +576,36 @@ final class LicensingManager: ObservableObject {
                     validUntil = fmt.date(from: iso)
                 }
                 let allFeatures = LicenseFeature.allCases.map(\.rawValue)
-                status = LicenseStatus(
+                let newStatus = LicenseStatus(
                     licenseId: appToken,
                     plan: plan,
                     features: allFeatures,
                     validUntil: validUntil
                 )
+                status = newStatus
+                cacheStatus(newStatus)
                 appLogger.info("✅ Subscription active — plan: \(plan.displayName, privacy: .public)")
 
                 if Keychain.load(key: activationIdKey) != nil {
+                    startHeartbeatTimer()
                     await heartbeatDevice(appToken: appToken)
                 } else {
                     await activateDevice(appToken: appToken)
                 }
             } else {
-                status = LicenseStatus(licenseId: "", plan: .free, features: [], validUntil: nil)
+                let freeStatus = LicenseStatus(licenseId: "", plan: .free, features: [], validUntil: nil)
+                status = freeStatus
+                cacheStatus(freeStatus)
                 appLogger.info("Subscription inactive or free plan")
             }
             lastValidated = Date()
         } catch {
             appLogger.error("Subscription check failed: \(error.localizedDescription, privacy: .public)")
-            // Non-fatal: leave existing status unchanged so the app stays usable offline
+            // If we have no status at all (never validated), mark server as unreachable
+            // so the UI can show a meaningful message instead of flashing "not signed in".
+            if status == nil {
+                activationState = .serverUnreachable
+            }
         }
     }
 }
