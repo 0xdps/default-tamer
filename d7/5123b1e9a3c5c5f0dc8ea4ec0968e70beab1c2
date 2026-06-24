@@ -1,0 +1,32 @@
+DefaultTamer/Views/LicensingView.swift
+  s_1ca1af58251738::t_694e554305ba07 93-94
+  s_1ca1af58251738::t_5e2638da13b38f 294-332
+DefaultTamerTests/LicensingManagerTests.swift
+  s_1ca1af58251738::t_5f5c0ba151c7cf 1-257
+DefaultTamer/Services/LicensingManager.swift
+  s_1ca1af58251738::t_12e357242741a0 219,221-227
+  s_1ca1af58251738::t_44786bd5fb865c 590
+  s_1ca1af58251738::t_0e14514ac170d3 291-293,297,303,313
+  s_1ca1af58251738::t_29ac97030dcca0 289-290,298,305-311,314-319
+  s_1ca1af58251738::t_b271f80335be56 579,585-586,596-598,604-608
+  s_1ca1af58251738::t_59b756407f03d6 557
+  s_1ca1af58251738::t_aff67d4891284b 340-341
+  s_1ca1af58251738::t_a9167b53795ef5 357,359-373,397,415-416,424-432,436,439-449,452,456-479
+  s_1ca1af58251738::t_a6140412f81b4b 107,119-122,124,126-152
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "d75123b1e9a3c5c5f0dc8ea4ec0968e70beab1c2",
+  "prompts": {},
+  "sessions": {
+    "s_1ca1af58251738": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "df4c61b9-763c-4e39-bf51-d2731a0e076a",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
