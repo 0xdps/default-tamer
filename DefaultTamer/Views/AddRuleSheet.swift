@@ -61,7 +61,7 @@ struct AddRuleSheet: View {
                 Section() {
                     Picker("Type", selection: $ruleType) {
                         ForEach(RuleType.allCases, id: \.self) { type in
-                            Text(type.rawValue).tag(type)
+                            Label(type.rawValue, systemImage: type.symbolName).tag(type)
                         }
                     }
                     .pickerStyle(.segmented)
@@ -669,7 +669,7 @@ struct EditRuleSheet: View {
                 Section("Rule Type") {
                     Picker("Type", selection: $ruleType) {
                         ForEach(RuleType.allCases, id: \.self) { type in
-                            Text(type.rawValue).tag(type)
+                            Label(type.rawValue, systemImage: type.symbolName).tag(type)
                         }
                     }
                     .pickerStyle(.segmented)

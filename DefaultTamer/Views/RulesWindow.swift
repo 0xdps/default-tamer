@@ -158,23 +158,8 @@ struct RuleSidebarRow: View {
         .padding(.vertical, 3)
     }
 
-    private var typeIcon: String {
-        switch rule.type {
-        case .sourceApp:  return "app.badge"
-        case .domain:     return "globe"
-        case .urlPattern: return "link"
-        case .shortcut:   return "keyboard"
-        }
-    }
-
-    private var typeColor: Color {
-        switch rule.type {
-        case .sourceApp:  return .orange
-        case .domain:     return .blue
-        case .urlPattern: return .purple
-        case .shortcut:   return .teal
-        }
-    }
+    private var typeIcon: String { rule.type.symbolName }
+    private var typeColor: Color { rule.type.accentColor }
 
     private var ruleName: String {
         switch rule.type {
@@ -311,7 +296,8 @@ struct RuleDetailView: View {
         switch rule.type {
         case .sourceApp:
             HStack(spacing: 10) {
-                Image(systemName: "app.badge").foregroundColor(.orange).frame(width: 20)
+                Image(systemName: rule.type.symbolName)
+                    .foregroundColor(rule.type.accentColor).frame(width: 20)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(rule.sourceAppName ?? "Unknown App").font(.body)
                     if let bundleId = rule.sourceAppBundleId {
@@ -323,7 +309,8 @@ struct RuleDetailView: View {
         case .domain:
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Image(systemName: "globe").foregroundColor(.blue).frame(width: 20)
+                    Image(systemName: rule.type.symbolName)
+                        .foregroundColor(rule.type.accentColor).frame(width: 20)
                     Text(rule.domainPattern ?? "")
                         .font(.system(.body, design: .monospaced))
                     Spacer()
@@ -343,8 +330,8 @@ struct RuleDetailView: View {
         case .urlPattern:
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: rule.urlRegex != nil ? "chevron.left.forwardslash.chevron.right" : "link")
-                        .foregroundColor(.purple).frame(width: 20)
+                    Image(systemName: rule.urlRegex != nil ? "chevron.left.forwardslash.chevron.right" : rule.type.symbolName)
+                        .foregroundColor(rule.type.accentColor).frame(width: 20)
                     Text(rule.urlRegex ?? rule.urlContains ?? "")
                         .font(.system(.caption, design: .monospaced))
                         .textSelection(.enabled)
@@ -356,7 +343,8 @@ struct RuleDetailView: View {
             }
         case .shortcut:
             HStack(spacing: 10) {
-                Image(systemName: "keyboard").foregroundColor(.teal).frame(width: 20)
+                Image(systemName: rule.type.symbolName)
+                    .foregroundColor(rule.type.accentColor).frame(width: 20)
                 Text(ShortcutFormatter.format(keyCode: rule.shortcutKeyCode, modifiers: rule.shortcutModifiers))
                     .font(.system(.body, design: .monospaced))
                 Spacer()
@@ -364,23 +352,8 @@ struct RuleDetailView: View {
         }
     }
 
-    private var typeIcon: String {
-        switch rule.type {
-        case .sourceApp:  return "app.badge"
-        case .domain:     return "globe"
-        case .urlPattern: return "link"
-        case .shortcut:   return "keyboard"
-        }
-    }
-
-    private var typeColor: Color {
-        switch rule.type {
-        case .sourceApp:  return .orange
-        case .domain:     return .blue
-        case .urlPattern: return .purple
-        case .shortcut:   return .teal
-        }
-    }
+    private var typeIcon: String { rule.type.symbolName }
+    private var typeColor: Color { rule.type.accentColor }
 
     private var ruleName: String {
         switch rule.type {
@@ -595,13 +568,6 @@ struct RuleRow: View {
         }
     }
     
-    private var ruleIcon: String {
-        switch rule.type {
-        case .sourceApp:  return "app.badge"
-        case .domain:     return "globe"
-        case .urlPattern: return "link"
-        case .shortcut:   return "keyboard"
-        }
-    }
+    private var ruleIcon: String { rule.type.symbolName }
 }
 
