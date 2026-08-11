@@ -1,0 +1,14 @@
+DefaultTamerWeb
+  h_95aea6b4aa8772 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "e6b8629a6814cdb23960612cfa92703bd2f4ff15",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
