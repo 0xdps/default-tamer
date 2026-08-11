@@ -1,0 +1,19 @@
+DefaultTamerWeb
+  s_16b94da403c176::t_f56f2ff3fabb8a 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "e2e28b2906e0288c50fb9a83c3656d75968db9dc",
+  "prompts": {},
+  "sessions": {
+    "s_16b94da403c176": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "3d43fe7f-aef8-4bd4-8941-03251ef9f968",
+        "model": "openrouter/OpenRouter/deepseek/deepseek-v4-pro"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
