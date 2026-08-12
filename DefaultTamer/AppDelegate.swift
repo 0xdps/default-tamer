@@ -53,44 +53,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         // Build menu with SwiftUI views hosted in NSMenuItem.view
         menu = NSMenu()
         menu.delegate = self
-
-        // Header item (app info + toggle or warning)
-        let isDefault = appState.browserManager.isDefaultBrowser()
-        let headerItem = NSMenuItem()
-        headerItem.view = makeHostingView(
-            MenuHeaderView(isDefaultBrowser: isDefault)
-                .environmentObject(appState)
-                .environmentObject(LicensingManager.shared),
-            width: UIConstants.menuBarPopoverWidth, height: isDefault ? 90 : 150)
-        menu.addItem(headerItem)
-
-        menu.addItem(.separator())
-
-        // Preferences
-        let prefsItem = NSMenuItem()
-        prefsItem.view = makeHostingView(
-            MenuItemView(icon: "gearshape", title: "Preferences", action: { [weak self] in
-                self?.openPreferences()
-            }), width: UIConstants.menuBarPopoverWidth, height: 32)
-        menu.addItem(prefsItem)
-
-        // Manage Rules
-        let rulesItem = NSMenuItem()
-        rulesItem.view = makeHostingView(
-            MenuItemView(icon: "list.bullet", title: "Manage Rules", action: { [weak self] in
-                self?.openRules()
-            }), width: UIConstants.menuBarPopoverWidth, height: 32)
-        menu.addItem(rulesItem)
-
-        menu.addItem(.separator())
-
-        // Quit
-        let quitItem = NSMenuItem()
-        quitItem.view = makeHostingView(
-            MenuItemView(icon: "power", title: "Quit Default Tamer", isDestructive: true, action: { [weak self] in
-                self?.quitApp()
-            }), width: UIConstants.menuBarPopoverWidth, height: 32)
-        menu.addItem(quitItem)
+        buildMenu()
 
         // Let macOS handle show/hide natively — no manual popover management needed
         statusItem.menu = menu
@@ -223,6 +186,60 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         }
     }
 
+    /// Rebuilds the entire menu from scratch. Called at launch and each time the
+    /// menu opens, so the "Upgrade to Power Plan" item reflects the live license state.
+    private func buildMenu() {
+        menu.removeAllItems()
+
+        // Header item (app info + toggle or warning)
+        let isDefault = appState.browserManager.isDefaultBrowser()
+        let headerItem = NSMenuItem()
+        headerItem.view = makeHostingView(
+            MenuHeaderView(isDefaultBrowser: isDefault)
+                .environmentObject(appState)
+                .environmentObject(LicensingManager.shared),
+            width: UIConstants.menuBarPopoverWidth, height: isDefault ? 90 : 150)
+        menu.addItem(headerItem)
+
+        menu.addItem(.separator())
+
+        // Preferences
+        let prefsItem = NSMenuItem()
+        prefsItem.view = makeHostingView(
+            MenuItemView(icon: "gearshape", title: "Preferences", action: { [weak self] in
+                self?.openPreferences()
+            }), width: UIConstants.menuBarPopoverWidth, height: 32)
+        menu.addItem(prefsItem)
+
+        // Manage Rules
+        let rulesItem = NSMenuItem()
+        rulesItem.view = makeHostingView(
+            MenuItemView(icon: "list.bullet", title: "Manage Rules", action: { [weak self] in
+                self?.openRules()
+            }), width: UIConstants.menuBarPopoverWidth, height: 32)
+        menu.addItem(rulesItem)
+
+        // Upgrade to Power Plan — only shown when the user doesn't have Power.
+        if !LicensingManager.shared.hasPowerPlan {
+            let upgradeItem = NSMenuItem()
+            upgradeItem.view = makeHostingView(
+                MenuItemView(icon: "bolt.fill", title: "Upgrade to Power Plan", action: { [weak self] in
+                    self?.openUpgrade()
+                }), width: UIConstants.menuBarPopoverWidth, height: 32)
+            menu.addItem(upgradeItem)
+        }
+
+        menu.addItem(.separator())
+
+        // Quit
+        let quitItem = NSMenuItem()
+        quitItem.view = makeHostingView(
+            MenuItemView(icon: "power", title: "Quit Default Tamer", isDestructive: true, action: { [weak self] in
+                self?.quitApp()
+            }), width: UIConstants.menuBarPopoverWidth, height: 32)
+        menu.addItem(quitItem)
+    }
+
     /// Wraps a SwiftUI view in an NSHostingView sized for an NSMenuItem.
     private func makeHostingView<V: View>(_ view: V, width: CGFloat, height: CGFloat) -> NSHostingView<V> {
         let hosting = NSHostingView(rootView: view)
@@ -233,17 +250,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     // MARK: - NSMenuDelegate
 
     func menuWillOpen(_ menu: NSMenu) {
-        // Check default browser status each time the menu opens
-        let isDefault = appState.browserManager.isDefaultBrowser()
-        let headerHeight: CGFloat = isDefault ? 90 : 150
-
-        if let headerItem = menu.items.first {
-            headerItem.view = makeHostingView(
-                MenuHeaderView(isDefaultBrowser: isDefault)
-                    .environmentObject(appState)
-                    .environmentObject(LicensingManager.shared),
-                width: UIConstants.menuBarPopoverWidth, height: headerHeight)
-        }
+        // Rebuild the menu so the upgrade item and header reflect the latest
+        // license and default-browser state.
+        buildMenu()
     }
 
     func menuDidClose(_ menu: NSMenu) {
@@ -268,6 +277,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     @objc func openRules() {
         appState.pendingTabSelection = .rules
         showPreferencesWindow()
+    }
+
+    @objc func openUpgrade() {
+        // Opens the Power plan purchase/activation page in the browser.
+        // startUpgrade re-checks the subscription first; if the user already has
+        // an active plan it activates silently without opening a browser.
+        LicensingManager.shared.startUpgrade()
     }
 
     private func showPreferencesWindow() {

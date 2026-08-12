@@ -114,24 +114,46 @@ struct SeatAPIConstants {
     static var subscriptionURL:   URL { URL(string: "\(baseURL)/api/subscription")! }
     static var promoValidateURL:  URL { URL(string: "\(baseURL)/api/promo/validate")! }
     /// Opens the /upgrade funnel page, which handles auth + seat-tier selection + checkout.
-    /// Passes the install UUID as `did` so the web can include it in the activation deep link.
+    /// Passes the install UUID and device metadata as query params so the web can
+    /// register the device with full details during SSR (before the deep link fires).
     static func upgradeURL(promoCode: String? = nil) -> URL {
         var items: [URLQueryItem] = []
         if let p = promoCode { items.append(URLQueryItem(name: "promo", value: p)) }
-        items.append(URLQueryItem(name: "did", value: PersistenceManager.shared.installID))
+        items.append(contentsOf: deviceMetadataQueryItems())
         var components = URLComponents(string: "\(baseURL)/upgrade")!
         components.queryItems = items
         return components.url!
     }
     /// Opens /upgrade?restore=true — sign in to activate an existing Power plan.
-    /// Also passes the install UUID so the deep link can echo it back.
+    /// Also passes the install UUID and device metadata so the web can register the device.
     static var restoreURL: URL {
         var components = URLComponents(string: "\(baseURL)/upgrade")!
         components.queryItems = [
             URLQueryItem(name: "restore", value: "true"),
-            URLQueryItem(name: "did",     value: PersistenceManager.shared.installID),
-        ]
+        ] + deviceMetadataQueryItems()
         return components.url!
+    }
+
+    /// Builds a single URL query item encoding this device's metadata as a
+    /// URL-safe base64 JSON blob. The web decodes it server-side to register
+    /// the device with full details during SSR.
+    private static func deviceMetadataQueryItems() -> [URLQueryItem] {
+        let osVersion = ProcessInfo.processInfo.operatingSystemVersion
+        var dict: [String: String] = [
+            "did": PersistenceManager.shared.installID,
+            "dn":  Host.current().localizedName ?? "Mac",
+            "av":  AppVersion.current,
+            "mv":  "\(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)",
+        ]
+        if let modelId = LicensingManager.hardwareModelIdentifier() {
+            dict["mi"] = modelId
+        }
+        let data = (try? JSONSerialization.data(withJSONObject: dict)) ?? Data()
+        let b64 = data.base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+        return [URLQueryItem(name: "d", value: b64)]
     }
 
     // MARK: Seat management
@@ -139,6 +161,13 @@ struct SeatAPIConstants {
     static var activateURL:   URL { URL(string: "\(baseURL)/api/seats/activate")! }
     static var heartbeatURL:  URL { URL(string: "\(baseURL)/api/seats/heartbeat")! }
     static var deactivateURL: URL { URL(string: "\(baseURL)/api/seats/deactivate")! }
+
+    /// GET /api/seats/status?device_id=… — checks if this device is already registered.
+    static func statusURL(deviceId: String) -> URL {
+        var components = URLComponents(string: "\(baseURL)/api/seats/status")!
+        components.queryItems = [URLQueryItem(name: "device_id", value: deviceId)]
+        return components.url!
+    }
 }
 
 struct ExternalLinks {

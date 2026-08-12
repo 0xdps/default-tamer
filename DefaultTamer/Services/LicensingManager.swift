@@ -325,7 +325,7 @@ final class LicensingManager: ObservableObject {
 
     /// Reads the hardware model identifier from IOKit, e.g. "MacBookPro18,1".
     /// Returns nil if the value cannot be read (sandboxing or VM environments).
-    private static func hardwareModelIdentifier() -> String? {
+    nonisolated static func hardwareModelIdentifier() -> String? {
         let service = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("IOPlatformExpertDevice"))
         guard service != IO_OBJECT_NULL else { return nil }
         defer { IOObjectRelease(service) }
@@ -352,6 +352,47 @@ final class LicensingManager: ObservableObject {
     }
 
     // MARK: - Seat device management
+
+    /// Checks whether this device is already registered via GET /api/seats/status.
+    /// Returns true if registered (and saves the activationId), false otherwise.
+    /// The web now registers devices during SSR, so this is the common fast path.
+    private func checkDeviceStatus(appToken: String) async -> Bool {
+        let deviceId = PersistenceManager.shared.installID
+
+        var request = URLRequest(url: SeatAPIConstants.statusURL(deviceId: deviceId))
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(appToken)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 15
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse else { return false }
+
+            struct StatusResponse: Decodable {
+                let registered: Bool
+                let activationId: String?
+                let planSlug: String?
+                let seatsUsed: Int
+                let seatsTotal: Int
+            }
+
+            guard http.statusCode == 200 else { return false }
+            let result = try JSONDecoder().decode(StatusResponse.self, from: data)
+
+            guard result.registered, let activationId = result.activationId else {
+                return false
+            }
+
+            Keychain.save(key: activationIdKey, value: activationId)
+            activationState = .activated(seatsUsed: result.seatsUsed, seatsTotal: result.seatsTotal)
+            appLogger.info("✅ Device already registered — \(result.seatsUsed)/\(result.seatsTotal) seats")
+            startHeartbeatTimer()
+            return true
+        } catch {
+            appLogger.warning("Device status check failed: \(error.localizedDescription, privacy: .public)")
+            return false
+        }
+    }
 
     /// Activates this device's seat via POST /api/seats/activate.
     /// Retries up to 3 times on transient network failures.
@@ -590,7 +631,13 @@ final class LicensingManager: ObservableObject {
                     startHeartbeatTimer()
                     await heartbeatDevice(appToken: appToken)
                 } else {
-                    await activateDevice(appToken: appToken)
+                    // Web registers the device during SSR. Check status first;
+                    // only fall back to a full activate if the web registration
+                    // didn't happen (e.g. older web version or direct app flow).
+                    let alreadyRegistered = await checkDeviceStatus(appToken: appToken)
+                    if !alreadyRegistered {
+                        await activateDevice(appToken: appToken)
+                    }
                 }
             } else {
                 let freeStatus = LicenseStatus(licenseId: "", plan: .free, features: [], validUntil: nil)

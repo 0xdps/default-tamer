@@ -25,10 +25,12 @@ enum LicensePlan: String, Codable, Equatable {
     var isPaid: Bool { self == .plus }
 
     /// Initialise from an unknown slug string; returns .free for unrecognised values.
-    /// Accepts "plus", "power", or any slug prefixed with "power" (e.g. "power-tq").
+    /// Accepts "plus", "power", "default-tamer-power", or any slug containing
+    /// "power" (NubeAuth uses non-standard slugs like "default-tamer-power").
     init(slug: String?) {
         guard let slug else { self = .free; return }
-        if slug == "plus" || slug.hasPrefix("power") {
+        let lower = slug.lowercased()
+        if lower == "plus" || lower == "power" || lower.contains("power") {
             self = .plus
         } else {
             self = .free
