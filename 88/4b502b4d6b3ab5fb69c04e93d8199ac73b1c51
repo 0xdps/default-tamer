@@ -1,0 +1,32 @@
+DefaultTamer/Services/LicensingManager.swift
+  s_16b94da403c176::t_d4de7684786ea2 634-640
+  s_16b94da403c176::t_2d30bfa4469a0d 328
+  s_16b94da403c176::t_85f01a0f4c9851 356-396
+DefaultTamer/AppDelegate.swift
+  s_16b94da403c176::t_d1027436efd1c4 189-242,253-255
+  s_16b94da403c176::t_899d3f2d5e3709 56
+  s_16b94da403c176::t_377a2710cb8841 282-288
+DefaultTamer/Models/LicensePlan.swift
+  s_16b94da403c176::t_f3385ae3315629 28-29,32-33
+DefaultTamer/Utilities/Constants.swift
+  s_16b94da403c176::t_b7779f4c6709c9 157,164-170
+  s_16b94da403c176::t_920b8101c6e49b 137-139,142-147,149,151-156
+  s_16b94da403c176::t_add993b9c7170f 117-118,122,128,133,140-141,148,150
+  s_16b94da403c176::t_c39f5dba62aee9 158
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "884b502b4d6b3ab5fb69c04e93d8199ac73b1c51",
+  "prompts": {},
+  "sessions": {
+    "s_16b94da403c176": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "3d43fe7f-aef8-4bd4-8941-03251ef9f968",
+        "model": "openrouter/OpenRouter/deepseek/deepseek-v4-pro"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
