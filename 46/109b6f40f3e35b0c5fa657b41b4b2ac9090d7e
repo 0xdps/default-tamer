@@ -1,0 +1,73 @@
+DefaultTamerTests/URLSanitizerTests.swift
+  s_793945599c2715::t_a9a1ef4123a970 272-346
+DefaultTamerTests/BrowserManagerTests.swift
+  s_793945599c2715::t_7dfa757f3861e0 1-137
+DefaultTamerTests/PersistenceManagerTests.swift
+  s_793945599c2715::t_2ee4d56d1a101d 20,30,33-34,36,39
+  s_793945599c2715::t_f1f1084b1c0033 13,16-17,23-29,40-41
+DefaultTamer/Views/LicensingView.swift
+  s_793945599c2715::t_9d7035ccb343bb 144
+  s_793945599c2715::t_23b7cc317334ae 323
+  s_793945599c2715::t_c14e96d64041f4 275
+  s_793945599c2715::t_b221462b6f4e35 220
+DefaultTamer/Services/SeatManager.swift
+  s_793945599c2715::t_76e9f0bc5b73db 1-42,44-62,69-220,222-228,230-366
+  s_793945599c2715::t_cd1bfacc9412eb 229
+  s_793945599c2715::t_09b5e14bd23ce9 63-68
+  s_793945599c2715::t_a008fd3781990d 221
+  s_793945599c2715::t_92650e7a11f071 43
+DefaultTamer/Utilities/Constants.swift
+  s_793945599c2715::t_85640e705656c3 148
+DefaultTamer/Services/PersistenceManager.swift
+  s_793945599c2715::t_f43fe4f4e7458b 126,131,152,154-156
+  s_793945599c2715::t_a9a0a5316e04e2 124,127-130,135,150,159,161-164,167,173,180,185,193
+  s_793945599c2715::t_efbb8b8ef7523b 12,15-16,21,27,30,36-37,39
+  s_793945599c2715::t_589f2b2a3e8a69 41-44
+DefaultTamer/Utilities/ErrorNotification.swift
+  s_793945599c2715::t_1ee95f674d5d94 15-17,19-24
+  s_793945599c2715::t_c4140a784d4e67 32
+  s_793945599c2715::t_b2dfb5b67b9fe1 57
+DefaultTamerTests/LicensingManagerTests.swift
+  s_793945599c2715::t_fcbe9247157afb 216-219
+DefaultTamer/Services/Router.swift
+  s_793945599c2715::t_ab0a2af77430e2 11,22-26,30-31,35
+CHANGELOG.md
+  s_793945599c2715::t_020627250c8eb4 12-47
+  s_793945599c2715::t_9ecd9f45fc0bbc 50-55
+DefaultTamerTests/SourceAppDetectorTests.swift
+  s_793945599c2715::t_b53a616797aa6f 1-127
+DefaultTamer/Utilities/DebugLog.swift
+  s_793945599c2715::t_6ba974309bf82c 4-10,14-18,20-21,23
+DefaultTamer/Services/BrowserManager.swift
+  s_793945599c2715::t_9ab938bb77d9a6 340-343,392,409
+  s_793945599c2715::t_d183a3e59d0459 430-457
+DefaultTamer/Services/RuleStore.swift
+  s_793945599c2715::t_4ba0da3f922b34 123-134
+  s_793945599c2715::t_754300040d7187 1-122,135-162
+DefaultTamer/Services/LicensingManager.swift
+  s_793945599c2715::t_5ef31ddc031c0c 127-128,131-134,139,141-150
+  s_793945599c2715::t_276ea8169fcde0 109-117
+  s_793945599c2715::t_a1f3ab28dc2a2e 77-80
+  s_793945599c2715::t_bf3ec39255eb3b 274
+  s_793945599c2715::t_37e86bc59cc811 350-352,357,359
+  s_793945599c2715::t_6529c7102a6e0f 374
+  s_793945599c2715::t_9b8ae132c452c3 55,63-68
+DefaultTamer/Services/KeychainStore.swift
+  s_793945599c2715::t_96073b60b840bb 1-55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "46109b6f40f3e35b0c5fa657b41b4b2ac9090d7e",
+  "prompts": {},
+  "sessions": {
+    "s_793945599c2715": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f1318d3a-1eb3-4e29-8f45-a21ddba670ed",
+        "model": "openrouter/OpenRouter/z-ai/glm-5.2"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
