@@ -7,35 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> Work targeting v0.1.0. The major theme is the **Power plan** — a paid seat-based license — plus Chrome profile routing, shortcut rules, and in-app feedback/promo surfaces.
+
 ### Added
 
-- `LicensingManager.handleActivation(token:isPaymentCallback:)`: stores the app JWT from the `defaulttamer://activate` deep link into Keychain, then calls `checkSubscription` (or `checkSubscriptionWithRetry` when `isPaymentCallback` is true)
-- `LicensingManager.startActivation(fallbackBrowserId:)`: opens `/upgrade?restore=true` with the same pre-check optimisation as `startUpgrade`
-- `SeatAPIConstants.restoreURL`: static URL for `/upgrade?restore=true`
-- "I already have Power" secondary button in `LicensingView.notSignedInSection`, calls `startActivation`
-- `AppDelegate` handler for `defaulttamer://activate?token=...&upgraded=true` deep link
+**Power plan (seat-based licensing)**
+
+- `LicensingManager`: new `@MainActor` service managing the full Power-plan lifecycle — sign-in, subscription checks, per-device seat activation, heartbeats, sign-out, and offline cache restore
+- `LicensingView`: new Preferences tab for the Power plan — active-plan summary with "ACTIVE" badge, renewal date, seat usage, sign-out, and an "Upgrade to Power" section for free users
+- `PlusFeatureBadge`: compact "POWER" pill shown inline next to Power-only features
+- `LicensePlan` / `LicenseFeature` models mapping NubeAuth plan slugs (`plus`, `power`, `default-tamer-power`) to the user-facing "Power" brand
+- `defaulttamer://activate?token=…&upgraded=true` deep link handling — the app stores the JWT in Keychain and validates the subscription (with retries on payment callbacks)
+- `GET /api/seats/status` check on app launch — detects whether the web already registered this device (web-side registration) and skips redundant activation
+- "Upgrade to Power Plan" item in the menu bar popover, shown only when the user is on the free plan
+
+**Chrome profile routing**
+
+- `ChromeProfileScanner`: reads Chromium-family browser profiles from the `Local State` file so individual profiles (e.g. "Work", "Personal") can be targeted as routing destinations
+- `Browser` model gains `profileDirectory` support with `bundleId::profileDir` composite IDs
+- `LaunchStrategy`: consolidated per-browser-family launch logic (workspace / chromium / gecko) — adding a browser now only requires assigning a strategy
+
+**Shortcut rules**
+
+- `ShortcutManager` + `ShortcutRecorderView`: new "Shortcut" rule type that routes links based on modifier keys held at URL-arrival time (no Carbon event taps or accessibility permission required)
+- `SystemShortcutChecker`: warns when a recorded combo conflicts with macOS system shortcuts (from `com.apple.symbolichotkeys.plist`) or universal app shortcuts (⌘C, ⌘Q, …)
+
+**Feedback & promo**
+
+- `FeedbackView` + `FeedbackManager`: in-app feedback modal (name, star rating, comment) submitted to Inbounce with a 24-hour per-version rate limit
+- `PromoManager`: polls `promo.json` daily, surfaces the live promo code in the upgrade flow, and auto-fills it in the Power checkout
+
+**Other**
+
+- `RuleType` gains `symbolName` (SF Symbol) and `accentColor` for consistent icons/colors across rule lists, pickers, and detail views
+- Local HTML document opens from Finder (`.html`, `.htm`, `.shtml`, `.xhtml`, `.shtm`, `.xhtm`) route through the fallback browser via Finder document-open event handling
 
 ### Changed
 
-- `/auth/callback.astro` rewritten as pure SSR — no HTML rendered, no client JS; server exchanges OAuth code, sets `dt_session` cookie, and 302-redirects to `next` from `dt_flow` cookie; errors 302-redirect to `/upgrade?error=...`
-- `/upgrade.astro` redesigned: when signed in, issues an `appToken` via `signAppToken` SSR; State B fires `defaulttamer://activate?token=...` deep link directly instead of redirecting to `/api/auth/start`; State C buy button calls `POST /api/checkout` with `Authorization: Bearer <appToken>` header embedded from SSR; added State C-restore (`?restore=true`) and error (`?error=...`) states; `dt_flow` cookie no longer carries a `context` field
-- `POST /api/checkout` `successUrl` changed from `/auth/callback?upgraded=true` to `/upgrade?upgraded=true`
-- `AppDelegate` `defaulttamer://upgraded` handler is now a no-op (kept for safety); `defaulttamer://auth` handler replaced by `defaulttamer://activate`
+- **License:** MIT → **Elastic License 2.0** (free to use/modify, but no offering as a hosted service or circumventing license keys)
+- macOS deployment target raised to **15.0** (was 14.0)
+- `Info.plist` version/build now sourced from `$(MARKETING_VERSION)` / `$(CURRENT_PROJECT_VERSION)` build settings; added `DTBaseURL`, `DTPromoURL`, `DTAnalyticsURL`, `DTAnalyticsWebsiteID` build-configurable values
+- App sandbox and per-entitlement flags (`network.client`, `automation.apple-events`, `files.user-selected.read-write`) removed — `app-sandbox` set to `false`
+- OAuth code exchange moved fully server-side — the Mac app no longer exchanges codes; it receives a signed app token via the `defaulttamer://activate` deep link
+- Deep-link scheme consolidated to `defaulttamer://activate` (replaces `defaulttamer://auth` / `defaulttamer://upgraded`); the old handlers are no-ops kept for safety
+- Device metadata (name, macOS version, model, app version) is now sent to the web for registration, base64-encoded into a single query param
 - `notSignedInSection` subtitle updated to "Unlock advanced routing on this Mac"
 
 ### Fixed
 
-- Local HTML document opens from Finder (`.html`, `.htm`, `.shtml`, `.xhtml`, `.shtm`, `.xhtm`) now open in the fallback browser by handling Finder document-open events and routing browser-openable `file://` URLs past the HTTP-only guard
+- `LicensePlan.init(slug:)` now treats non-standard NubeAuth slugs (`default-tamer-power`) as the paid plan instead of defaulting to free
+- Device registration now succeeds end-to-end after sign-in + payment (previously the device was never registered, leaving the app on the "Get Power Plan" state)
+- License state now refreshes correctly in the menu bar and Preferences after activation
 
 ### Removed
 
-- `GET/POST /api/auth/start` endpoint (`start.ts`) — no longer called by anything
-- `POST /api/auth/exchange` endpoint (`exchange.ts`) — Mac app no longer exchanges OAuth codes; web callback does it SSR
-- `LicensingManager.handleOAuthCallback(_:)` — replaced by `handleActivation`
-- `LicensingManager.handleUpgradeCallback()` — superseded by `handleActivation(isPaymentCallback: true)`
-- `LicensingManager.exchangeCode(_:isPaymentCallback:)` — code exchange now happens server-side in `callback.astro`
-- `LicensingManager.startOAuth(fallbackBrowserId:)` — dead code
-- `SeatAPIConstants.authStartURL` and `SeatAPIConstants.exchangeURL`
+- `LicensingManager.handleOAuthCallback(_:)`, `handleUpgradeCallback()`, `exchangeCode(_:isPaymentCallback:)`, and `startOAuth(fallbackBrowserId:)` — superseded by the server-side exchange + `defaulttamer://activate` deep-link flow
+- `SeatAPIConstants.authStartURL` / `exchangeURL` — no longer used
+- `Models/GitHubRelease.swift` — removed (update handling moved to Sparkle)
 
 ## [0.0.7] - 2026-03-19
 
