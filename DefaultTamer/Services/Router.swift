@@ -8,6 +8,7 @@
 import Foundation
 import AppKit
 import CoreGraphics
+import os
 
 enum RouteAction {
     case openInBrowser(bundleId: String, matchedRule: Rule?)
@@ -18,16 +19,20 @@ enum RouteAction {
 class Router {
     
     /// Compiled NSRegularExpression cache, keyed by pattern string.
-    /// NSRegularExpression is thread-safe after compilation.
-    private nonisolated(unsafe) static var regexCache: [String: NSRegularExpression] = [:]
+    /// NSRegularExpression is thread-safe after compilation, but the cache
+    /// dictionary itself needs synchronization for concurrent access.
+    /// `OSAllocatedUnfairLock` provides a lightweight, low-overhead lock
+    /// suitable for this cache (available on macOS 13+).
+    private static let regexCache = OSAllocatedUnfairLock(initialState: [String: NSRegularExpression]())
     
     /// Returns a cached compiled regex, or compiles and caches on first access.
     private static func compiledRegex(for pattern: String) throws -> NSRegularExpression {
-        if let cached = regexCache[pattern] {
+        // Fast path: check if already cached (read lock)
+        if let cached = regexCache.withLock({ $0[pattern] }) {
             return cached
         }
         let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
-        regexCache[pattern] = regex
+        regexCache.withLock { $0[pattern] = regex }
         return regex
     }
     

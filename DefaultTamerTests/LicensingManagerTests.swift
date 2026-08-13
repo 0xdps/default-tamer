@@ -213,6 +213,10 @@ final class LicensingManagerTests: XCTestCase {
     override func setUp() {
         super.setUp()
         licensing = LicensingManager.shared
+        // Clear cached state so tests start from a clean slate.
+        // The shared singleton may have restored a cached license status
+        // from UserDefaults (e.g. if the app was run previously).
+        licensing.clearCachedStateForTesting()
     }
 
     // MARK: - Initial state

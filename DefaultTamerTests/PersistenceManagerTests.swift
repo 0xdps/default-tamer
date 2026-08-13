@@ -10,23 +10,35 @@ import XCTest
 
 @MainActor
 final class PersistenceManagerTests: XCTestCase {
-    
+
     var persistence: PersistenceManager!
     let testSuiteName = "com.defaulttamer.tests"
-    
+    var tempSentinelURL: URL!
+
     override func setUp() {
         super.setUp()
-        
+
         // Use test user defaults
         let defaults = UserDefaults(suiteName: testSuiteName)!
-        persistence = PersistenceManager(userDefaults: defaults)
-        
+
+        // Use a temp directory for the first-run sentinel so tests are isolated
+        // from the real app's sentinel file.
+        tempSentinelURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("DefaultTamerTests-\(UUID().uuidString)-.setup_complete")
+
+        persistence = PersistenceManager(userDefaults: defaults, setupCompleteURL: tempSentinelURL)
+
         // Clear any existing data
         clearTestDefaults()
+        // Clear the shared RuleStore so tests are isolated
+        RuleStore.shared.clearAllRules()
     }
-    
+
     override func tearDown() {
         clearTestDefaults()
+        RuleStore.shared.clearAllRules()
+        // Clean up the temp sentinel
+        try? FileManager.default.removeItem(at: tempSentinelURL)
         persistence = nil
         super.tearDown()
     }

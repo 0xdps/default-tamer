@@ -141,7 +141,7 @@ struct LicensingTab: View {
                 }
                 Spacer()
                 Button {
-                    licensing.validateOnLaunch()
+                    licensing.validateNow()
                 } label: {
                     Text("Re-activate")
                         .font(.subheadline).fontWeight(.semibold)
@@ -217,7 +217,7 @@ struct LicensingTab: View {
 
             HStack(spacing: 14) {
                 Button {
-                    licensing.validateOnLaunch()
+                    licensing.validateNow()
                 } label: {
                     if licensing.isValidating {
                         ProgressView().controlSize(.small)
@@ -272,7 +272,7 @@ struct LicensingTab: View {
 
             HStack(spacing: 10) {
                 Button {
-                    licensing.validateOnLaunch()
+                    licensing.validateNow()
                 } label: {
                     Label("Restore", systemImage: "arrow.clockwise")
                 }
@@ -320,7 +320,7 @@ struct LicensingTab: View {
 
             HStack(spacing: 10) {
                 Button {
-                    licensing.validateOnLaunch()
+                    licensing.validateNow()
                 } label: {
                     Label("Retry", systemImage: "arrow.clockwise")
                 }

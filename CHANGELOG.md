@@ -9,7 +9,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > Work targeting v0.1.0. The major theme is the **Power plan** — a paid seat-based license — plus Chrome profile routing, shortcut rules, and in-app feedback/promo surfaces.
 
+### Changed
+
+**License check frequency reduced**
+
+- `validateOnLaunch()` now throttles to 1 hour (was always checking) — skips re-check if recently validated
+- `validateOnForeground()` throttle changed from 5 minutes to 1 hour
+- Heartbeat interval changed from 8 hours to 12 hours (twice a day)
+- New `validateNow()` method for user-initiated checks (bypasses all throttling)
+- All UI "Refresh" / "Restore" / "Retry" buttons now use `validateNow()` instead of `validateOnLaunch()`
+
+**LicensingManager split**
+
+- Extracted seat management (activation, heartbeat, deactivation) into `SeatManager`
+- Extracted `Keychain` helper into `KeychainStore.swift` (shared between LicensingManager and SeatManager)
+- `LicensingManager` now delegates seat operations to `seatManager` and exposes `activationState` as a computed property
+- `hardwareModelIdentifier()` moved from `LicensingManager` to `SeatManager`
+
+**Rules storage migration to SQLite**
+
+- New `RuleStore` class backed by SQLite for rules storage (per-rule storage with order index)
+- `PersistenceManager` now writes rules to both SQLite and UserDefaults (backward compatibility)
+- Automatic migration from UserDefaults to SQLite on first launch
+- UserDefaults retained as backup and for test isolation
+
+**Thread safety and performance**
+
+- `Router.regexCache` replaced `nonisolated(unsafe)` static dictionary with `OSAllocatedUnfairLock` — eliminates data race risk
+- `BrowserManager.runProcess` moved to `Task.detached` — `waitUntilExit()` no longer blocks the main thread
+- Heartbeat now retries transient failures with exponential backoff (5s, 10s, 20s) up to 3 attempts
+
+**Logging**
+
+- `debugLog` now routes through `os.Logger` in all builds (was no-op in release) — messages visible in Console.app under subsystem `com.defaulttamer.app`
+- Removed dead `ErrorHandler.recordInDatabase` method (was a no-op with commented-out future code)
+- `ErrorNotifier` no longer requests notification permission at init — deferred to first error display
+
 ### Added
+
+**Tests**
+
+- `BrowserManagerTests`: launch strategy resolution (workspace/chromium/gecko), profile browser ID parsing, browser equality
+- `SourceAppDetectorTests`: confidence scoring, detection method ordering, known apps lookup
+- `URLSanitizerTests`: additional edge cases (port preservation, fragment-only URLs, subdomain handling, path preservation)
 
 **Power plan (seat-based licensing)**
 

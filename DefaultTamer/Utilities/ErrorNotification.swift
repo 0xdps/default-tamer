@@ -12,12 +12,16 @@ import UserNotifications
 class ErrorNotifier {
     static let shared = ErrorNotifier()
     
-    private init() {
-        requestNotificationPermissions()
-    }
+    private var hasRequestedPermission = false
     
-    private func requestNotificationPermissions() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { granted, error in
+    private init() {}
+    
+    /// Requests notification permission lazily — only when the first error
+    /// actually needs to be shown, not at singleton initialization time.
+    private func ensurePermissionRequested() {
+        guard !hasRequestedPermission else { return }
+        hasRequestedPermission = true
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { _, error in
             if let error = error {
                 debugLog("Failed to request notification permissions: \(error)")
             }
@@ -25,6 +29,7 @@ class ErrorNotifier {
     }
     
     func notifyError(_ title: String, message: String) {
+        ensurePermissionRequested()
         #if DEBUG
         // In debug, also print
         debugLog("ERROR: \(title) - \(message)")
@@ -49,6 +54,7 @@ class ErrorNotifier {
     }
     
     func notifyWarning(_ title: String, message: String) {
+        ensurePermissionRequested()
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = message

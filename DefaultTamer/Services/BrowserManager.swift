@@ -337,6 +337,10 @@ class BrowserManager: ObservableObject {
 
     /// Single unified launch entry point.
     /// Resolves the browser's LaunchStrategy and dispatches to the correct mechanism.
+    ///
+    /// The CLI-based strategies (chromium with args, gecko) run the process
+    /// off the main actor so `waitUntilExit()` never blocks the UI. Errors
+    /// from those paths are reported asynchronously via `ErrorNotifier`.
     private func safeLaunch(url: URL, inBrowser browserId: String, privateMode: Bool) throws {
         var parts = browserId.components(separatedBy: Browser.profileSeparator)
         let bundleId = parts[0]
@@ -383,9 +387,9 @@ class BrowserManager: ObservableObject {
                 if let dir = profileDir { args.append("--profile-directory=\(dir)") }
                 if privateMode        { args.append(privateFlag) }
                 args.append(url.absoluteString)
-                try runProcess("/usr/bin/open", arguments: args, bundleId: bundleId)
                 let note = [profileDir.map { "profile: \($0)" }, privateMode ? "private" : nil]
                     .compactMap { $0 }.joined(separator: ", ")
+                runProcessAsync("/usr/bin/open", arguments: args, bundleId: bundleId)
                 debugLog("✅ Opened \(url.absoluteString) in \(bundleId) (\(note))")
             } else {
                 openViaWorkspace(url: url, appURL: appURL, bundleId: bundleId)
@@ -402,7 +406,7 @@ class BrowserManager: ObservableObject {
             var args: [String] = []
             if privateMode { args.append(privateFlag) }
             args.append(url.absoluteString)
-            try runProcess(execURL.path, arguments: args, bundleId: bundleId)
+            runProcessAsync(execURL.path, arguments: args, bundleId: bundleId)
             debugLog("✅ Opened \(url.absoluteString) in \(bundleId)\(privateMode ? " (private)" : "")")
         }
     }
@@ -423,20 +427,34 @@ class BrowserManager: ObservableObject {
         }
     }
 
-    /// Runs an executable synchronously and throws on non-zero exit.
-    private func runProcess(_ executablePath: String, arguments: [String], bundleId: String) throws {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: executablePath)
-        process.arguments = arguments
-        do { try process.run() } catch {
-            throw BrowserError.openFailed(bundleId: bundleId, underlying: error)
-        }
-        process.waitUntilExit()
-        if process.terminationStatus != 0 {
-            throw BrowserError.openFailed(
-                bundleId: bundleId,
-                underlying: NSError(domain: "ProcessError", code: Int(process.terminationStatus))
-            )
+    /// Runs an executable on a background thread so `waitUntilExit()` never
+    /// blocks the main actor. Errors are reported asynchronously via
+    /// `ErrorNotifier` on the main queue.
+    private func runProcessAsync(_ executablePath: String, arguments: [String], bundleId: String) {
+        Task.detached(priority: .userInitiated) {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: executablePath)
+            process.arguments = arguments
+            do {
+                try process.run()
+            } catch {
+                await MainActor.run {
+                    debugLog("⚠️ \(BrowserError.openFailed(bundleId: bundleId, underlying: error).localizedDescription)")
+                    ErrorNotifier.shared.notifyWarning("Browser Error", message: error.localizedDescription)
+                }
+                return
+            }
+            process.waitUntilExit()
+            if process.terminationStatus != 0 {
+                let launchError = BrowserError.openFailed(
+                    bundleId: bundleId,
+                    underlying: NSError(domain: "ProcessError", code: Int(process.terminationStatus))
+                )
+                await MainActor.run {
+                    debugLog("⚠️ \(launchError.localizedDescription)")
+                    ErrorNotifier.shared.notifyWarning("Browser Error", message: launchError.localizedDescription)
+                }
+            }
         }
     }
 

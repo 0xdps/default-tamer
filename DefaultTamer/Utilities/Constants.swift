@@ -145,7 +145,7 @@ struct SeatAPIConstants {
             "av":  AppVersion.current,
             "mv":  "\(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)",
         ]
-        if let modelId = LicensingManager.hardwareModelIdentifier() {
+        if let modelId = SeatManager.hardwareModelIdentifier() {
             dict["mi"] = modelId
         }
         let data = (try? JSONSerialization.data(withJSONObject: dict)) ?? Data()
