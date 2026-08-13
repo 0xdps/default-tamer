@@ -1,0 +1,19 @@
+CHANGELOG.md
+  s_16b94da403c176::t_80d4f19f81ce7c 10-11,14-43,47-53,58-60,64-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "fc3c6273ee6c73fa312bd3a8cc385568cd80c6a3",
+  "prompts": {},
+  "sessions": {
+    "s_16b94da403c176": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "3d43fe7f-aef8-4bd4-8941-03251ef9f968",
+        "model": "openrouter/OpenRouter/deepseek/deepseek-v4-pro"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
