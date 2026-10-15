@@ -113,6 +113,8 @@ struct SeatAPIConstants {
     // MARK: Subscription & payment
     static var subscriptionURL:   URL { URL(string: "\(baseURL)/api/subscription")! }
     static var promoValidateURL:  URL { URL(string: "\(baseURL)/api/promo/validate")! }
+    /// Exchanges a one-time activation code. The long-lived app token is never put in a URL.
+    static var activationExchangeURL: URL { URL(string: "\(baseURL)/api/auth/activate")! }
     /// Opens the /upgrade funnel page, which handles auth + seat-tier selection + checkout.
     /// Passes the install UUID and device metadata as query params so the web can
     /// register the device with full details during SSR (before the deep link fires).

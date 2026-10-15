@@ -37,6 +37,14 @@ jobs:
           VERSION=$(cat VERSION.txt | tr -d '[:space:]')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Tag version: v$VERSION"
+
+      - name: Validate tag matches VERSION.txt
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          if [ "$TAG" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::error::Tag v$TAG does not match VERSION.txt (${{ steps.version.outputs.version }})"
+            exit 1
+          fi
       
       - name: Setup certificate
         env:
@@ -57,7 +65,7 @@ jobs:
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           
           # Import certificate to keychain
-          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
 
           # Import Apple intermediate certificates required to build the full
@@ -228,16 +236,98 @@ jobs:
       - name: Extract release notes
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          # Extract from the versioned heading [VERSION] — this is always populated
-          # in CHANGELOG.md (either pre-existing or promoted from [Unreleased] in
-          # the same run). Using [Unreleased] was fragile: on retries the section
-          # is already empty because the first run already promoted it.
-          awk "/^## \\[$VERSION\\]/{found=1; next} found && /^## \\[/{exit} found{print}" \
-            CHANGELOG.md > /tmp/release-notes.md
-          # Trim leading blank lines
+          if grep -qF "## [$VERSION]" CHANGELOG.md; then
+            awk "/^## \\[$VERSION\\]/{found=1; next} found && /^## \\[/{exit} found{print}" \
+              CHANGELOG.md > /tmp/release-notes.md
+          else
+            awk '/^## \[Unreleased\]/{found=1; next} found && /^## \[/{exit} found{print}' \
+              CHANGELOG.md > /tmp/release-notes.md
+          fi
           sed -i '' '/./,$!d' /tmp/release-notes.md
+          if [ ! -s /tmp/release-notes.md ]; then
+            echo "::error::CHANGELOG.md has no notes for $VERSION"
+            exit 1
+          fi
           echo "--- Release notes preview ---"
           cat /tmp/release-notes.md
+
+      - name: Sign Sparkle update
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          DATE=$(date -u +%Y-%m-%d)
+          DMG_PATH="dist/DefaultTamer-v${VERSION}.dmg"
+          test -f "$DMG_PATH"
+          DMG_SIZE=$(stat -f%z "$DMG_PATH")
+          SPARKLE_SIGN_TOOL=$(find build/DerivedData/SourcePackages/artifacts -name "sign_update" -not -path "*/old_dsa_scripts/*" 2>/dev/null | head -1 || true)
+          if [ -z "$SPARKLE_SIGN_TOOL" ] || [ -z "$SPARKLE_PRIVATE_KEY" ]; then
+            echo "::error::Sparkle signing requires sign_update and SPARKLE_PRIVATE_KEY"
+            exit 1
+          fi
+          echo "$SPARKLE_PRIVATE_KEY" | base64 --decode > /tmp/sparkle_private_key
+          SIGN_OUTPUT=$("$SPARKLE_SIGN_TOOL" --ed-key-file /tmp/sparkle_private_key "$DMG_PATH" 2>&1)
+          rm -f /tmp/sparkle_private_key
+          echo "sign_update output: $SIGN_OUTPUT"
+          ED_SIGNATURE=$(echo "$SIGN_OUTPUT" | grep -oE 'sparkle:edSignature="[^"]+"' | sed 's/sparkle:edSignature="//;s/"//' || true)
+          if [ -z "$ED_SIGNATURE" ]; then
+            ED_SIGNATURE=$(echo "$SIGN_OUTPUT" | grep -oE '[A-Za-z0-9+/=]{80,}' | head -1 || true)
+          fi
+          if [ -z "$ED_SIGNATURE" ] || [ "$ED_SIGNATURE" = "PLACEHOLDER" ]; then
+            echo "::error::Sparkle EdDSA signature was not produced"
+            exit 1
+          fi
+          jq -n \
+            --arg version "${VERSION}" \
+            --arg downloadUrl "/download/DefaultTamer-v${VERSION}.dmg" \
+            --arg releaseDate "${DATE}" \
+            --arg releaseNotesUrl "https://www.defaulttamer.app/release-notes" \
+            --arg edSignature "${ED_SIGNATURE}" \
+            --argjson size "${DMG_SIZE}" \
+            '{version: $version, downloadUrl: $downloadUrl, releaseDate: $releaseDate, releaseNotesUrl: $releaseNotesUrl, edSignature: $edSignature, size: $size}' \
+            > /tmp/release.json
+
+      - name: Publish website release metadata
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WEB_REPO_TOKEN: ${{ secrets.WEB_REPO_TOKEN }}
+        run: |
+          if [ -z "$WEB_REPO_TOKEN" ]; then
+            echo "::error::WEB_REPO_TOKEN is required. Create a fine-grained PAT with contents write access to 0xdps/default-tamer-web."
+            exit 1
+          fi
+          VERSION="${{ steps.version.outputs.version }}"
+          DATE=$(date -u +%Y-%m-%d)
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/0xdps/default-tamer.git"
+          git fetch origin trunk
+          git checkout -B trunk origin/trunk
+
+          cd DefaultTamerWeb
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch "https://x-access-token:${WEB_REPO_TOKEN}@github.com/0xdps/default-tamer-web.git" trunk
+          git checkout -B trunk FETCH_HEAD
+          cp /tmp/release.json src/data/release.json
+          CONTENT_CHANGELOG="src/content/changelog/${VERSION}.md"
+          if [ -f "$CONTENT_CHANGELOG" ]; then
+            perl -i -pe "s/^version: \"9\.9\.9\"/version: \"${VERSION}\"/" "$CONTENT_CHANGELOG"
+            perl -i -ne "print unless /^isUnreleased: true/" "$CONTENT_CHANGELOG"
+            git add "$CONTENT_CHANGELOG"
+          fi
+          git add src/data/release.json
+          git diff --staged --quiet || git commit -m "chore: publish v${VERSION} release metadata"
+          git push "https://x-access-token:${WEB_REPO_TOKEN}@github.com/0xdps/default-tamer-web.git" HEAD:trunk
+          cd ..
+
+          if ! grep -qF "## [$VERSION]" CHANGELOG.md; then
+            perl -i -pe "s/## \[Unreleased\]/## [Unreleased]\n\n## [$VERSION] - $DATE/" CHANGELOG.md
+          fi
+          perl -i -pe "s|DefaultTamer-v[0-9]+\.[0-9]+\.[0-9]+\.dmg\]\(https://github\.com/0xdps/default-tamer/releases/download/v[0-9]+\.[0-9]+\.[0-9]+/DefaultTamer-v[0-9]+\.[0-9]+\.[0-9]+\.dmg\)|DefaultTamer-v${VERSION}.dmg](https://github.com/0xdps/default-tamer/releases/download/v${VERSION}/DefaultTamer-v${VERSION}.dmg)|g" README.md
+          git add DefaultTamerWeb CHANGELOG.md README.md
+          git diff --staged --quiet || git commit -m "chore: update website to v${VERSION} [skip ci]"
+          git push origin trunk
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v1
@@ -248,80 +338,6 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Update website release data
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          DATE=$(date -u +%Y-%m-%d)
-          DMG_PATH="dist/DefaultTamer-v${VERSION}.dmg"
-
-          # Sign the DMG for Sparkle using the EdDSA private key (base64-encoded)
-          # stored in the SPARKLE_PRIVATE_KEY repository secret.
-          ED_SIGNATURE="PLACEHOLDER"
-          DMG_SIZE=0
-          if [ -f "$DMG_PATH" ]; then
-            DMG_SIZE=$(stat -f%z "$DMG_PATH")
-            # sign_update is in SPM artifacts resolved during the build step
-            SPARKLE_SIGN_TOOL=$(find build/DerivedData/SourcePackages/artifacts -name "sign_update" -not -path "*/old_dsa_scripts/*" 2>/dev/null | head -1 || true)
-            if [ -z "$SPARKLE_SIGN_TOOL" ]; then
-              SPARKLE_SIGN_TOOL=$(find ~/Library/Developer/Xcode/DerivedData -name "sign_update" -not -path "*/old_dsa_scripts/*" 2>/dev/null | head -1 || true)
-            fi
-            echo "sign_update tool: ${SPARKLE_SIGN_TOOL:-NOT FOUND}"
-            if [ -n "$SPARKLE_SIGN_TOOL" ] && [ -n "$SPARKLE_PRIVATE_KEY" ]; then
-              echo "$SPARKLE_PRIVATE_KEY" | base64 --decode > /tmp/sparkle_private_key
-              SIGN_OUTPUT=$("$SPARKLE_SIGN_TOOL" --ed-key-file /tmp/sparkle_private_key "$DMG_PATH" 2>&1)
-              echo "sign_update output: $SIGN_OUTPUT"
-              ED_SIGNATURE=$(echo "$SIGN_OUTPUT" | grep -oE 'sparkle:edSignature="[^"]+"' | sed 's/sparkle:edSignature="//;s/"//' || true)
-              if [ -z "$ED_SIGNATURE" ]; then
-                # Fallback: try matching a long base64 string
-                ED_SIGNATURE=$(echo "$SIGN_OUTPUT" | grep -oE '[A-Za-z0-9+/=]{80,}' | head -1 || true)
-              fi
-              rm -f /tmp/sparkle_private_key
-              echo "EdDSA signature: ${ED_SIGNATURE:-FAILED}"
-            else
-              echo "::warning::Sparkle signing skipped — sign_update or SPARKLE_PRIVATE_KEY not available"
-            fi
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/0xdps/default-tamer.git"
-          git fetch origin trunk
-          git checkout -f trunk
-          jq -n \
-            --arg version "${VERSION}" \
-            --arg downloadUrl "/download/DefaultTamer-v${VERSION}.dmg" \
-            --arg releaseDate "${DATE}" \
-            --arg releaseNotesUrl "https://www.defaulttamer.app/release-notes" \
-            --arg edSignature "${ED_SIGNATURE}" \
-            --argjson size "${DMG_SIZE}" \
-            '{version: $version, downloadUrl: $downloadUrl, releaseDate: $releaseDate, releaseNotesUrl: $releaseNotesUrl, edSignature: $edSignature, size: $size}' \
-            > DefaultTamerWeb/src/data/release.json
-          # Promote [Unreleased] section to versioned entry in CHANGELOG.md.
-          # Guard: only insert if ## [VERSION] doesn't already exist (idempotent
-          # on retries / re-runs of the same tag).
-          if ! grep -qF "## [$VERSION]" CHANGELOG.md; then
-            perl -i -pe "s/## \[Unreleased\]/## [Unreleased]\n\n## [$VERSION] - $DATE/" CHANGELOG.md
-          fi
-
-          # Promote the user-facing changelog entry from "upcoming" to released:
-          # - Replace the 9.9.9 placeholder version with the real version
-          # - Remove the isUnreleased: true flag
-          CONTENT_CHANGELOG="DefaultTamerWeb/src/content/changelog/${VERSION}.md"
-          if [ -f "$CONTENT_CHANGELOG" ]; then
-            perl -i -pe "s/^version: \"9\.9\.9\"/version: \"${VERSION}\"/" "$CONTENT_CHANGELOG"
-            perl -i -ne "print unless /^isUnreleased: true/" "$CONTENT_CHANGELOG"
-          fi
-
-          # Update README.md download link to point at the new release
-          perl -i -pe "s|DefaultTamer-v[0-9]+\.[0-9]+\.[0-9]+\.dmg\]\(https://github\.com/0xdps/default-tamer/releases/download/v[0-9]+\.[0-9]+\.[0-9]+/DefaultTamer-v[0-9]+\.[0-9]+\.[0-9]+\.dmg\)|DefaultTamer-v${VERSION}.dmg](https://github.com/0xdps/default-tamer/releases/download/v${VERSION}/DefaultTamer-v${VERSION}.dmg)|g" README.md
-
-          git add DefaultTamerWeb/src/data/release.json CHANGELOG.md README.md ${CONTENT_CHANGELOG:-}
-          git diff --staged --quiet || git commit -m "chore: update website to v${VERSION} [skip ci]"
-          git push origin trunk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
 
       - name: Clean keychain
         if: always()

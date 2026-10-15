@@ -262,7 +262,7 @@ class AppState: ObservableObject {
         }
 
         guard url.isHTTP else {
-            appLogger.error("Non-HTTP URL received: \(url.absoluteString)")
+            appLogger.error("Non-HTTP URL received: \(URLSanitizer.sanitize(url), privacy: .private)")
             return
         }
         
@@ -304,7 +304,8 @@ class AppState: ObservableObject {
 
         switch action {
         case .openInBrowser(let bundleId, let matchedRule):
-            let privateMode = matchedRule?.openInPrivateMode ?? false
+            let privateMode = (matchedRule?.openInPrivateMode ?? false)
+                && LicensingManager.shared.isEnabled(.privateBrowsing)
 
             if matchedRule?.type == .shortcut {
                 // Modifier keys are still physically held at this point (they triggered the
