@@ -1,0 +1,133 @@
+.github/pull_request_template.md
+  s_0e94a7c32c5992::t_26c7a66d1b0b8e 36
+.github/workflows/README.md
+  s_0e94a7c32c5992::t_6f0f285dfb7444 17,21,30,34-36,40-41,47,51-54,59-61,64,66-76,108-109,112
+.github/workflows/build.yml
+  s_0e94a7c32c5992::t_657d13bbc43096 30,63
+.github/workflows/codeql.yml
+  s_0e94a7c32c5992::t_4eb929aac4cbd5 26
+.github/workflows/release.yml
+  s_0e94a7c32c5992::t_b29f070c1dc909 13,20,176
+.gitmodules
+  s_0e94a7c32c5992::t_8330e4c5efe8cc 1-2,4-6
+CHANGELOG.md
+  s_0e94a7c32c5992::t_da2e9a661274ec 10-109
+CONTRIBUTING.md
+  s_0e94a7c32c5992::t_06761c5eafe3d8 52,121
+DEVELOPER.md
+  s_0e94a7c32c5992::t_9f1d0072ba8bc8 3
+DefaultTamer/AppDelegate.swift
+  s_0e94a7c32c5992::t_d933ad3ffbb3c3 26-37,56,69-73,110-128,140,189-242,253-255,259,282-288,299,314-317,341-371,386-389,391-465,556
+DefaultTamer/DefaultTamer.entitlements
+  s_0e94a7c32c5992::t_6920f998a9710a 6
+DefaultTamer/Info.plist
+  s_0e94a7c32c5992::t_c471d489861e2f 36,57-64,67-75
+DefaultTamer/Models/Browser.swift
+  s_0e94a7c32c5992::t_504062ddb372b4 11-31,33,36-45,48-54,57,75,91,108-128
+DefaultTamer/Models/LicensePlan.swift
+  s_0e94a7c32c5992::t_9105a0276293fd 1-21,23-36,39-59
+DefaultTamer/Models/Rule.swift
+  s_0e94a7c32c5992::t_dc493173c539ca 9,15-35,60-63,94-96
+DefaultTamer/Models/Settings.swift
+  s_0e94a7c32c5992::t_faa62a189e2754 17,26
+DefaultTamer/Services/AnalyticsManager.swift
+  s_0e94a7c32c5992::t_0482e2c44d9aa6 26-33
+DefaultTamer/Services/AppState.swift
+  s_0e94a7c32c5992::t_1a1d8bab71141a 179,186,192,199,204,257-263,278-288,294-295,308-322,365-400
+DefaultTamer/Services/BrowserManager.swift
+  s_0e94a7c32c5992::t_2da7ac2360ffcc 57,258-283,313-314,321-322,324,326,337-357,364-368,370,372-377,379-397,399-412,414-425,430-457,461-462,464-465,530-532,536,543,550,553,555,558-570,573-587
+DefaultTamer/Services/FeedbackManager.swift
+  s_0e94a7c32c5992::t_e53ddb4304879f 1-9,11-14,16-23,25-29,31-39,41-49,51,54-59,61-64,66-73,75-89
+DefaultTamer/Services/KeychainStore.swift
+  s_0e94a7c32c5992::t_7c63e12c145aae 1-8,10-45,47-54
+DefaultTamer/Services/LicensingManager.swift
+  s_0e94a7c32c5992::t_1237e949118263 1-378
+DefaultTamer/Services/PersistenceManager.swift
+  s_0e94a7c32c5992::t_955905b8983dc7 12,15-16,21,27,30,36-37,39,41-44,124,126-131,135,150,152,154-156,159,161-164,167,173,180,185,193
+DefaultTamer/Services/PromoManager.swift
+  s_0e94a7c32c5992::t_604533c33e253e 1-47,50-110,112,114-162,165-166
+DefaultTamer/Services/Router.swift
+  s_0e94a7c32c5992::t_9c0de35c1ee96f 10-11,22-26,30-31,35,58-72,79-81,104-105,108-115
+DefaultTamer/Services/RuleStore.swift
+  s_0e94a7c32c5992::t_457e68a92ff98f 1-162
+DefaultTamer/Services/SeatManager.swift
+  s_0e94a7c32c5992::t_b956b4f7be3fbb 1-366
+DefaultTamer/Services/ShortcutManager.swift
+  s_0e94a7c32c5992::t_30ec751a59fbca 1-104
+DefaultTamer/Utilities/ChromeProfileScanner.swift
+  s_0e94a7c32c5992::t_193774431e91ac 1-35,37-51,53-55,57-62,64-80,82-87
+DefaultTamer/Utilities/Constants.swift
+  s_0e94a7c32c5992::t_158ac9af184fd2 12,50,100-170,177-178,180-181,183-184
+DefaultTamer/Utilities/DebugLog.swift
+  s_0e94a7c32c5992::t_be3d30c8dd7afd 4-10,16-18,20-21,23
+DefaultTamer/Utilities/ErrorNotification.swift
+  s_0e94a7c32c5992::t_41d74833773384 15-17,19-24,32,57
+DefaultTamer/Utilities/RuleImportExport.swift
+  s_0e94a7c32c5992::t_99b363d34625ad 99-100,238-239,301-302
+DefaultTamer/Utilities/SystemShortcutChecker.swift
+  s_0e94a7c32c5992::t_5235c81a8db6e5 1-67,69-134
+DefaultTamer/Utilities/URLHelpers.swift
+  s_0e94a7c32c5992::t_227bcc5c24cb66 11-14,30-37
+DefaultTamer/Views/AddRuleSheet.swift
+  s_0e94a7c32c5992::t_514300cfe66f25 12,38-42,61,64,68-84,192-214,217-218,221-225,254-291,345-356,360,372-373,376,404,408,415-418,424-429,451-453,592,621-625,648-651,672,676-692,800-822,825,829-831,860-896,936-943,962,974-975,978,1019-1021,1024,1038-1040,1048,1052,1059-1062,1068-1072
+DefaultTamer/Views/FeedbackView.swift
+  s_0e94a7c32c5992::t_de1b14896dd4e3 1-215
+DefaultTamer/Views/FirstRunView.swift
+  s_0e94a7c32c5992::t_7443201f93ab75 117-118
+DefaultTamer/Views/LicensingView.swift
+  s_0e94a7c32c5992::t_567f4fdb96255a 1-474
+DefaultTamer/Views/MenuHeaderView.swift
+  s_0e94a7c32c5992::t_57cceb50b031a4 12,108-109,111,113
+DefaultTamer/Views/PlusFeatureBadge.swift
+  s_0e94a7c32c5992::t_bbdf002683e754 1-22
+DefaultTamer/Views/PreferencesWindow.swift
+  s_0e94a7c32c5992::t_027ab6572639ea 14,28-29,45,56-59,82-84,86-87,95-109,135,144,151,191-195,225-243,264-272,371-373,410,1090,1156-1157,1163,1167,1172-1176,1180-1186,1189,1197-1199
+DefaultTamer/Views/RecentRoutesView.swift
+  s_0e94a7c32c5992::t_a21a2d003e6870 15-16,123-128,131-158
+DefaultTamer/Views/RulesWindow.swift
+  s_0e94a7c32c5992::t_da981afda206a8 27,34,74-76,78-80,121,123-132,137,150-155,158,160-163,166-169,180,184,186-195,197-204,207-228,230-250,255-265,267-269,271-276,278,284,288,293-366,368-377,382,384-385,387-389,393-394,396-402,408-436,505,571
+DefaultTamer/Views/ShortcutRecorderView.swift
+  s_0e94a7c32c5992::t_b40bc7dce6a527 1-246
+DefaultTamerScript
+  s_0e94a7c32c5992::t_333d8b7d8f2d10 1
+DefaultTamerTests/BrowserManagerTests.swift
+  s_0e94a7c32c5992::t_a0984a0df89ccc 1-137
+DefaultTamerTests/LicensingManagerTests.swift
+  s_0e94a7c32c5992::t_c8b8c1db8a4d1d 1-261
+DefaultTamerTests/PersistenceManagerTests.swift
+  s_0e94a7c32c5992::t_9a191028250311 13,16-17,20,23-30,33-34,36,39-41
+DefaultTamerTests/SourceAppDetectorTests.swift
+  s_0e94a7c32c5992::t_a9328f47384e90 1-127
+DefaultTamerTests/URLHelpersTests.swift
+  s_0e94a7c32c5992::t_14782a48092338 1-45
+DefaultTamerTests/URLSanitizerTests.swift
+  s_0e94a7c32c5992::t_556dda48719346 272-346
+DefaultTamerWeb
+  s_0e94a7c32c5992::t_c1fc61c7f8d7d0 1
+LICENSE
+  s_0e94a7c32c5992::t_ff6fd0e5e5a1dd 1-88
+README.md
+  s_0e94a7c32c5992::t_8fae125a57e16c 4-5,65
+VERSION.txt
+  s_0e94a7c32c5992::t_c6cd93c4f44960 1
+justfile
+  s_0e94a7c32c5992::t_1286d28ca41b5c 1
+project.yml
+  s_0e94a7c32c5992::t_1d884ce8d2fc87 5,17,34-37,55-57,64,74-77,82-83,87-92,101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7c6a57a192698ad46fb0ef504bbd1ca8c21b9c55",
+  "prompts": {},
+  "sessions": {
+    "s_0e94a7c32c5992": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7b9e5eae-b745-49c6-91eb-2e3c9fa7ac4f",
+        "model": "auto-smart"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
