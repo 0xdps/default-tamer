@@ -8,27 +8,8 @@
 import Foundation
 
 struct AppVersion {
-    /// Get current app version from Info.plist
-    /// This is automatically updated from VERSION.txt during release builds
     static var current: String {
-        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
-            return version
-        }
-        return "1.0.0"
-    }
-    
-    /// Get build number from Info.plist
-    /// This is also updated from VERSION.txt during release builds
-    static var build: String {
-        if let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
-            return build
-        }
-        return "1"
-    }
-    
-    /// Full version string (e.g., "1.0.1")
-    static var full: String {
-        return current
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.0"
     }
 }
 
@@ -66,7 +47,7 @@ struct UIConstants {
     static let rulesWindowWidth: CGFloat = 600
     static let rulesWindowHeight: CGFloat = 500
     static let addRuleSheetCompactWidth: CGFloat = 500
-    static let addRuleSheetCompactHeight: CGFloat = 400
+    static let addRuleSheetCompactHeight: CGFloat = 420
     static let addRuleSheetExpandedHeight: CGFloat = 500
     
     // Icon sizes
@@ -116,15 +97,88 @@ struct NetworkConstants {
 }
 
 struct AnalyticsConfig {
-    static let umamiURL = "https://analytics.0xlabs.space" 
-    static let websiteID = "babc74c5-5c94-4f0b-9a47-6b0b0fa12384"
+    static let umamiURL: String = Bundle.main.infoDictionary?["DTAnalyticsURL"] as? String ?? "https://analytics.0xlabs.space"
+    static let websiteID: String = Bundle.main.infoDictionary?["DTAnalyticsWebsiteID"] as? String ?? "babc74c5-5c94-4f0b-9a47-6b0b0fa12384"
+}
+
+struct FeedbackConfig {
+    static var submitURL: String { "\(SeatAPIConstants.baseURL)/api/feedback" }
+}
+
+// MARK: - Seat-based device management
+
+struct SeatAPIConstants {
+    static let baseURL: String = Bundle.main.infoDictionary?["DTBaseURL"] as? String ?? "https://www.defaulttamer.app"
+
+    // MARK: Subscription & payment
+    static var subscriptionURL:   URL { URL(string: "\(baseURL)/api/subscription")! }
+    static var promoValidateURL:  URL { URL(string: "\(baseURL)/api/promo/validate")! }
+    /// Opens the /upgrade funnel page, which handles auth + seat-tier selection + checkout.
+    /// Passes the install UUID and device metadata as query params so the web can
+    /// register the device with full details during SSR (before the deep link fires).
+    static func upgradeURL(promoCode: String? = nil) -> URL {
+        var items: [URLQueryItem] = []
+        if let p = promoCode { items.append(URLQueryItem(name: "promo", value: p)) }
+        items.append(contentsOf: deviceMetadataQueryItems())
+        var components = URLComponents(string: "\(baseURL)/upgrade")!
+        components.queryItems = items
+        return components.url!
+    }
+    /// Opens /upgrade?restore=true — sign in to activate an existing Power plan.
+    /// Also passes the install UUID and device metadata so the web can register the device.
+    static var restoreURL: URL {
+        var components = URLComponents(string: "\(baseURL)/upgrade")!
+        components.queryItems = [
+            URLQueryItem(name: "restore", value: "true"),
+        ] + deviceMetadataQueryItems()
+        return components.url!
+    }
+
+    /// Builds a single URL query item encoding this device's metadata as a
+    /// URL-safe base64 JSON blob. The web decodes it server-side to register
+    /// the device with full details during SSR.
+    private static func deviceMetadataQueryItems() -> [URLQueryItem] {
+        let osVersion = ProcessInfo.processInfo.operatingSystemVersion
+        var dict: [String: String] = [
+            "did": PersistenceManager.shared.installID,
+            "dn":  Host.current().localizedName ?? "Mac",
+            "av":  AppVersion.current,
+            "mv":  "\(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)",
+        ]
+        if let modelId = SeatManager.hardwareModelIdentifier() {
+            dict["mi"] = modelId
+        }
+        let data = (try? JSONSerialization.data(withJSONObject: dict)) ?? Data()
+        let b64 = data.base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+        return [URLQueryItem(name: "d", value: b64)]
+    }
+
+    // MARK: Seat management
+    static var accountURL:    URL { URL(string: "\(baseURL)/account")! }
+    static var activateURL:   URL { URL(string: "\(baseURL)/api/seats/activate")! }
+    static var heartbeatURL:  URL { URL(string: "\(baseURL)/api/seats/heartbeat")! }
+    static var deactivateURL: URL { URL(string: "\(baseURL)/api/seats/deactivate")! }
+
+    /// GET /api/seats/status?device_id=… — checks if this device is already registered.
+    static func statusURL(deviceId: String) -> URL {
+        var components = URLComponents(string: "\(baseURL)/api/seats/status")!
+        components.queryItems = [URLQueryItem(name: "device_id", value: deviceId)]
+        return components.url!
+    }
 }
 
 struct ExternalLinks {
     static let github = "https://github.com/0xdps/default-tamer"
     static let issues = "https://github.com/0xdps/default-tamer/issues"
     static let buyMeACoffee = "https://buymeacoffee.com/0xdps"
-    static let website = "https://www.defaulttamer.app"
-    static let privacy = "https://www.defaulttamer.app/privacy"
+    static var website: String { SeatAPIConstants.baseURL }
+    static var privacy: String { "\(SeatAPIConstants.baseURL)/privacy" }
     static let developerWebsite = "https://dps.codes"
+    /// Promo config — polled once per day to check for active discount codes.
+    static let promoConfigURL: String = Bundle.main.infoDictionary?["DTPromoURL"] as? String ?? "https://www.defaulttamer.app/promo.json"
 }
+
+

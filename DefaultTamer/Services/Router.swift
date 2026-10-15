@@ -7,6 +7,8 @@
 
 import Foundation
 import AppKit
+import CoreGraphics
+import os
 
 enum RouteAction {
     case openInBrowser(bundleId: String, matchedRule: Rule?)
@@ -17,16 +19,20 @@ enum RouteAction {
 class Router {
     
     /// Compiled NSRegularExpression cache, keyed by pattern string.
-    /// NSRegularExpression is thread-safe after compilation.
-    private nonisolated(unsafe) static var regexCache: [String: NSRegularExpression] = [:]
+    /// NSRegularExpression is thread-safe after compilation, but the cache
+    /// dictionary itself needs synchronization for concurrent access.
+    /// `OSAllocatedUnfairLock` provides a lightweight, low-overhead lock
+    /// suitable for this cache (available on macOS 13+).
+    private static let regexCache = OSAllocatedUnfairLock(initialState: [String: NSRegularExpression]())
     
     /// Returns a cached compiled regex, or compiles and caches on first access.
     private static func compiledRegex(for pattern: String) throws -> NSRegularExpression {
-        if let cached = regexCache[pattern] {
+        // Fast path: check if already cached (read lock)
+        if let cached = regexCache.withLock({ $0[pattern] }) {
             return cached
         }
         let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
-        regexCache[pattern] = regex
+        regexCache.withLock { $0[pattern] = regex }
         return regex
     }
     
@@ -49,15 +55,30 @@ class Router {
             appLogger.info("🔀 App disabled, using fallback")
             return .openInFallback
         }
-        
+
+        // Check shortcut rules first — they act as explicit modifier-hold overrides.
+        // This check runs before the chooser so a shortcut combo always wins.
+        if let flags = modifierFlags {
+            let heldFlags = flags.intersection([.command, .option, .shift, .control])
+            if !heldFlags.isEmpty {
+                for rule in rules where rule.type == .shortcut && rule.enabled {
+                    if let action = evaluateShortcutRule(rule, heldFlags: heldFlags) {
+                        appLogger.info("🔀 ⌨️ Shortcut rule matched: \(ShortcutFormatter.format(keyCode: rule.shortcutKeyCode, modifiers: rule.shortcutModifiers), privacy: .public)")
+                        return action
+                    }
+                }
+            }
+        }
+
         // Check for modifier key to show chooser
         if let flags = modifierFlags, flags.contains(settings.chooserModifierFlags) {
             appLogger.info("🔀 Modifier key held (\(settings.chooserModifierKey)), showing chooser")
             return .showChooser(url: url)
         }
         
-        // Evaluate rules top-to-bottom, first match wins
-        for (index, rule) in rules.enumerated() where rule.enabled {
+        // Evaluate rules top-to-bottom, first match wins.
+        // Shortcut rules are already handled above, so skip them here.
+        for (index, rule) in rules.enumerated() where rule.enabled && rule.type != .shortcut {
             appLogger.info("🔀 Evaluating rule #\(index + 1, privacy: .public): \(rule.type.rawValue, privacy: .public)")
             if let action = evaluateRule(rule, url: url, sourceApp: sourceApp) {
                 appLogger.info("🔀 ✅ Rule matched!")
@@ -80,7 +101,17 @@ class Router {
             return evaluateDomainRule(rule, url: url)
         case .urlPattern:
             return evaluateURLPatternRule(rule, url: url)
+        case .shortcut:
+            return nil  // Handled before normal rule evaluation in route()
         }
+    }
+
+    /// Evaluates a shortcut rule: matches when ⌘+⌥ are held and the rule's key is physically pressed.
+    private static func evaluateShortcutRule(_ rule: Rule, heldFlags: NSEvent.ModifierFlags) -> RouteAction? {
+        guard let keyCode = rule.shortcutKeyCode else { return nil }
+        guard heldFlags.isSuperset(of: [.command, .option]) else { return nil }
+        guard CGEventSource.keyState(.combinedSessionState, key: CGKeyCode(keyCode)) else { return nil }
+        return .openInBrowser(bundleId: rule.targetBrowserId, matchedRule: rule)
     }
     
     /// Evaluates source app rule

@@ -23,6 +23,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     private var chooserCancellable: AnyCancellable?
     private var firstRunCancellable: AnyCancellable?
 
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        // Register Apple Event handlers here — this is the earliest point where
+        // NSAppleEventManager is ready, and it fires before any queued events
+        // (including kAEOpenDocuments from Finder) are dispatched.
+        NSAppleEventManager.shared().setEventHandler(
+            self,
+            andSelector: #selector(handleOpenDocumentsEvent(_:withReplyEvent:)),
+            forEventClass: AEEventClass(kCoreEventClass),
+            andEventID: AEEventID(kAEOpenDocuments)
+        )
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide from Dock and hide default window
         NSApp.setActivationPolicy(.accessory)
@@ -41,42 +53,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         // Build menu with SwiftUI views hosted in NSMenuItem.view
         menu = NSMenu()
         menu.delegate = self
-
-        // Header item (app info + toggle or warning)
-        let isDefault = appState.browserManager.isDefaultBrowser()
-        let headerItem = NSMenuItem()
-        headerItem.view = makeHostingView(
-            MenuHeaderView(isDefaultBrowser: isDefault).environmentObject(appState),
-            width: UIConstants.menuBarPopoverWidth, height: isDefault ? 90 : 150)
-        menu.addItem(headerItem)
-
-        menu.addItem(.separator())
-
-        // Preferences
-        let prefsItem = NSMenuItem()
-        prefsItem.view = makeHostingView(
-            MenuItemView(icon: "gearshape", title: "Preferences", action: { [weak self] in
-                self?.openPreferences()
-            }), width: UIConstants.menuBarPopoverWidth, height: 32)
-        menu.addItem(prefsItem)
-
-        // Manage Rules
-        let rulesItem = NSMenuItem()
-        rulesItem.view = makeHostingView(
-            MenuItemView(icon: "list.bullet", title: "Manage Rules", action: { [weak self] in
-                self?.openRules()
-            }), width: UIConstants.menuBarPopoverWidth, height: 32)
-        menu.addItem(rulesItem)
-
-        menu.addItem(.separator())
-
-        // Quit
-        let quitItem = NSMenuItem()
-        quitItem.view = makeHostingView(
-            MenuItemView(icon: "power", title: "Quit Default Tamer", isDestructive: true, action: { [weak self] in
-                self?.quitApp()
-            }), width: UIConstants.menuBarPopoverWidth, height: 32)
-        menu.addItem(quitItem)
+        buildMenu()
 
         // Let macOS handle show/hide natively — no manual popover management needed
         statusItem.menu = menu
@@ -89,6 +66,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             forEventClass: AEEventClass(kInternetEventClass),
             andEventID: AEEventID(kAEGetURL)
         )
+        // Note: kAEOpenDocuments is registered in init() for earlier delivery.
+
+        // Ensure Default Tamer is the LaunchServices handler for HTML documents
+        // so Finder double-clicks route through kAEOpenDocuments to us.
+        appState.browserManager.claimHTMLDocumentHandlerIfNeeded()
 
         // Observe chooser state to present/dismiss chooser window
         chooserCancellable = appState.$showChooser
@@ -125,7 +107,25 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             // Existing users get the Day 0 consent prompt
             checkAndPromptTelemetryConsent()
         }
-        
+
+        // Validate stored license in the background (refreshes plan status from server)
+        LicensingManager.shared.validateOnLaunch()
+
+        // Check for active promo codes (throttled to once per 24 h)
+        PromoManager.shared.checkIfNeeded()
+
+        // Re-validate when the app returns to the foreground (throttled in LicensingManager)
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            Task { @MainActor in
+                LicensingManager.shared.validateOnForeground()
+                PromoManager.shared.checkIfNeeded()
+            }
+        }
+
         // Track app launch & updates (AppState handles debouncing internal to these calls)
         appState.trackAppUpdated()
         appState.trackAppLaunch()
@@ -137,7 +137,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     private func checkAndPromptTelemetryConsent() {
         if appState.settings.telemetryEnabled == nil {
             let alert = NSAlert()
-            alert.messageText = "Help improve DefaultTamer"
+            alert.messageText = "Help improve Default Tamer"
             alert.informativeText = """
             Share anonymous usage stats to help improve the app.
             
@@ -186,6 +186,60 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         }
     }
 
+    /// Rebuilds the entire menu from scratch. Called at launch and each time the
+    /// menu opens, so the "Upgrade to Power Plan" item reflects the live license state.
+    private func buildMenu() {
+        menu.removeAllItems()
+
+        // Header item (app info + toggle or warning)
+        let isDefault = appState.browserManager.isDefaultBrowser()
+        let headerItem = NSMenuItem()
+        headerItem.view = makeHostingView(
+            MenuHeaderView(isDefaultBrowser: isDefault)
+                .environmentObject(appState)
+                .environmentObject(LicensingManager.shared),
+            width: UIConstants.menuBarPopoverWidth, height: isDefault ? 90 : 150)
+        menu.addItem(headerItem)
+
+        menu.addItem(.separator())
+
+        // Preferences
+        let prefsItem = NSMenuItem()
+        prefsItem.view = makeHostingView(
+            MenuItemView(icon: "gearshape", title: "Preferences", action: { [weak self] in
+                self?.openPreferences()
+            }), width: UIConstants.menuBarPopoverWidth, height: 32)
+        menu.addItem(prefsItem)
+
+        // Manage Rules
+        let rulesItem = NSMenuItem()
+        rulesItem.view = makeHostingView(
+            MenuItemView(icon: "list.bullet", title: "Manage Rules", action: { [weak self] in
+                self?.openRules()
+            }), width: UIConstants.menuBarPopoverWidth, height: 32)
+        menu.addItem(rulesItem)
+
+        // Upgrade to Power Plan — only shown when the user doesn't have Power.
+        if !LicensingManager.shared.hasPowerPlan {
+            let upgradeItem = NSMenuItem()
+            upgradeItem.view = makeHostingView(
+                MenuItemView(icon: "bolt.fill", title: "Upgrade to Power Plan", action: { [weak self] in
+                    self?.openUpgrade()
+                }), width: UIConstants.menuBarPopoverWidth, height: 32)
+            menu.addItem(upgradeItem)
+        }
+
+        menu.addItem(.separator())
+
+        // Quit
+        let quitItem = NSMenuItem()
+        quitItem.view = makeHostingView(
+            MenuItemView(icon: "power", title: "Quit Default Tamer", isDestructive: true, action: { [weak self] in
+                self?.quitApp()
+            }), width: UIConstants.menuBarPopoverWidth, height: 32)
+        menu.addItem(quitItem)
+    }
+
     /// Wraps a SwiftUI view in an NSHostingView sized for an NSMenuItem.
     private func makeHostingView<V: View>(_ view: V, width: CGFloat, height: CGFloat) -> NSHostingView<V> {
         let hosting = NSHostingView(rootView: view)
@@ -196,19 +250,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     // MARK: - NSMenuDelegate
 
     func menuWillOpen(_ menu: NSMenu) {
-        // Check default browser status each time the menu opens
-        let isDefault = appState.browserManager.isDefaultBrowser()
-        let headerHeight: CGFloat = isDefault ? 90 : 150
-
-        if let headerItem = menu.items.first {
-            headerItem.view = makeHostingView(
-                MenuHeaderView(isDefaultBrowser: isDefault).environmentObject(appState),
-                width: UIConstants.menuBarPopoverWidth, height: headerHeight)
-        }
+        // Rebuild the menu so the upgrade item and header reflect the latest
+        // license and default-browser state.
+        buildMenu()
     }
 
     func menuDidClose(_ menu: NSMenu) {
-        DebugLog.menu("📂 menuDidClose")
+        appLogger.debug("📂 menuDidClose")
     }
 
     // MARK: - Actions
@@ -231,6 +279,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         showPreferencesWindow()
     }
 
+    @objc func openUpgrade() {
+        // Opens the Power plan purchase/activation page in the browser.
+        // startUpgrade re-checks the subscription first; if the user already has
+        // an active plan it activates silently without opening a browser.
+        LicensingManager.shared.startUpgrade()
+    }
+
     private func showPreferencesWindow() {
         if let existingWindow = preferencesWindow {
             existingWindow.makeKeyAndOrderFront(nil)
@@ -241,6 +296,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         let prefsView = PreferencesWindow()
             .environmentObject(appState)
             .environmentObject(updateManager)
+            .environmentObject(LicensingManager.shared)
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 640, height: 400),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
@@ -255,6 +311,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
         preferencesWindow = window
 
+        // Switch to .regular so the app becomes the key application and can
+        // receive keyboard events (e.g. in the shortcut recorder, text fields).
+        // Restored to .accessory when the window closes.
+        NSApp.setActivationPolicy(.regular)
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
@@ -278,6 +338,37 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             appLogger.info("📥 Received URL: \(url.absoluteString, privacy: .public)")
         }
 
+        // Route `defaulttamer://activate?token=...&did=...` deep-links — issued by /upgrade
+        if url.scheme == "defaulttamer", url.host == "activate" {
+            let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            let token     = components?.queryItems?.first(where: { $0.name == "token" })?.value ?? ""
+            let isUpgraded = components?.queryItems?.contains(where: { $0.name == "upgraded" && $0.value == "true" }) ?? false
+            let did        = components?.queryItems?.first(where: { $0.name == "did" })?.value
+            if !token.isEmpty {
+                LicensingManager.shared.handleActivation(token: token, isPaymentCallback: isUpgraded, confirmedDeviceId: did)
+            }
+            return
+        }
+
+        // Route `defaulttamer://upgraded` — legacy no-op (kept for compatibility)
+        if url.scheme == "defaulttamer", url.host == "upgraded" {
+            return
+        }
+
+        // Route `defaulttamer://promo?code=XXXX` — promo code delivered via deep link
+        // (e.g. from a pricing page button or a notification tap).
+        // Opens Preferences on the License tab with the code pre-filled and validated.
+        if url.scheme == "defaulttamer", url.host == "promo" {
+            let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            if let code = components?.queryItems?.first(where: { $0.name == "code" })?.value,
+               !code.isEmpty {
+                PromoManager.shared.applyFromDeepLink(code: code)
+                appState.pendingTabSelection = .power
+                showPreferencesWindow()
+            }
+            return
+        }
+
         // Use enhanced SourceAppDetector with Apple Event support
         let detectionResult = SourceAppDetector.shared.detectSourceAppWithConfidence(from: event)
         let sourceAppBundleId = detectionResult?.bundleId
@@ -292,8 +383,86 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             }
         }
 
+        // Capture modifier flags immediately at Apple Event arrival time, before any
+        // async dispatch, so the snapshot is correct for shortcut-rule matching.
+        let capturedFlags = NSEvent.modifierFlags
+
         Task { @MainActor in
-            appState.handleURL(url, sourceApp: sourceAppBundleId)
+            appState.handleURL(url, sourceApp: sourceAppBundleId, modifierFlags: capturedFlags)
+        }
+    }
+
+    func application(_ sender: NSApplication, openFiles filenames: [String]) {
+        let urls = filenames.map { URL(fileURLWithPath: $0) }
+        let browserOpenableURLs = urls.filter { $0.isBrowserOpenableFile }
+
+        guard !browserOpenableURLs.isEmpty else {
+            appLogger.error("No browser-openable files received from Finder")
+            sender.reply(toOpenOrPrint: .failure)
+            return
+        }
+
+        for url in browserOpenableURLs {
+            appLogger.info("📄 Received local file from Finder (openFiles): \(url.lastPathComponent, privacy: .public)")
+            appState.handleURL(url, sourceApp: BundleIdentifiers.finder)
+        }
+
+        sender.reply(toOpenOrPrint: .success)
+    }
+
+    @objc func handleOpenDocumentsEvent(_ event: NSAppleEventDescriptor, withReplyEvent replyEvent: NSAppleEventDescriptor) {
+        appLogger.info("handleOpenDocuments: received kAEOpenDocuments event")
+
+        guard let fileList = event.paramDescriptor(forKeyword: AEKeyword(keyDirectObject)) else {
+            appLogger.error("handleOpenDocuments: no direct object in Apple Event")
+            return
+        }
+
+        appLogger.info("handleOpenDocuments: descriptor type=\(fileList.descriptorType, privacy: .public) items=\(fileList.numberOfItems, privacy: .public)")
+
+        var urls: [URL] = []
+
+        // Iterate list items, or treat the descriptor itself as a single item.
+        // fileURLValue resolves typeAlias, typeBookmarkData, typeFSRef, and
+        // typeFileURL descriptors uniformly — no need to branch on descriptorType.
+        let count = fileList.numberOfItems
+        if count > 0 {
+            for i in 1...count {
+                guard let item = fileList.atIndex(i) else { continue }
+                if let fileURL = item.fileURLValue {
+                    urls.append(fileURL)
+                } else if let s = item.stringValue, !s.isEmpty {
+                    // Fallback: coerce to URL if it looks like a path or file URL
+                    if s.hasPrefix("/") {
+                        urls.append(URL(fileURLWithPath: s))
+                    } else if s.hasPrefix("file://"), let u = URL(string: s) {
+                        urls.append(u)
+                    }
+                }
+            }
+        } else {
+            if let fileURL = fileList.fileURLValue {
+                urls.append(fileURL)
+            } else if let s = fileList.stringValue, !s.isEmpty {
+                if s.hasPrefix("/") {
+                    urls.append(URL(fileURLWithPath: s))
+                } else if s.hasPrefix("file://"), let u = URL(string: s) {
+                    urls.append(u)
+                }
+            }
+        }
+
+        appLogger.info("handleOpenDocuments: resolved \(urls.count, privacy: .public) URL(s)")
+
+        let browserOpenable = urls.filter { $0.isBrowserOpenableFile }
+        guard !browserOpenable.isEmpty else {
+            appLogger.error("handleOpenDocuments: no browser-openable files (resolved \(urls.count) total, paths: \(urls.map(\.lastPathComponent).joined(separator: ", "), privacy: .public))")
+            return
+        }
+
+        for url in browserOpenable {
+            appLogger.info("📄 Received local file from Finder: \(url.lastPathComponent, privacy: .public)")
+            appState.handleURL(url, sourceApp: BundleIdentifiers.finder)
         }
     }
 
@@ -384,6 +553,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             firstRunWindow = nil
         } else if window === preferencesWindow {
             preferencesWindow = nil
+            NSApp.setActivationPolicy(.accessory)
         } else if window === chooserWindow {
             chooserWindow = nil
             appState.showChooser = false

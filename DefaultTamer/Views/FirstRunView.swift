@@ -114,7 +114,8 @@ struct FirstRunView: View {
                         Spacer()
                         
                         Picker("", selection: $selectedFallbackBrowser) {
-                            ForEach(appState.browserManager.availableBrowsers) { browser in
+                            // Profiles make no sense as a fallback browser — exclude them here.
+                            ForEach(appState.browserManager.availableBrowsers.filter { $0.profileDirectory == nil }) { browser in
                                 Label {
                                     Text(browser.displayName)
                                 } icon: {

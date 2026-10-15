@@ -9,6 +9,7 @@ import SwiftUI
 
 struct AddRuleSheet: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var licensing: LicensingManager
     @Environment(\.dismiss) var dismiss
     
     @State private var ruleType: RuleType = .domain
@@ -34,6 +35,11 @@ struct AddRuleSheet: View {
     @State private var testURL: String = ""
     @State private var testResult: Bool? = nil
 
+    // Shortcut fields
+    @State private var shortcutKeyCode: Int? = nil
+    @State private var shortcutModifiers: Int? = nil
+    @State private var shortcutConflict: String? = nil
+
     // Privacy mode
     @State private var openInPrivateMode: Bool = false
 
@@ -52,13 +58,30 @@ struct AddRuleSheet: View {
             
             // Form
             Form {
-                Section("Rule Type") {
+                Section() {
                     Picker("Type", selection: $ruleType) {
                         ForEach(RuleType.allCases, id: \.self) { type in
-                            Text(type.rawValue).tag(type)
+                            Label(type.rawValue, systemImage: type.symbolName).tag(type)
                         }
                     }
                     .pickerStyle(.segmented)
+
+                    if ruleType == .shortcut && !licensing.isEnabled(.shortcutRules) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "keyboard.fill")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Global keyboard shortcuts")
+                                    .foregroundColor(.secondary)
+                                Text("Upgrade to Power to assign keyboard shortcuts to browsers.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            PlusFeatureBadge()
+                        }
+                    }
                 }
                 
                 Section("Match Criteria") {
@@ -166,13 +189,40 @@ struct AddRuleSheet: View {
                         } else {
                             TextField("URL contains (e.g., /docs/)", text: $urlContains)
                         }
+
+                    case .shortcut:
+                        if licensing.isEnabled(.shortcutRules) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                ShortcutRecorderView(keyCode: $shortcutKeyCode, modifiers: $shortcutModifiers)
+                                    .frame(height: 32)
+                                    .onChange(of: shortcutModifiers) { _ in checkShortcutConflict() }
+                                    .onChange(of: shortcutKeyCode) { _ in checkShortcutConflict() }
+                                Text("Hold ⌘⌥ and press a key (A–Z or 0–9) to set your shortcut (e.g. ⌘⌥A). Clicking a link while holding that combo routes it to this browser.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                if let conflict = shortcutConflict {
+                                    HStack(alignment: .top, spacing: 6) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .font(.caption)
+                                            .foregroundColor(.orange)
+                                        Text("May conflict with \(conflict) — holding this combo while clicking may also trigger that action.")
+                                            .font(.caption)
+                                            .foregroundColor(.orange)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-                
-                Section("Target Browser") {
+
+                Section() {
                     HStack {
                         Picker("Browser", selection: $targetBrowserId) {
-                            ForEach(appState.browserManager.availableBrowsers) { browser in
+                            // Locked profile entries are excluded from the picker entirely —
+                            // .disabled() on Picker items is cosmetic only and doesn't block selection.
+                            ForEach(appState.browserManager.availableBrowsers.filter {
+                                $0.profileDirectory == nil || licensing.isEnabled(.chromeProfiles)
+                            }) { browser in
                                 Label {
                                     Text(browser.displayName)
                                 } icon: {
@@ -201,8 +251,44 @@ struct AddRuleSheet: View {
                         .help("Refresh browser list")
                     }
 
-                    Toggle("Open in private/incognito mode", isOn: $openInPrivateMode)
-                        .help("Opens URLs in private/incognito window (not all browsers supported)")
+                    // Show a locked hint row if there are profile browsers the user can't pick yet.
+                    if !licensing.isEnabled(.chromeProfiles) &&
+                        appState.browserManager.availableBrowsers.contains(where: { $0.profileDirectory != nil }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "person.2.fill")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Browser profiles")
+                                    .foregroundColor(.secondary)
+                                Text("Upgrade to Power to route URLs to a specific Chrome, Edge, or Brave profile.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            PlusFeatureBadge()
+                        }
+                    }
+
+                    if licensing.isEnabled(.privateBrowsing) {
+                        Toggle("Open in private/incognito mode", isOn: $openInPrivateMode)
+                            .help("Opens URLs in private/incognito window (not all browsers supported)")
+                    } else {
+                        HStack(spacing: 8) {
+                            Image(systemName: "lock.fill")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Private / incognito mode")
+                                    .foregroundColor(.secondary)
+                                Text("Upgrade to Power to open links in private windows.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            PlusFeatureBadge()
+                        }
+                    }
                 }
             }
             .formStyle(.grouped)
@@ -256,11 +342,22 @@ struct AddRuleSheet: View {
             }
         }
     }
-    
+
+    /// Returns the effective browser ID for `targetBrowserId`, downgrading to the base
+    /// browser if the selected entry is a locked profile the user can't actually use.
+    private var effectiveTargetBrowserId: String {
+        guard !licensing.isEnabled(.chromeProfiles),
+              let browser = appState.browserManager.availableBrowsers.first(where: { $0.id == targetBrowserId }),
+              browser.profileDirectory != nil else {
+            return targetBrowserId
+        }
+        return browser.baseBundleId
+    }
+
     private var isValid: Bool {
         // Must have target browser
         guard !targetBrowserId.isEmpty else { return false }
-        
+
         switch ruleType {
         case .sourceApp:
             return selectedApp != nil
@@ -272,9 +369,11 @@ struct AddRuleSheet: View {
             } else {
                 return !urlContains.isEmpty
             }
+        case .shortcut:
+            return licensing.isEnabled(.shortcutRules) && shortcutModifiers != nil && shortcutKeyCode != nil
         }
     }
-    
+
     private func validateRegex(_ pattern: String) {
         guard !pattern.isEmpty else {
             regexError = nil
@@ -302,23 +401,32 @@ struct AddRuleSheet: View {
                 rule.sourceAppBundleId = app.bundleId
                 rule.sourceAppName = app.name
             }
-            
+
         case .domain:
             rule.domainPattern = domainPattern
             rule.domainMatchType = domainMatchType
-            
+
         case .urlPattern:
             if useRegex {
                 rule.urlRegex = urlRegex
             } else {
                 rule.urlContains = urlContains
             }
+
+        case .shortcut:
+            rule.shortcutKeyCode = shortcutKeyCode
+            rule.shortcutModifiers = shortcutModifiers
         }
         
         appState.addRule(rule)
         dismiss()
     }
-    
+
+    private func checkShortcutConflict() {
+        guard let mods = shortcutModifiers else { shortcutConflict = nil; return }
+        shortcutConflict = SystemShortcutChecker.conflictName(keyCode: shortcutKeyCode, modifiers: mods)
+    }
+
     private var validationMessage: String {
         if targetBrowserId.isEmpty {
             return "Select a browser"
@@ -340,6 +448,9 @@ struct AddRuleSheet: View {
                 return "Enter URL pattern"
             }
             return ""
+        case .shortcut:
+            if !licensing.isEnabled(.shortcutRules) { return "Requires Power" }
+            return (shortcutModifiers == nil || shortcutKeyCode == nil) ? "Record a shortcut (⌘⌥ + key)" : ""
         }
     }
 }
@@ -478,6 +589,7 @@ struct AppPickerRow: View {
 struct EditRuleSheet: View {
     let rule: Rule
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var licensing: LicensingManager
     @Environment(\.dismiss) var dismiss
     
     @State private var ruleType: RuleType
@@ -506,6 +618,11 @@ struct EditRuleSheet: View {
     // Privacy mode
     @State private var openInPrivateMode: Bool
 
+    // Shortcut fields
+    @State private var shortcutKeyCode: Int?
+    @State private var shortcutModifiers: Int?
+    @State private var shortcutConflict: String? = nil
+
     init(rule: Rule) {
         self.rule = rule
 
@@ -528,6 +645,10 @@ struct EditRuleSheet: View {
 
         // Privacy mode
         _openInPrivateMode = State(initialValue: rule.openInPrivateMode)
+
+        // Shortcut
+        _shortcutKeyCode = State(initialValue: rule.shortcutKeyCode)
+        _shortcutModifiers = State(initialValue: rule.shortcutModifiers)
     }
     
     var body: some View {
@@ -548,10 +669,27 @@ struct EditRuleSheet: View {
                 Section("Rule Type") {
                     Picker("Type", selection: $ruleType) {
                         ForEach(RuleType.allCases, id: \.self) { type in
-                            Text(type.rawValue).tag(type)
+                            Label(type.rawValue, systemImage: type.symbolName).tag(type)
                         }
                     }
                     .pickerStyle(.segmented)
+
+                    if ruleType == .shortcut && !licensing.isEnabled(.shortcutRules) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "keyboard.fill")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Global keyboard shortcuts")
+                                    .foregroundColor(.secondary)
+                                Text("Upgrade to Power to assign keyboard shortcuts to browsers.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            PlusFeatureBadge()
+                        }
+                    }
                 }
                 
                 Section("Match Criteria") {
@@ -659,13 +797,38 @@ struct EditRuleSheet: View {
                         } else {
                             TextField("URL contains (e.g., /docs/)", text: $urlContains)
                         }
+
+                    case .shortcut:
+                        if licensing.isEnabled(.shortcutRules) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                ShortcutRecorderView(keyCode: $shortcutKeyCode, modifiers: $shortcutModifiers)
+                                    .frame(height: 32)
+                                    .onChange(of: shortcutModifiers) { _ in checkShortcutConflict() }
+                                    .onChange(of: shortcutKeyCode) { _ in checkShortcutConflict() }
+                                Text("Hold ⌘⌥ and press a key (A–Z or 0–9) to set your shortcut (e.g. ⌘⌥A). Clicking a link while holding that combo routes it to this browser.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                if let conflict = shortcutConflict {
+                                    HStack(alignment: .top, spacing: 6) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .font(.caption)
+                                            .foregroundColor(.orange)
+                                        Text("May conflict with \(conflict) — holding this combo while clicking may also trigger that action.")
+                                            .font(.caption)
+                                            .foregroundColor(.orange)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-                
+
                 Section("Target Browser") {
                     HStack {
                         Picker("Browser", selection: $targetBrowserId) {
-                            ForEach(appState.browserManager.availableBrowsers) { browser in
+                            ForEach(appState.browserManager.availableBrowsers.filter {
+                                $0.profileDirectory == nil || licensing.isEnabled(.chromeProfiles)
+                            }) { browser in
                                 Label {
                                     Text(browser.displayName)
                                 } icon: {
@@ -694,8 +857,43 @@ struct EditRuleSheet: View {
                         .help("Refresh browser list")
                     }
 
-                    Toggle("Open in private/incognito mode", isOn: $openInPrivateMode)
-                        .help("Opens URLs in private/incognito window (not all browsers supported)")
+                    if !licensing.isEnabled(.chromeProfiles) &&
+                        appState.browserManager.availableBrowsers.contains(where: { $0.profileDirectory != nil }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "person.2.fill")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Browser profiles")
+                                    .foregroundColor(.secondary)
+                                Text("Upgrade to Power to route URLs to a specific Chrome, Edge, or Brave profile.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            PlusFeatureBadge()
+                        }
+                    }
+
+                    if licensing.isEnabled(.privateBrowsing) {
+                        Toggle("Open in private/incognito mode", isOn: $openInPrivateMode)
+                            .help("Opens URLs in private/incognito window (not all browsers supported)")
+                    } else {
+                        HStack(spacing: 8) {
+                            Image(systemName: "lock.fill")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Private / incognito mode")
+                                    .foregroundColor(.secondary)
+                                Text("Upgrade to Power to open links in private windows.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            PlusFeatureBadge()
+                        }
+                    }
                 }
             }
             .formStyle(.grouped)
@@ -735,6 +933,14 @@ struct EditRuleSheet: View {
             )
         }
         .onAppear {
+            // If the rule's saved target is a locked profile (e.g. user signed out since
+            // rule was created), reset to the base browser to avoid a blank picker.
+            if !licensing.isEnabled(.chromeProfiles),
+               let browser = appState.browserManager.availableBrowsers.first(where: { $0.id == targetBrowserId }),
+               browser.profileDirectory != nil {
+                targetBrowserId = browser.baseBundleId
+            }
+
             // Load installed apps in background
             DispatchQueue.global(qos: .userInitiated).async {
                 let apps = ApplicationScanner.shared.getInstalledApplications()
@@ -753,7 +959,7 @@ struct EditRuleSheet: View {
     private var isValid: Bool {
         // Must have target browser
         guard !targetBrowserId.isEmpty else { return false }
-        
+
         switch ruleType {
         case .sourceApp:
             return selectedApp != nil
@@ -765,9 +971,11 @@ struct EditRuleSheet: View {
             } else {
                 return !urlContains.isEmpty
             }
+        case .shortcut:
+            return licensing.isEnabled(.shortcutRules) && shortcutModifiers != nil && shortcutKeyCode != nil
         }
     }
-    
+
     private func validateRegex() {
         guard !urlRegex.isEmpty else {
             regexError = nil
@@ -808,9 +1016,12 @@ struct EditRuleSheet: View {
             } else {
                 return urlContains.isEmpty ? "Enter URL pattern" : ""
             }
+        case .shortcut:
+            if !licensing.isEnabled(.shortcutRules) { return "Requires Power" }
+            return (shortcutModifiers == nil || shortcutKeyCode == nil) ? "Record a shortcut (⌘⌥ + key)" : ""
         }
     }
-    
+
     private func saveChanges() {
         var updatedRule = rule
         updatedRule.type = ruleType
@@ -824,7 +1035,9 @@ struct EditRuleSheet: View {
         updatedRule.domainMatchType = nil
         updatedRule.urlContains = nil
         updatedRule.urlRegex = nil
-        
+        updatedRule.shortcutKeyCode = nil
+        updatedRule.shortcutModifiers = nil
+
         // Set the appropriate fields based on rule type
         switch ruleType {
         case .sourceApp:
@@ -832,20 +1045,29 @@ struct EditRuleSheet: View {
                 updatedRule.sourceAppBundleId = app.bundleId
                 updatedRule.sourceAppName = app.name
             }
-            
+
         case .domain:
             updatedRule.domainPattern = domainPattern
             updatedRule.domainMatchType = domainMatchType
-            
+
         case .urlPattern:
             if useRegex {
                 updatedRule.urlRegex = urlRegex
             } else {
                 updatedRule.urlContains = urlContains
             }
+
+        case .shortcut:
+            updatedRule.shortcutKeyCode = shortcutKeyCode
+            updatedRule.shortcutModifiers = shortcutModifiers
         }
         
         appState.updateRule(updatedRule)
         dismiss()
+    }
+
+    private func checkShortcutConflict() {
+        guard let mods = shortcutModifiers else { shortcutConflict = nil; return }
+        shortcutConflict = SystemShortcutChecker.conflictName(keyCode: shortcutKeyCode, modifiers: mods)
     }
 }

@@ -23,6 +23,14 @@ class AnalyticsManager {
         let telemetryEnabled = (NSApp.delegate as? AppDelegate)?.appState.settings.telemetryEnabled
             ?? PersistenceManager.shared.loadSettings().telemetryEnabled
         
+        #if DEBUG
+        let msg = "SKIP event '\(name)' — DEBUG build, telemetry disabled"
+        UnifiedLogger.debug("Analytics: \(msg)", category: .network)
+        Self.writeDebugLog(msg)
+        completion?(false)
+        return
+        #endif
+
         guard telemetryEnabled == true else {
             let msg = "SKIP event '\(name)' — telemetryEnabled=\(String(describing: telemetryEnabled))"
             UnifiedLogger.debug("Analytics: \(msg)", category: .network)

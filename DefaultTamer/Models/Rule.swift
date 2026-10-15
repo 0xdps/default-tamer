@@ -6,11 +6,33 @@
 //
 
 import Foundation
+import SwiftUI
 
 enum RuleType: String, Codable, CaseIterable {
     case sourceApp = "Source App"
     case domain = "Domain"
     case urlPattern = "URL Pattern"
+    case shortcut = "Shortcut"
+
+    /// SF Symbol name for this rule type — used in rule lists, detail views, and pickers.
+    var symbolName: String {
+        switch self {
+        case .sourceApp:  return "macwindow"
+        case .domain:     return "globe"
+        case .urlPattern: return "link"
+        case .shortcut:   return "keyboard"
+        }
+    }
+
+    /// Accent color for this rule type — consistent across all views.
+    var accentColor: Color {
+        switch self {
+        case .sourceApp:  return .orange
+        case .domain:     return .blue
+        case .urlPattern: return .purple
+        case .shortcut:   return .teal
+        }
+    }
 }
 
 enum DomainMatchType: String, Codable {
@@ -35,6 +57,10 @@ struct Rule: Identifiable, Codable, Hashable {
 
     var urlContains: String?
     var urlRegex: String?
+
+    // Shortcut fields
+    var shortcutKeyCode: Int?      // NSEvent.keyCode
+    var shortcutModifiers: Int?    // NSEvent.ModifierFlags.rawValue
     
     init(
         id: UUID = UUID(),
@@ -65,6 +91,9 @@ struct Rule: Identifiable, Codable, Hashable {
         case .urlPattern:
             let pattern = urlContains ?? urlRegex ?? ""
             return "URL contains '\(pattern)' → \(targetBrowser)"
+        case .shortcut:
+            let keys = ShortcutFormatter.format(keyCode: shortcutKeyCode, modifiers: shortcutModifiers)
+            return "\(keys) → \(targetBrowser)"
         }
     }
     

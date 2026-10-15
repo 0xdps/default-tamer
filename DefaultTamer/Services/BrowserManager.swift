@@ -54,7 +54,7 @@ class BrowserManager: ObservableObject {
     private static let cacheKey = "defaultTamer.cachedBrowsers"
     private static let cacheVersionKey = "defaultTamer.browserCacheVersion"
     private static let cacheTimestampKey = "defaultTamer.browserCacheTimestamp"
-    private static let currentCacheVersion = 3
+    private static let currentCacheVersion = 5
     private static let cacheExpirationInterval: TimeInterval = TimeConstants.browserCacheExpiration // 24 hours
     
     init() {
@@ -255,6 +255,32 @@ class BrowserManager: ObservableObject {
                                       isInstalled: true))
         }
 
+        // Inject profile entries for Chromium-based browsers that have multiple profiles.
+        // Only shown when the user has actually created more than one profile.
+        let profileCapable: [(bundleId: String, profilePath: String)] = [
+            (BundleIdentifiers.chrome, "Google/Chrome"),
+            (BundleIdentifiers.edge,   "Microsoft Edge"),
+            (BundleIdentifiers.brave,  "BraveSoftware/Brave-Browser"),
+        ]
+        for entry in profileCapable where seenBundleIds.contains(entry.bundleId) {
+            let chromeProfiles = ChromeProfileScanner.profiles(forProfilePath: entry.profilePath)
+            debugLog("🔍 Chrome profiles for \(entry.bundleId): \(chromeProfiles.map(\.name))")
+            guard chromeProfiles.count > 1 else { continue }
+            let baseName = discovered.first(where: { $0.id == entry.bundleId })?.displayName ?? "Chrome"
+            for profile in chromeProfiles {
+                let profileBrowser = Browser(
+                    bundleId: entry.bundleId,
+                    displayName: "\(baseName) – \(profile.name)",
+                    isInstalled: true,
+                    profileDirectory: profile.directory
+                )
+                if !seenBundleIds.contains(profileBrowser.id) {
+                    discovered.append(profileBrowser)
+                    seenBundleIds.insert(profileBrowser.id)
+                }
+            }
+        }
+
         return discovered.sorted { $0.displayName < $1.displayName }
     }
 
@@ -284,23 +310,20 @@ class BrowserManager: ObservableObject {
     /// Get the human-readable name for an app bundle ID (main-actor safe only).
     /// Use `displayNameFromURL` instead when calling from background threads.
     @MainActor
-    static func getDisplayName(for bundleId: String) -> String? {
+    static func getDisplayName(for browserId: String) -> String? {
+        let bundleId = browserId.components(separatedBy: Browser.profileSeparator).first ?? browserId
         if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) {
             return displayNameFromURL(appURL)
         }
         return nil
     }
     
-    /// Opens a URL in a specific browser by bundle ID
-    /// Returns true if successful, false otherwise
+    /// Opens a URL in a specific browser by bundle ID.
+    /// Returns true if successful, false otherwise.
     @discardableResult
-    func openURL(_ url: URL, inBrowser bundleId: String, privateMode: Bool = false) -> Bool {
+    func openURL(_ url: URL, inBrowser browserId: String, privateMode: Bool = false) -> Bool {
         do {
-            if privateMode {
-                try safeOpenURLInPrivateMode(url, inBrowser: bundleId)
-            } else {
-                try safeOpenURL(url, inBrowser: bundleId)
-            }
+            try safeLaunch(url: url, inBrowser: browserId, privateMode: privateMode)
             return true
         } catch {
             debugLog("⚠️ \(error.localizedDescription)")
@@ -311,110 +334,135 @@ class BrowserManager: ObservableObject {
             return false
         }
     }
-    
-    /// Safe URL opening with proper error handling
-    /// Throws BrowserError if operation fails
-    private func safeOpenURL(_ url: URL, inBrowser bundleId: String) throws {
-        // Defensive check: Verify browser is installed
-        guard let appURL = safeURLForApplication(withBundleIdentifier: bundleId) else {
+
+    /// Single unified launch entry point.
+    /// Resolves the browser's LaunchStrategy and dispatches to the correct mechanism.
+    ///
+    /// The CLI-based strategies (chromium with args, gecko) run the process
+    /// off the main actor so `waitUntilExit()` never blocks the UI. Errors
+    /// from those paths are reported asynchronously via `ErrorNotifier`.
+    private func safeLaunch(url: URL, inBrowser browserId: String, privateMode: Bool) throws {
+        var parts = browserId.components(separatedBy: Browser.profileSeparator)
+        let bundleId = parts[0]
+
+        // Gate: if the requested browser is a profile entry and the user's license
+        // doesn't include Chrome Profiles, silently drop to the base browser.
+        if parts.count > 1 && !LicensingManager.shared.isEnabled(.chromeProfiles) {
+            debugLog("⚠️ chromeProfiles feature not licensed — stripping profile from \(browserId), opening base browser")
+            parts = [bundleId]
+        }
+
+        let profileDir: String? = parts.count > 1 ? parts[1] : nil
+
+        guard let appURL = safeURLForApplication(withBundleIdentifier: browserId) else {
             throw BrowserError.notInstalled(bundleId: bundleId)
         }
-        
-        // Defensive check: Verify URL is accessible
         guard FileManager.default.fileExists(atPath: appURL.path) else {
             throw BrowserError.notAccessible(bundleId: bundleId)
         }
-        
+
+        // Resolve strategy — use cached browser if available, otherwise derive from bundle ID.
+        let strategy = availableBrowsers
+            .first(where: { $0.baseBundleId == bundleId })?
+            .launchStrategy
+            ?? Browser(bundleId: bundleId, displayName: "").launchStrategy
+
+        switch strategy {
+
+        case .workspace:
+            // Safari, Arc — NSWorkspace URL open. No CLI flags supported.
+            if privateMode {
+                debugLog("⚠️ Private mode not supported via CLI for \(bundleId), opening normally")
+            }
+            openViaWorkspace(url: url, appURL: appURL, bundleId: bundleId)
+
+        case .chromium(let privateFlag):
+            // Real Chromium browsers (Chrome, Edge, Brave, etc.) support CLI args for profiles
+            // and private mode. For those cases use `open -na --args` so the flags reach the app.
+            // Without those flags, fall back to NSWorkspace which is universal and works for
+            // any browser-registered app (including unknown Electron wrappers like Atlas, Dia, etc.)
+            // that don't implement Chrome-style single-instance IPC.
+            if privateMode || profileDir != nil {
+                var args: [String] = ["-na", appURL.path, "--args"]
+                if let dir = profileDir { args.append("--profile-directory=\(dir)") }
+                if privateMode        { args.append(privateFlag) }
+                args.append(url.absoluteString)
+                let note = [profileDir.map { "profile: \($0)" }, privateMode ? "private" : nil]
+                    .compactMap { $0 }.joined(separator: ", ")
+                runProcessAsync("/usr/bin/open", arguments: args, bundleId: bundleId)
+                debugLog("✅ Opened \(url.absoluteString) in \(bundleId) (\(note))")
+            } else {
+                openViaWorkspace(url: url, appURL: appURL, bundleId: bundleId)
+                debugLog("✅ Opened \(url.absoluteString) in \(bundleId)")
+            }
+
+        case .gecko(let privateFlag):
+            // Firefox-family — invoke the binary directly.
+            //   <binary> [-private-window] <url>
+            // Firefox does not reliably forward argv via single-instance IPC like Chrome does.
+            guard let execURL = Bundle(url: appURL)?.executableURL else {
+                throw BrowserError.notAccessible(bundleId: bundleId)
+            }
+            var args: [String] = []
+            if privateMode { args.append(privateFlag) }
+            args.append(url.absoluteString)
+            runProcessAsync(execURL.path, arguments: args, bundleId: bundleId)
+            debugLog("✅ Opened \(url.absoluteString) in \(bundleId)\(privateMode ? " (private)" : "")")
+        }
+    }
+
+    /// Opens a URL via NSWorkspace (Safari, Arc, and any browser without useful CLI flags).
+    /// Fire-and-forget: does NOT block the calling thread. NSWorkspace’s completion block is
+    /// dispatched on the main queue, so waiting with a semaphore on the main thread deadlocks.
+    /// Errors are surfaced asynchronously via the completion handler.
+    private func openViaWorkspace(url: URL, appURL: URL, bundleId: String) {
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.activates = true
-        
-        // Defensive check: Use completion handler to catch async errors
-        var openError: Error?
-        let semaphore = DispatchSemaphore(value: 0)
-        
         NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: configuration) { _, error in
-            openError = error
-            semaphore.signal()
-        }
-        
-        // Wait for open operation (with timeout)
-        _ = semaphore.wait(timeout: .now() + 5.0)
-        
-        if let error = openError {
-            throw BrowserError.openFailed(bundleId: bundleId, underlying: error)
-        }
-        
-        debugLog("✅ Opened \(url.absoluteString) in \(bundleId)")
-    }
-
-    /// Opens URL in private/incognito mode for supported browsers
-    /// Throws BrowserError if operation fails
-    private func safeOpenURLInPrivateMode(_ url: URL, inBrowser bundleId: String) throws {
-        // Defensive check: Verify browser is installed
-        guard let appURL = safeURLForApplication(withBundleIdentifier: bundleId) else {
-            throw BrowserError.notInstalled(bundleId: bundleId)
-        }
-
-        // Get private mode arguments for this browser
-        let privateArgs = getPrivateModeArguments(for: bundleId)
-
-        if privateArgs.isEmpty {
-            // Browser doesn't support command-line private mode
-            // Fall back to normal opening
-            debugLog("⚠️ Private mode not supported for \(bundleId), opening normally")
-            try safeOpenURL(url, inBrowser: bundleId)
-            return
-        }
-
-        // Build command to open browser with private mode flags
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        process.arguments = ["-a", appURL.path] + privateArgs + [url.absoluteString]
-
-        do {
-            try process.run()
-            process.waitUntilExit()
-
-            if process.terminationStatus == 0 {
-                debugLog("✅ Opened \(url.absoluteString) in \(bundleId) (private mode)")
-            } else {
-                throw BrowserError.openFailed(bundleId: bundleId, underlying: NSError(domain: "ProcessError", code: Int(process.terminationStatus)))
+            guard let error else { return }
+            DispatchQueue.main.async {
+                debugLog("⚠️ openViaWorkspace failed for \(bundleId): \(error.localizedDescription)")
+                ErrorNotifier.shared.notifyWarning("Browser Error", message: error.localizedDescription)
             }
-        } catch {
-            throw BrowserError.openFailed(bundleId: bundleId, underlying: error)
         }
     }
 
-    /// Returns command-line arguments for opening browser in private mode
-    private func getPrivateModeArguments(for bundleId: String) -> [String] {
-        switch bundleId {
-        case BundleIdentifiers.chrome:
-            return ["--args", "--incognito"]
-        case BundleIdentifiers.firefox:
-            return ["--args", "-private-window"]
-        case BundleIdentifiers.edge:
-            return ["--args", "-inprivate"]
-        case BundleIdentifiers.brave:
-            return ["--args", "--incognito"]
-        case BundleIdentifiers.opera:
-            return ["--args", "--private"]
-        case BundleIdentifiers.vivaldi:
-            return ["--args", "--incognito"]
-        case BundleIdentifiers.safari:
-            // Safari requires AppleScript for private mode, not supported via command-line
-            return []
-        case BundleIdentifiers.arc:
-            // Arc doesn't have command-line private mode support
-            return []
-        default:
-            // Unknown browser - try generic Chromium incognito flag
-            return ["--args", "--incognito"]
+    /// Runs an executable on a background thread so `waitUntilExit()` never
+    /// blocks the main actor. Errors are reported asynchronously via
+    /// `ErrorNotifier` on the main queue.
+    private func runProcessAsync(_ executablePath: String, arguments: [String], bundleId: String) {
+        Task.detached(priority: .userInitiated) {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: executablePath)
+            process.arguments = arguments
+            do {
+                try process.run()
+            } catch {
+                await MainActor.run {
+                    debugLog("⚠️ \(BrowserError.openFailed(bundleId: bundleId, underlying: error).localizedDescription)")
+                    ErrorNotifier.shared.notifyWarning("Browser Error", message: error.localizedDescription)
+                }
+                return
+            }
+            process.waitUntilExit()
+            if process.terminationStatus != 0 {
+                let launchError = BrowserError.openFailed(
+                    bundleId: bundleId,
+                    underlying: NSError(domain: "ProcessError", code: Int(process.terminationStatus))
+                )
+                await MainActor.run {
+                    debugLog("⚠️ \(launchError.localizedDescription)")
+                    ErrorNotifier.shared.notifyWarning("Browser Error", message: launchError.localizedDescription)
+                }
+            }
         }
     }
 
-    /// Safe wrapper for getting application URL by bundle ID
+    /// Safe wrapper for getting application URL by bundle ID (or profile browser ID).
+    /// Strips any profile suffix before the NSWorkspace lookup.
     /// Returns nil if app is not found or not accessible
-    private func safeURLForApplication(withBundleIdentifier bundleId: String) -> URL? {
+    private func safeURLForApplication(withBundleIdentifier browserId: String) -> URL? {
+        let bundleId = browserId.components(separatedBy: Browser.profileSeparator).first ?? browserId
         guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) else {
             return nil
         }
@@ -479,38 +527,62 @@ class BrowserManager: ObservableObject {
     
     // MARK: - Default Browser Management
     
+    /// UTIs for local HTML document types registered in Info.plist
+    private static let htmlContentTypes: [String] = ["public.html", "public.xhtml"]
+
     /// Check if DefaultTamer is currently set as the default browser for HTTP/HTTPS
     func isDefaultBrowser() -> Bool {
         guard let bundleId = Bundle.main.bundleIdentifier else { return false }
-        
+
         // Check http handler
         if let httpHandler = LSCopyDefaultHandlerForURLScheme("http" as CFString)?.takeRetainedValue() as String? {
             if httpHandler == bundleId {
                 return true
             }
         }
-        
+
         // Check https handler
         if let httpsHandler = LSCopyDefaultHandlerForURLScheme("https" as CFString)?.takeRetainedValue() as String? {
             if httpsHandler == bundleId {
                 return true
             }
         }
-        
+
         return false
     }
-    
+
     /// Request to set DefaultTamer as the default browser for HTTP/HTTPS
+    /// and as the default viewer for HTML document types.
     func requestSetAsDefault() -> Bool {
         guard let bundleId = Bundle.main.bundleIdentifier else { return false }
-        
-        // Set as default for http
-        LSSetDefaultHandlerForURLScheme("http" as CFString, bundleId as CFString)
-        
-        // Set as default for https
-        LSSetDefaultHandlerForURLScheme("https" as CFString, bundleId as CFString)
-        
-        debugLog("✅ Set DefaultTamer as default browser for http/https")
+        let cfBundleId = bundleId as CFString
+
+        // Set as default for http/https URL schemes
+        LSSetDefaultHandlerForURLScheme("http" as CFString, cfBundleId)
+        LSSetDefaultHandlerForURLScheme("https" as CFString, cfBundleId)
+
+        // Set as default viewer for HTML document UTIs so Finder double-clicks
+        // are routed through the kAEOpenDocuments Apple Event handler.
+        for uti in Self.htmlContentTypes {
+            LSSetDefaultRoleHandlerForContentType(uti as CFString, .viewer, cfBundleId)
+        }
+
+        debugLog("✅ Set DefaultTamer as default handler for http/https + HTML document types")
         return true
+    }
+
+    /// Check and, if needed, claim the HTML document handler role.
+    /// Called on launch after the user has set Default Tamer as default browser,
+    /// to ensure Finder double-clicks are also routed here.
+    func claimHTMLDocumentHandlerIfNeeded() {
+        guard let bundleId = Bundle.main.bundleIdentifier else { return }
+        let cfBundleId = bundleId as CFString
+        for uti in Self.htmlContentTypes {
+            let current = LSCopyDefaultRoleHandlerForContentType(uti as CFString, .viewer)?.takeRetainedValue() as String?
+            if current != bundleId {
+                LSSetDefaultRoleHandlerForContentType(uti as CFString, .viewer, cfBundleId)
+                debugLog("✅ Claimed HTML document handler for \(uti) (was: \(current ?? "nil"))")
+            }
+        }
     }
 }
