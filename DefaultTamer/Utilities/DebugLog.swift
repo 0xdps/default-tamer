@@ -20,5 +20,5 @@ private let debugLogger = Logger(subsystem: "com.defaulttamer.app", category: "d
 /// Logs a debug-level message through the unified logging system.
 /// Visible in Console.app (subsystem: com.defaulttamer.app) in all builds.
 func debugLog(_ message: String) {
-    debugLogger.debug("\(message, privacy: .public)")
+    debugLogger.debug("\(message, privacy: .private)")
 }

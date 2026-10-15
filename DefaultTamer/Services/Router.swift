@@ -46,8 +46,7 @@ class Router {
         modifierFlags: NSEvent.ModifierFlags?
     ) -> RouteAction {
         
-        appLogger.info("🔀 Routing URL: \(url.absoluteString, privacy: .public)")
-        appLogger.info("🔀 Source App: \(sourceApp ?? "nil", privacy: .public)")
+        appLogger.info("🔀 Routing \(url.scheme ?? "unknown", privacy: .public) URL for \(sourceApp ?? "unknown source", privacy: .private)")
         appLogger.info("🔀 Enabled Rules: \(rules.filter { $0.enabled }.count, privacy: .public)/\(rules.count, privacy: .public)")
         
         // Check if app is disabled

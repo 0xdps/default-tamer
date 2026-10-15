@@ -73,7 +73,9 @@ git push origin v0.0.8
 | `APPLE_ID_USER` | Apple ID email for notarization |
 | `APPLE_ID_TEAM` | Apple Developer Team ID for notarization |
 | `APPLE_ID_PASSWORD` | App-specific password for notarization |
-| `SCRIPTS_DEPLOY_TOKEN` | GitHub token with read access to the private scripts submodule |
+| `SCRIPTS_DEPLOY_TOKEN` | GitHub token with read access to both private submodules (`default-tamer-scripts` and `default-tamer-web`) |
+| `SPARKLE_PRIVATE_KEY` | Base64-encoded Sparkle EdDSA private key from `generate_keys` |
+| `WEB_REPO_TOKEN` | Fine-grained GitHub token with contents write access to `0xdps/default-tamer-web` |
 
 
 ## Adding Tests

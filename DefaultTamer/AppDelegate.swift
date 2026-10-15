@@ -98,7 +98,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             ToastManager.shared.warning("\(disabledCount) \(noun) disabled — target browser not installed", duration: 6.0)
         }
 
-        // Show first run if needed
+        // Show first run if needed. Launch analytics wait until the user has answered.
         if appState.showFirstRun {
             DispatchQueue.main.async {
                 self.showFirstRunWindow()
@@ -106,6 +106,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         } else {
             // Existing users get the Day 0 consent prompt
             checkAndPromptTelemetryConsent()
+            if appState.settings.telemetryEnabled == true {
+                appState.trackAppUpdated()
+                appState.trackAppLaunch()
+            }
         }
 
         // Validate stored license in the background (refreshes plan status from server)
@@ -126,9 +130,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             }
         }
 
-        // Track app launch & updates (AppState handles debouncing internal to these calls)
-        appState.trackAppUpdated()
-        appState.trackAppLaunch()
     }
 
     // MARK: - Helpers
@@ -335,17 +336,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         let diagnosticsEnabled = appState.settings.diagnosticsEnabled
 
         if diagnosticsEnabled {
-            appLogger.info("📥 Received URL: \(url.absoluteString, privacy: .public)")
+            appLogger.info("📥 Received URL: \(URLSanitizer.sanitize(url), privacy: .private)")
         }
 
-        // Route `defaulttamer://activate?token=...&did=...` deep-links — issued by /upgrade
+        // Route `defaulttamer://activate?code=...&did=...` deep links issued by /upgrade.
+        // A bearer token in the URL is ignored so a web page cannot overwrite the Keychain.
         if url.scheme == "defaulttamer", url.host == "activate" {
             let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-            let token     = components?.queryItems?.first(where: { $0.name == "token" })?.value ?? ""
+            let code = components?.queryItems?.first(where: { $0.name == "code" })?.value ?? ""
+            let legacyToken = components?.queryItems?.first(where: { $0.name == "token" })?.value ?? ""
             let isUpgraded = components?.queryItems?.contains(where: { $0.name == "upgraded" && $0.value == "true" }) ?? false
-            let did        = components?.queryItems?.first(where: { $0.name == "did" })?.value
-            if !token.isEmpty {
-                LicensingManager.shared.handleActivation(token: token, isPaymentCallback: isUpgraded, confirmedDeviceId: did)
+            let did = components?.queryItems?.first(where: { $0.name == "did" })?.value
+            if !code.isEmpty {
+                LicensingManager.shared.handleActivationCode(code: code, isPaymentCallback: isUpgraded, confirmedDeviceId: did)
+            } else if !legacyToken.isEmpty {
+                appLogger.error("Rejected activation URL containing a bearer token")
             }
             return
         }

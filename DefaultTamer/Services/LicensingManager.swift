@@ -10,10 +10,10 @@
 //
 //  Flow:
 //  1. User taps "Get Power Plan" / "I already have Power" → opens /upgrade in browser
-//  2. Website handles OAuth (Google) and issues a 1-year appToken JWT
-//  3. Website fires defaulttamer://activate?token=<appToken>[&upgraded=true]
-//  4. App stores appToken in Keychain, calls GET /api/subscription
-//  5. If plan is active: calls POST /api/seats/activate with device metadata
+//  2. Website handles OAuth (Google) and issues a one-time activation code
+//  3. Website fires defaulttamer://activate?code=<code>[&upgraded=true]
+//  4. App confirms the account, exchanges the code, then stores the app token
+//  5. App calls GET /api/subscription and POST /api/seats/activate
 //  6. validateOnLaunch() / validateOnForeground() re-checks silently
 //
 
@@ -70,6 +70,9 @@ final class LicensingManager: ObservableObject {
     private let appTokenKey       = "appToken"
     private let userIdKey         = "userId"
     private let cachedStatusKey   = "cachedLicenseStatus"
+    private let cachedStatusAtKey = "cachedLicenseStatusAt"
+    /// Paid features survive a failed re-check only inside this window.
+    private let offlineGraceInterval: TimeInterval = 7 * 24 * 60 * 60
     private var lastValidated: Date?
 
     private let defaults = UserDefaults.standard
@@ -89,18 +92,31 @@ final class LicensingManager: ObservableObject {
     private func restoreCachedStatus() {
         guard let data = defaults.data(forKey: cachedStatusKey),
               let cached = try? JSONDecoder().decode(LicenseStatus.self, from: data) else { return }
+        if cached.plan.isPaid && !isCachedLicenseUsable(cached) { return }
         status = cached
         appLogger.info("Restored cached license status: \(cached.plan.displayName, privacy: .public)")
+    }
+
+    /// A paid cache is usable only when it has a timestamp inside the grace window
+    /// and its server-supplied expiry has not passed. Older caches had no timestamp
+    /// and cannot keep paid features unlocked.
+    private func isCachedLicenseUsable(_ cached: LicenseStatus) -> Bool {
+        guard let cachedAt = defaults.object(forKey: cachedStatusAtKey) as? Date,
+              Date().timeIntervalSince(cachedAt) <= offlineGraceInterval else { return false }
+        if let validUntil = cached.validUntil, validUntil < Date() { return false }
+        return true
     }
 
     /// Persists the current license status to UserDefaults for offline recovery.
     private func cacheStatus(_ newStatus: LicenseStatus?) {
         guard let newStatus else {
             defaults.removeObject(forKey: cachedStatusKey)
+            defaults.removeObject(forKey: cachedStatusAtKey)
             return
         }
         if let data = try? JSONEncoder().encode(newStatus) {
             defaults.set(data, forKey: cachedStatusKey)
+            defaults.set(Date(), forKey: cachedStatusAtKey)
         }
     }
 
@@ -192,27 +208,96 @@ final class LicensingManager: ObservableObject {
         }
     }
 
-    /// Handles the activation deep link from the website.
+    /// Handles `defaulttamer://activate?code=…`.
     ///
-    /// Stores the app JWT in Keychain, then validates the subscription. When
-    /// `isPaymentCallback` is true, uses a retry loop to tolerate Stripe webhook
-    /// processing delays (up to 5 attempts with 3-second delays).
-    ///
-    /// The optional `confirmedDeviceId` is the install UUID echoed back by the
-    /// web page; if present and mismatched, we log a warning but proceed anyway
-    /// using our own `PersistenceManager.installID` for the actual API call.
-    func handleActivation(token: String, isPaymentCallback: Bool, confirmedDeviceId: String? = nil) {
-        Keychain.save(key: appTokenKey, value: token)
-        if let did = confirmedDeviceId, !did.isEmpty, did != PersistenceManager.shared.installID {
-            appLogger.warning("⚠️ activate deep link did=\(did, privacy: .public) does not match local installID — ignoring mismatch")
+    /// The code is previewed, confirmed by the user, and only then exchanged.
+    /// A mismatched device id is rejected. The returned app token is stored
+    /// only after that exchange succeeds.
+    func handleActivationCode(code: String, isPaymentCallback: Bool, confirmedDeviceId: String? = nil) {
+        let installID = PersistenceManager.shared.installID
+        if let did = confirmedDeviceId, !did.isEmpty, did != installID {
+            presentActivationAlert(
+                title: "This activation link is for a different Mac",
+                message: "Start activation again from Default Tamer on this Mac."
+            )
+            return
         }
+
         Task {
+            guard let preview = await requestActivation(code: code, deviceId: installID, redeem: false),
+                  let accountLabel = preview.accountLabel else {
+                presentActivationAlert(
+                    title: "Activation link expired",
+                    message: "Return to the upgrade page and try again."
+                )
+                return
+            }
+
+            guard confirmActivation(accountLabel: accountLabel) else { return }
+
+            guard let redeemed = await requestActivation(code: code, deviceId: installID, redeem: true),
+                  let token = redeemed.appToken, !token.isEmpty else {
+                presentActivationAlert(
+                    title: "Could not activate this Mac",
+                    message: "The activation link was already used or has expired."
+                )
+                return
+            }
+
+            Keychain.save(key: appTokenKey, value: token)
             if isPaymentCallback {
                 await checkSubscriptionWithRetry(appToken: token)
             } else {
                 await checkSubscription(appToken: token)
             }
         }
+    }
+
+    private struct ActivationExchangeResponse: Decodable {
+        let accountLabel: String?
+        let appToken: String?
+    }
+
+    private func requestActivation(code: String, deviceId: String, redeem: Bool) async -> ActivationExchangeResponse? {
+        var request = URLRequest(url: SeatAPIConstants.activationExchangeURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 20
+        request.httpBody = try? JSONSerialization.data(withJSONObject: [
+            "code": code,
+            "device_id": deviceId,
+            "redeem": redeem,
+        ])
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { return nil }
+            return try JSONDecoder().decode(ActivationExchangeResponse.self, from: data)
+        } catch {
+            appLogger.error("Activation exchange failed: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
+    }
+
+    private func confirmActivation(accountLabel: String) -> Bool {
+        let alert = NSAlert()
+        alert.messageText = "Activate Power on this Mac?"
+        alert.informativeText = "This signs this Mac in as \(accountLabel)."
+        alert.addButton(withTitle: "Activate")
+        alert.addButton(withTitle: "Cancel")
+        alert.alertStyle = .informational
+        NSApp.activate(ignoringOtherApps: true)
+        return alert.runModal() == .alertFirstButtonReturn
+    }
+
+    private func presentActivationAlert(title: String, message: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.addButton(withTitle: "OK")
+        alert.alertStyle = .warning
+        NSApp.activate(ignoringOtherApps: true)
+        alert.runModal()
     }
 
     /// Opens `/upgrade` in a browser so the user can sign in and activate an existing Power plan.
@@ -338,7 +423,7 @@ final class LicensingManager: ObservableObject {
                 }
                 let allFeatures = LicenseFeature.allCases.map(\.rawValue)
                 let newStatus = LicenseStatus(
-                    licenseId: appToken,
+                    licenseId: "",
                     plan: plan,
                     features: allFeatures,
                     validUntil: validUntil
@@ -368,9 +453,12 @@ final class LicensingManager: ObservableObject {
             lastValidated = Date()
         } catch {
             appLogger.error("Subscription check failed: \(error.localizedDescription, privacy: .public)")
-            // If we have no status at all (never validated), mark server as unreachable
-            // so the UI can show a meaningful message instead of flashing "not signed in".
-            if status == nil {
+            if let current = status, current.plan.isPaid, !isCachedLicenseUsable(current) {
+                let freeStatus = LicenseStatus(licenseId: "", plan: .free, features: [], validUntil: nil)
+                status = freeStatus
+                cacheStatus(freeStatus)
+                seatManager.markServerUnreachable()
+            } else if status == nil {
                 seatManager.markServerUnreachable()
             }
         }
