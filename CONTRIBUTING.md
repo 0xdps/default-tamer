@@ -49,7 +49,7 @@ Be respectful, inclusive, and constructive in all interactions.
 
 ### Prerequisites
 
-- macOS 13.0 or later
+- macOS 15.0 or later
 - Xcode 14.0 or later
 - [`just`](https://github.com/casey/just): `brew install just`
 
@@ -118,4 +118,4 @@ Before submitting a PR:
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+By contributing, you agree that your contributions will be licensed under the Elastic License 2.0.

@@ -33,8 +33,7 @@
 
 <!-- Describe how you tested these changes -->
 
-- [ ] Tested on macOS 13.x
-- [ ] Tested on macOS 14.x
+- [ ] Tested on macOS 15.x
 - [ ] Tested with multiple browsers
 - [ ] Tested source app routing (Slack, Cursor)
 - [ ] Tested domain rules

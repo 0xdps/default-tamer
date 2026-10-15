@@ -40,9 +40,6 @@ class ErrorHandler {
         // Log the error
         logError(error, context: context, severity: .critical)
         
-        // Record in diagnostic database if available
-        recordInDatabase(error, context: context)
-        
         // Always notify user for critical errors
         showSystemNotification(for: appError ?? error)
     }
@@ -130,15 +127,6 @@ class ErrorHandler {
             }
         } else {
             ErrorNotifier.shared.notifyError("Error", message: error.localizedDescription)
-        }
-    }
-    
-    private func recordInDatabase(_ error: Error, context: String) {
-        // Only record if diagnostics is enabled
-        // ActivityDatabase will handle this
-        Task {
-            // Future: Add error logging to database
-            // ActivityDatabase.shared.logError(error: error, context: context)
         }
     }
 }

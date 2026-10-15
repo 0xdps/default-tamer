@@ -11,6 +11,7 @@ import Sparkle
 struct PreferencesWindow: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var updateManager: UpdateManager
+    @EnvironmentObject var licensing: LicensingManager
     @State private var selectedTab: PreferenceTab = .general
     @StateObject private var toastManager = ToastManager.shared
     
@@ -24,6 +25,8 @@ struct PreferencesWindow: View {
             return "Default Tamer / Activity"
         case .about:
             return "Default Tamer / About"
+        case .power:
+            return "Default Tamer / Power Plan"
         }
     }
     
@@ -39,6 +42,7 @@ struct PreferencesWindow: View {
                 case .general:
                     GeneralTab()
                         .environmentObject(appState)
+                        .environmentObject(licensing)
                 case .rules:
                     RulesTab()
                         .environmentObject(appState)
@@ -49,6 +53,10 @@ struct PreferencesWindow: View {
                     AboutTab()
                         .environmentObject(appState)
                         .environmentObject(updateManager)
+                case .power:
+                    LicensingTab()
+                        .environmentObject(appState)
+                        .environmentObject(licensing)
                 }
             }
         }
@@ -71,15 +79,12 @@ struct PreferencesWindow: View {
                 .keyboardShortcut("2", modifiers: .command)
                 .help("Manage routing rules")
                 
-                // Only show Activity tab when diagnostics is enabled
-                if appState.settings.diagnosticsEnabled {
-                    Button(action: { selectedTab = .activity }) {
-                        Label("Activity", systemImage: "clock.arrow.circlepath")
-                            .foregroundColor(selectedTab == .activity ? .accentColor : .primary)
-                    }
-                    .keyboardShortcut("3", modifiers: .command)
-                    .help("View routing activity logs")
+                Button(action: { selectedTab = .activity }) {
+                    Label("Activity", systemImage: "list.bullet.rectangle")
+                        .foregroundColor(selectedTab == .activity ? .accentColor : .primary)
                 }
+                .keyboardShortcut("3", modifiers: .command)
+                .help("View routing activity logs")
                 
                 Button(action: { selectedTab = .about }) {
                     Label("About", systemImage: "info.circle")
@@ -87,6 +92,21 @@ struct PreferencesWindow: View {
                 }
                 .keyboardShortcut("4", modifiers: .command)
                 .help("About Default Tamer")
+
+                Button(action: { selectedTab = .power }) {
+                    ZStack(alignment: .topTrailing) {
+                        Label("Power", systemImage: "bolt.fill")
+                            .foregroundColor(selectedTab == .power ? .orange : .primary)
+                        if !licensing.hasPowerPlan && !licensing.isValidating {
+                            Circle()
+                                .fill(Color.orange)
+                                .frame(width: 7, height: 7)
+                                .offset(x: 3, y: -3)
+                        }
+                    }
+                }
+                .keyboardShortcut("5", modifiers: .command)
+                .help("Manage your Power plan license")
             }
         }
         .toastOverlay(manager: toastManager)
@@ -112,12 +132,7 @@ struct PreferencesWindow: View {
                 appState.pendingTabSelection = nil
             }
         }
-        .onChange(of: appState.settings.diagnosticsEnabled) { isEnabled in
-            // If diagnostics is disabled while on Activity tab, switch to General
-            if !isEnabled && selectedTab == .activity {
-                selectedTab = .general
-            }
-        }
+
     }
 }
 
@@ -126,12 +141,14 @@ enum PreferenceTab: Int {
     case rules = 1
     case activity = 2
     case about = 3
+    case power = 4
 }
 
 // MARK: - General Tab
 
 struct GeneralTab: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var licensing: LicensingManager
     @State private var showResetConfirmation = false
     
     var body: some View {
@@ -171,7 +188,11 @@ struct GeneralTab: View {
                         get: { appState.settings.fallbackBrowserId },
                         set: { appState.setFallbackBrowser($0) }
                     )) {
-                        ForEach(appState.browserManager.availableBrowsers) { browser in
+                        // Locked profile entries are excluded from the picker — .disabled()
+                        // on Picker items is cosmetic only and doesn't prevent selection.
+                        ForEach(appState.browserManager.availableBrowsers.filter {
+                            $0.profileDirectory == nil || licensing.isEnabled(.chromeProfiles)
+                        }) { browser in
                             Label {
                                 Text(browser.displayName)
                             } icon: {
@@ -201,6 +222,25 @@ struct GeneralTab: View {
                     .disabled(appState.browserManager.isRefreshingBrowsers)
                     .help("Refresh browser list")
                 }
+
+                // Informational row so free users discover the Chrome Profiles feature.
+                if !licensing.isEnabled(.chromeProfiles) &&
+                    appState.browserManager.availableBrowsers.contains(where: { $0.profileDirectory != nil }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "person.2.fill")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Browser profiles")
+                                .foregroundColor(.secondary)
+                            Text("Upgrade to Power to set a specific Chrome, Edge, or Brave profile as fallback.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        PlusFeatureBadge()
+                    }
+                }
             } header: {
                 Text("Default Browser")
                     .font(.headline)
@@ -209,15 +249,6 @@ struct GeneralTab: View {
             // Diagnostics and User Feedback
 
             Section {
-                Toggle(isOn: Binding(
-                    get: { appState.settings.telemetryEnabled == true },
-                    set: { appState.setTelemetryEnabled($0) }
-                )) {
-                    Text("Share anonymous usage stats") + Text(" (recommended)").foregroundColor(.secondary)
-                }
-                
-                TelemetryConsentDescription()
-                
                 Toggle(isOn: Binding(
                     get: { appState.settings.diagnosticsEnabled },
                     set: { _ in appState.toggleDiagnostics() }
@@ -229,6 +260,15 @@ struct GeneralTab: View {
                             .foregroundColor(.secondary)
                     }
                 }
+
+                Toggle(isOn: Binding(
+                    get: { appState.settings.telemetryEnabled == true },
+                    set: { appState.setTelemetryEnabled($0) }
+                )) {
+                    Text("Share anonymous usage stats") + Text(" (recommended)").foregroundColor(.secondary)
+                }
+                
+                TelemetryConsentDescription()
 
             } header: {
                 Text("Diagnostics")
@@ -328,12 +368,9 @@ struct RulesTab: View {
                 
                 // Rules list
                 if appState.rules.isEmpty {
-                    VStack(spacing: 8) {
-                        Image(systemName: "list.bullet.rectangle")
-                            .font(.largeTitle)
-                            .foregroundColor(.secondary)
-                        Text("No rules")
-                            .font(.caption)
+                    VStack(spacing: 12) {
+                        Text("No rules yet")
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -370,7 +407,7 @@ struct RulesTab: View {
                 RuleDetailView(rule: rule)
                     .environmentObject(appState)
             } else {
-                EmptyRuleDetail()
+                EmptyRuleDetail(onAddRule: { showAddRule = true })
             }
         }
         .sheet(isPresented: $showAddRule) {
@@ -1050,6 +1087,7 @@ struct AboutTab: View {
     @EnvironmentObject var updateManager: UpdateManager
     @StateObject private var checkForUpdatesViewModel = CheckForUpdatesViewModel()
     @State private var isIconHovered = false
+    @State private var showFeedback = false
     
     var body: some View {
         VStack(spacing: 20) {
@@ -1115,39 +1153,40 @@ struct AboutTab: View {
             Spacer()
             
             // Centered links
-            VStack(spacing: 12) {
+            VStack(spacing: 10) {
+                // Row 1
                 HStack(spacing: 16) {
                     Spacer()
-                    
                     Link(destination: URL(string: ExternalLinks.github)!) {
                         Label("View on GitHub", systemImage: "link")
                     }
-                    
-                    Divider()
-                        .frame(height: 20)
-                    
+                    Divider().frame(height: 20)
                     Link(destination: URL(string: ExternalLinks.issues)!) {
                         Label("Report an Issue", systemImage: "exclamationmark.bubble")
                     }
-                    
-                    Divider()
-                        .frame(height: 20)
-                    
+                    Divider().frame(height: 20)
                     Link(destination: URL(string: ExternalLinks.buyMeACoffee)!) {
                         Label("Buy Me a Coffee", systemImage: "cup.and.saucer.fill")
                     }
                     .foregroundColor(.orange)
-
-                    Divider()
-                        .frame(height: 20)
-
+                    Spacer()
+                }
+                // Row 2
+                HStack(spacing: 16) {
+                    Spacer()
                     Link(destination: URL(string: ExternalLinks.privacy)!) {
                         Label("Privacy Policy", systemImage: "hand.raised")
                     }
-                    
+                    Divider().frame(height: 20)
+                    Button {
+                        showFeedback = true
+                    } label: {
+                        Label("Send Feedback", systemImage: "bubble.left.and.bubble.right")
+                    }
+                    .buttonStyle(.plain)
                     Spacer()
                 }
-                
+
                 Text("© 2026 Default Tamer")
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -1155,6 +1194,9 @@ struct AboutTab: View {
         }
         .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .sheet(isPresented: $showFeedback) {
+            FeedbackView(isPresented: $showFeedback)
+        }
         .onAppear {
             checkForUpdatesViewModel.updater = updateManager.updater
         }

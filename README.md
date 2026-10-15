@@ -1,8 +1,8 @@
 # Default Tamer
 
 [![Latest Release](https://img.shields.io/github/v/release/0xdps/default-tamer?color=orange&label=Download)](https://github.com/0xdps/default-tamer/releases/latest)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![macOS](https://img.shields.io/badge/macOS-13.0+-blue.svg)](https://www.apple.com/macos/)
+[![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic--2.0-blue.svg)](https://www.elastic.co/licensing/elastic-license)
+[![macOS](https://img.shields.io/badge/macOS-15.0+-blue.svg)](https://www.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-5.9-orange.svg)](https://swift.org)
 
 > A macOS menu bar utility that intelligently routes URLs to the correct browser based on source app and URL rules.
@@ -62,4 +62,4 @@ Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for guideli
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Elastic License 2.0 — see [LICENSE](LICENSE).

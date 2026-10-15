@@ -1,1 +1,1 @@
-private/justfile
+DefaultTamerScript/justfile

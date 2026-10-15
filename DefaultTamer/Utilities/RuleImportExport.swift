@@ -96,6 +96,8 @@ class RuleImportExport {
                 pattern = rule.urlContains ?? rule.urlRegex ?? ""
             case .sourceApp:
                 pattern = rule.sourceAppName ?? rule.sourceAppBundleId ?? ""
+            case .shortcut:
+                pattern = ShortcutFormatter.format(keyCode: rule.shortcutKeyCode, modifiers: rule.shortcutModifiers)
             }
             
             let targetBrowser = rule.targetBrowserId
@@ -233,6 +235,8 @@ class RuleImportExport {
             } else {
                 rule.sourceAppName = pattern
             }
+        case .shortcut:
+            break  // shortcut rules are not representable in CSV; skip
         }
         
         return rule
@@ -294,6 +298,8 @@ class RuleImportExport {
                                existing.urlRegex == importedRule.urlRegex
                     case .sourceApp:
                         return existing.sourceAppBundleId == importedRule.sourceAppBundleId
+                    case .shortcut:
+                        return existing.shortcutModifiers == importedRule.shortcutModifiers
                     }
                 }
                 

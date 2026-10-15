@@ -9,32 +9,39 @@ import Foundation
 
 class PersistenceManager {
     static let shared = PersistenceManager()
-    
+
     private let defaults: UserDefaults
     private let schemaVersion = 1
-    
+    private let customSetupCompleteURL: URL?
+
     // Keys
     private let settingsKey = "defaultTamer.settings"
     private let rulesKey = "defaultTamer.rules"
     private let schemaVersionKey = "defaultTamer.schemaVersion"
-    
+
     private let settingsBackupKey = "defaultTamer.settings.backup"
     private let rulesBackupKey = "defaultTamer.rules.backup"
     private let installIdKey = "defaultTamer.install_id"
     private let lastVersionKey = "defaultTamer.lastVersion"
     private let lastLaunchDateKey = "defaultTamer.lastLaunchDate"
-    
+
     // File-based first-run sentinel (survives app updates, resets on full uninstall)
     private var setupCompleteURL: URL {
+        if let custom = customSetupCompleteURL { return custom }
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         let dir = appSupport.appendingPathComponent("DefaultTamer", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent(".setup_complete")
     }
-    
-    init(userDefaults: UserDefaults = .standard) {
+
+    init(userDefaults: UserDefaults = .standard, setupCompleteURL: URL? = nil) {
         self.defaults = userDefaults
+        self.customSetupCompleteURL = setupCompleteURL
         migrateIfNeeded()
+        // Migrate rules from UserDefaults to SQLite if needed
+        Task { @MainActor in
+            RuleStore.shared.migrateFromUserDefaultsIfNeeded(userDefaults: userDefaults, rulesKey: "defaultTamer.rules")
+        }
     }
     
     private convenience init() {
@@ -114,14 +121,18 @@ class PersistenceManager {
     }
     
     // MARK: - Rules
-    
+
     func saveRules(_ rules: [Rule]) {
-        // Backup current rules before overwriting
+        // Save to SQLite (primary storage for large rule sets)
+        Task { @MainActor in
+            RuleStore.shared.saveAllRules(rules)
+        }
+
+        // Also keep UserDefaults as a backup and for test isolation
         if let currentData = defaults.data(forKey: rulesKey) {
             defaults.set(currentData, forKey: rulesBackupKey)
         }
-        
-        // Save new rules
+
         do {
             let encoded = try JSONEncoder().encode(rules)
             defaults.set(encoded, forKey: rulesKey)
@@ -136,37 +147,42 @@ class PersistenceManager {
             }
         }
     }
-    
+
     func loadRules() -> [Rule] {
-        // No data written yet — first run or clean install, silently use defaults
+        // Try UserDefaults first (preserves test isolation with custom UserDefaults)
         guard defaults.data(forKey: rulesKey) != nil || defaults.data(forKey: rulesBackupKey) != nil else {
-            return []
+            // No UserDefaults data — try SQLite (post-migration storage)
+            let sqliteRules = MainActor.assumeIsolated { RuleStore.shared.loadAllRules() }
+            return sqliteRules
         }
 
-        // Try to load current rules
+        // Try to load current rules from UserDefaults
         if let rules = loadRulesFromKey(rulesKey) {
+            // Migrate to SQLite for future loads
+            Task { @MainActor in
+                RuleStore.shared.saveAllRules(rules)
+            }
             return rules
         }
-        
+
         // Current rules corrupt, try backup
         debugLog("⚠️ Rules corrupted, attempting recovery from backup...")
         if let rules = loadRulesFromKey(rulesBackupKey) {
             debugLog("✅ Rules recovered from backup")
-            // Restore backup to main key
             saveRules(rules)
-            
+
             let error = AppError.dataCorruption(dataType: "Routing Rules", recovered: true)
             Task { @MainActor in
                 ErrorHandler.shared.handle(error, context: "Load Rules", showToast: true)
             }
             return rules
         }
-        
+
         // Both corrupt, try partial recovery
         if let partialRules = attemptPartialRulesRecovery() {
             debugLog("✅ Partially recovered \(partialRules.count) rules")
             saveRules(partialRules)
-            
+
             let error = AppError.dataCorruption(dataType: "Routing Rules", recovered: true)
             Task { @MainActor in
                 ErrorHandler.shared.handle(error, context: "Partial Rules Recovery", showToast: true)
@@ -174,7 +190,7 @@ class PersistenceManager {
             }
             return partialRules
         }
-        
+
         // All recovery failed, start fresh
         debugLog("⚠️ Rules backup also corrupt, starting with empty rules")
         let error = AppError.dataCorruption(dataType: "Routing Rules", recovered: false)
