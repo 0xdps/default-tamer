@@ -1,0 +1,19 @@
+DefaultTamerTests/PersistenceManagerTests.swift
+  s_0e94a7c32c5992::t_8acd91af70411d 260,262-263
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "554a1a2b18177a23216c83c778d990ad914797c4",
+  "prompts": {},
+  "sessions": {
+    "s_0e94a7c32c5992": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7b9e5eae-b745-49c6-91eb-2e3c9fa7ac4f",
+        "model": "auto-smart"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
