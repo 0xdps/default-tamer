@@ -257,9 +257,10 @@ final class PersistenceManagerTests: XCTestCase {
         // Given: First run completed
         persistence.hasCompletedFirstRun = true
         
-        // When: Creating new persistence manager
+        // When: Creating new persistence manager against the same sentinel
         let newPersistence = PersistenceManager(
-            userDefaults: UserDefaults(suiteName: testSuiteName)!
+            userDefaults: UserDefaults(suiteName: testSuiteName)!,
+            setupCompleteURL: tempSentinelURL
         )
         
         // Then: Value should persist
