@@ -1,0 +1,26 @@
+.env.example
+  s_0e94a7c32c5992::t_d62a5afcc8488f 1-22
+DefaultTamerScript
+  s_0e94a7c32c5992::t_84d2b61869eb67 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "46b208dcaa3cf5d1cd0f34b49c008e2249025a62",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_0e94a7c32c5992": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7b9e5eae-b745-49c6-91eb-2e3c9fa7ac4f",
+        "model": "auto-smart"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
