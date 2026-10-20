@@ -1,0 +1,21 @@
+.github/workflows/release.yml
+  s_0e94a7c32c5992::t_fe74d68ee694d5 290-300
+DefaultTamerScript
+  s_0e94a7c32c5992::t_77a43fe6baac18 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "aafd1e2ded0754ed219ca411d0b483631002478d",
+  "prompts": {},
+  "sessions": {
+    "s_0e94a7c32c5992": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7b9e5eae-b745-49c6-91eb-2e3c9fa7ac4f",
+        "model": "auto-smart"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
