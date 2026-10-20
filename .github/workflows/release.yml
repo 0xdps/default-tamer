@@ -287,6 +287,17 @@ jobs:
             '{version: $version, downloadUrl: $downloadUrl, releaseDate: $releaseDate, releaseNotesUrl: $releaseNotesUrl, edSignature: $edSignature, size: $size}' \
             > /tmp/release.json
 
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/DefaultTamer-v${{ steps.version.outputs.version }}.dmg
+          body_path: /tmp/release-notes.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Push after the DMG exists. Cloudflare auto-deploys default-tamer-web trunk.
       - name: Publish website release metadata
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -328,16 +339,6 @@ jobs:
           git add DefaultTamerWeb CHANGELOG.md README.md
           git diff --staged --quiet || git commit -m "chore: update website to v${VERSION} [skip ci]"
           git push origin trunk
-
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: dist/DefaultTamer-v${{ steps.version.outputs.version }}.dmg
-          body_path: /tmp/release-notes.md
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Clean keychain
         if: always()
