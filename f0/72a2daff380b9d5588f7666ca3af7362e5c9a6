@@ -1,0 +1,22 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f072a2daff380b9d5588f7666ca3af7362e5c9a6",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_e5a1fb969fbfc6": {
+      "agent_id": {
+        "tool": "github-copilot-cli",
+        "id": "4bde3749-47bc-4939-bf44-cfe440be400a",
+        "model": "unknown"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}

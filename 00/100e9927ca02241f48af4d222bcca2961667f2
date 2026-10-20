@@ -1,0 +1,52 @@
+.github/workflows/README.md
+  s_0e94a7c32c5992::t_80a43a7ade576a 77-78
+  s_0e94a7c32c5992::t_80ab01b785f2d0 76
+DefaultTamer/Services/Router.swift
+  s_0e94a7c32c5992::t_a8287d73551029 49
+DefaultTamer/Models/Settings.swift
+  s_0e94a7c32c5992::t_746e0b016610aa 17
+  s_0e94a7c32c5992::t_ab913232e27a72 26
+DefaultTamer/Utilities/Constants.swift
+  s_0e94a7c32c5992::t_5068f8c3f915ba 116-117
+DefaultTamer/AppDelegate.swift
+  s_0e94a7c32c5992::t_f40da6fffdb957 101,109-112
+  s_0e94a7c32c5992::t_f1e8e88576c763 339,342-343,346-347,349-353
+DefaultTamer/Services/AppState.swift
+  s_0e94a7c32c5992::t_6d20ea18a7c234 265
+  s_0e94a7c32c5992::t_017f404f435282 307-308
+DefaultTamer/Utilities/DebugLog.swift
+  s_0e94a7c32c5992::t_5cc3aed46fc081 23
+DefaultTamer/Services/LicensingManager.swift
+  s_0e94a7c32c5992::t_47d792534421f5 95,100-107
+  s_0e94a7c32c5992::t_05238f396b5c81 456-461
+  s_0e94a7c32c5992::t_f88416914c290b 13-16
+  s_0e94a7c32c5992::t_4b6d61892c825d 73-75
+  s_0e94a7c32c5992::t_b073c1d9463309 108,211,213-223,225,227-247,256-301
+  s_0e94a7c32c5992::t_7d5a4451994ff0 426
+  s_0e94a7c32c5992::t_5a5bd2d404573a 114,119
+  s_0e94a7c32c5992::t_4ca38896b21415 109
+  s_0e94a7c32c5992::t_e716bd97d950d6 302
+.github/workflows/release.yml
+  s_0e94a7c32c5992::t_086675ca57567f 310-311
+  s_0e94a7c32c5992::t_5e31500e8fdb53 68
+  s_0e94a7c32c5992::t_887da9d05017a8 239-245,247-250,254,256,261-278,288-297,299-304,307,312-313,317,319-322,324-326,328,331-338
+  s_0e94a7c32c5992::t_c45d62c4d1a110 305
+  s_0e94a7c32c5992::t_fe7d2a36321e57 308-309
+  s_0e94a7c32c5992::t_11874d4505eb1b 40-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "00100e9927ca02241f48af4d222bcca2961667f2",
+  "prompts": {},
+  "sessions": {
+    "s_0e94a7c32c5992": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7b9e5eae-b745-49c6-91eb-2e3c9fa7ac4f",
+        "model": "auto-smart"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
