@@ -1,0 +1,20 @@
+.github/workflows/release.yml
+  s_0e94a7c32c5992::t_2cbf10cab1ec93 19-21,25,28-41
+  s_0e94a7c32c5992::t_01f40ad7781f06 42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4c9c20c3dd7123ad7f61121f30d363e8a068279c",
+  "prompts": {},
+  "sessions": {
+    "s_0e94a7c32c5992": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7b9e5eae-b745-49c6-91eb-2e3c9fa7ac4f",
+        "model": "auto-smart"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
