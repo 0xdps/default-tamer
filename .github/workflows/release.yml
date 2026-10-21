@@ -16,12 +16,29 @@ jobs:
       contents: write
     
     steps:
+      # The parent repo is public, so the workflow token can fetch it.
+      # SCRIPTS_DEPLOY_TOKEN is only for the private scripts repo. Using it for
+      # the parent checkout fails the whole job when that credential is rejected.
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          submodules: true
-          token: ${{ secrets.SCRIPTS_DEPLOY_TOKEN }}
+          submodules: false
           persist-credentials: false
+
+      - name: Checkout private submodules
+        env:
+          SCRIPTS_DEPLOY_TOKEN: ${{ secrets.SCRIPTS_DEPLOY_TOKEN }}
+          WEB_REPO_TOKEN: ${{ secrets.WEB_REPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SCRIPTS_DEPLOY_TOKEN}" ] || [ -z "${WEB_REPO_TOKEN}" ]; then
+            echo "::error::SCRIPTS_DEPLOY_TOKEN and WEB_REPO_TOKEN are required to fetch the private submodules."
+            exit 1
+          fi
+          git -c url."https://x-access-token:${SCRIPTS_DEPLOY_TOKEN}@github.com/0xdps/default-tamer-scripts.git".insteadOf="https://github.com/0xdps/default-tamer-scripts.git" \
+            submodule update --init -- DefaultTamerScript
+          git -c url."https://x-access-token:${WEB_REPO_TOKEN}@github.com/0xdps/default-tamer-web.git".insteadOf="https://github.com/0xdps/default-tamer-web.git" \
+            submodule update --init -- DefaultTamerWeb
 
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
