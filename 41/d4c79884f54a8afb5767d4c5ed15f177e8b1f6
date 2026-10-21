@@ -1,0 +1,63 @@
+DefaultTamer/Views/RulesWindow.swift
+  s_0e94a7c32c5992::t_695c80efbed382 189,527,529-532
+  s_0e94a7c32c5992::t_733dd8d3580273 229-230
+  s_0e94a7c32c5992::t_017043673892aa 545-546
+  s_0e94a7c32c5992::t_abc1344895b11c 559,561
+  s_0e94a7c32c5992::t_b35e2984fcc1c2 212-216,227-228
+  s_0e94a7c32c5992::t_8f0db1e3e5f4f9 543-544
+  s_0e94a7c32c5992::t_ae0bf73670d4f9 178,186-188
+  s_0e94a7c32c5992::t_d703b001e9ab91 190
+DefaultTamer/AppDelegate.swift
+  s_0e94a7c32c5992::t_b7d38dec98043c 350-351
+  s_0e94a7c32c5992::t_8b4ec66ef6b714 284-286
+DefaultTamer/Models/Rule.swift
+  s_0e94a7c32c5992::t_af4f149855ac3e 132-146,151-152
+  s_0e94a7c32c5992::t_cd22b96c1dd20a 147-150
+DefaultTamer/Services/LicensingManager.swift
+  s_0e94a7c32c5992::t_1cafbc44f0b3b2 441
+  s_0e94a7c32c5992::t_e5936affcd80aa 64-66
+  s_0e94a7c32c5992::t_c908984605c5c9 163,168-170
+  s_0e94a7c32c5992::t_9c0ab20aecdd3f 403
+  s_0e94a7c32c5992::t_d25d5a28fa4bd3 488
+  s_0e94a7c32c5992::t_c5ae4a7687781d 497
+  s_0e94a7c32c5992::t_005a1ed0c6448f 87-95,98-119,171
+  s_0e94a7c32c5992::t_b7db781ee033e8 130
+  s_0e94a7c32c5992::t_c514257078871f 470
+  s_0e94a7c32c5992::t_e719dde3ea24b7 172
+DefaultTamer/Services/AppState.swift
+  s_0e94a7c32c5992::t_6d45545b573f52 48
+  s_0e94a7c32c5992::t_a74608e95faab4 49-53
+  s_0e94a7c32c5992::t_b0293ff2e1a697 182,192
+  s_0e94a7c32c5992::t_b4e99ed3edc732 239
+  s_0e94a7c32c5992::t_6491f4f1b4bce8 222
+  s_0e94a7c32c5992::t_79abef011c0af6 209
+  s_0e94a7c32c5992::t_c23dd39de82d8b 181,183-184,191,193-194
+  s_0e94a7c32c5992::t_3c63b61d450ecd 210-211,217-221,223-228
+  s_0e94a7c32c5992::t_9484b0a91b702b 229-230
+DefaultTamerWeb
+  s_e5a1fb969fbfc6::t_fd8b408b41341d 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "41d4c79884f54a8afb5767d4c5ed15f177e8b1f6",
+  "prompts": {},
+  "sessions": {
+    "s_0e94a7c32c5992": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7b9e5eae-b745-49c6-91eb-2e3c9fa7ac4f",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    },
+    "s_e5a1fb969fbfc6": {
+      "agent_id": {
+        "tool": "github-copilot-cli",
+        "id": "4bde3749-47bc-4939-bf44-cfe440be400a",
+        "model": "unknown"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
