@@ -45,6 +45,12 @@ class AppState: ObservableObject {
         diagnosticsManager.objectWillChange
             .sink { [weak self] in self?.objectWillChange.send() }
             .store(in: &cancellables)
+
+        let licensing = LicensingManager.shared
+        licensing.onStatusChanged = { [weak self] in
+            self?.disableUnlicensedPowerRules()
+        }
+        disableUnlicensedPowerRules()
     }
     
     // MARK: - Settings Management
@@ -172,12 +178,20 @@ class AppState: ObservableObject {
     // MARK: - Rules Management
     
     func addRule(_ rule: Rule) {
+        var rule = rule
+        if rule.isBlocked(by: LicensingManager.shared) {
+            rule.enabled = false
+        }
         rules.append(rule)
         persistence.saveRules(rules)
         trackRuleCreated(type: rule.type.rawValue)
     }
 
     func updateRule(_ rule: Rule) {
+        var rule = rule
+        if rule.isBlocked(by: LicensingManager.shared) {
+            rule.enabled = false
+        }
         if let index = rules.firstIndex(where: { $0.id == rule.id }) {
             rules[index] = rule
             persistence.saveRules(rules)
@@ -192,9 +206,26 @@ class AppState: ObservableObject {
 
     func toggleRule(_ rule: Rule) {
         if let index = rules.firstIndex(where: { $0.id == rule.id }) {
+            if !rules[index].enabled && rules[index].isBlocked(by: LicensingManager.shared) {
+                return
+            }
             rules[index].enabled.toggle()
             persistence.saveRules(rules)
         }
+    }
+
+    /// Turns off rules that use a Power feature the current license does not include.
+    /// They stay off until the user turns them back on under an active Power plan.
+    func disableUnlicensedPowerRules() {
+        var updated = rules
+        var changed = false
+        for index in updated.indices where updated[index].enabled && updated[index].isBlocked(by: LicensingManager.shared) {
+            updated[index].enabled = false
+            changed = true
+        }
+        guard changed else { return }
+        rules = updated
+        persistence.saveRules(rules)
     }
 
     func moveRule(from source: IndexSet, to destination: Int) {
@@ -205,6 +236,7 @@ class AppState: ObservableObject {
     func replaceRules(_ newRules: [Rule]) {
         rules = newRules
         persistence.saveRules(rules)
+        disableUnlicensedPowerRules()
     }
 
     /// Refreshes bundle IDs for all app-based rules

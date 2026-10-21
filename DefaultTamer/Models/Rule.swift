@@ -129,6 +129,27 @@ struct Rule: Identifiable, Codable, Hashable {
         )
     }
     
+    /// Power features this rule depends on. Empty for a free rule.
+    var requiredPowerFeatures: Set<LicenseFeature> {
+        var features = Set<LicenseFeature>()
+        if type == .shortcut {
+            features.insert(.shortcutRules)
+        }
+        if openInPrivateMode {
+            features.insert(.privateBrowsing)
+        }
+        if targetBrowserId.contains(Browser.profileSeparator) {
+            features.insert(.chromeProfiles)
+        }
+        return features
+    }
+
+    /// True when this rule uses a Power feature `licensing` does not include.
+    @MainActor
+    func isBlocked(by licensing: LicensingManager) -> Bool {
+        requiredPowerFeatures.contains { !licensing.isEnabled($0) }
+    }
+
     /// Updates bundle IDs for app-based rules with dynamic resolution
     /// Returns true if bundle ID was updated
     mutating func refreshBundleId() -> Bool {

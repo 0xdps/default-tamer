@@ -61,6 +61,9 @@ final class LicensingManager: ObservableObject {
     @Published private(set) var status: LicenseStatus?
     @Published private(set) var isValidating = false
 
+    /// Called synchronously after `status` changes so rule locking does not wait on a publisher.
+    var onStatusChanged: (@MainActor () -> Void)?
+
     /// Seat manager handles device activation, heartbeats, and deactivation.
     let seatManager = SeatManager()
 
@@ -81,8 +84,39 @@ final class LicensingManager: ObservableObject {
     /// The user opening the app or manually triggering a check bypasses this.
     private let foregroundCheckInterval: TimeInterval = 3600  // 1 hour
 
+    /// How often the opportunistic background poll runs. This is what lets the
+    /// app notice a purchase made directly on the website — no deep link click,
+    /// no foreground event, no visit to the Power tab required. It only fires
+    /// while this Mac is signed in (has an app token) and not already on a paid
+    /// plan; once paid, the hourly foreground check and the 12h seat heartbeat
+    /// are enough to keep status current.
+    private let backgroundPollInterval: TimeInterval = 10 * 60  // 10 minutes
+    private var backgroundPollTimer: Timer?
+
     private init() {
         restoreCachedStatus()
+        startBackgroundPolling()
+    }
+
+    /// Runs on a plain repeating timer added to the main run loop in `.common`
+    /// mode, so it keeps firing even while a menu is tracking or no window is
+    /// key — i.e. for the entire time the app is running in the menu bar,
+    /// regardless of whether it's frontmost or showing the purchase page.
+    private func startBackgroundPolling() {
+        backgroundPollTimer?.invalidate()
+        let timer = Timer(timeInterval: backgroundPollInterval, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.pollForExternalPurchase() }
+        }
+        timer.tolerance = backgroundPollInterval * 0.2
+        RunLoop.main.add(timer, forMode: .common)
+        backgroundPollTimer = timer
+    }
+
+    private func pollForExternalPurchase() {
+        guard let appToken = Keychain.load(key: appTokenKey) else { return }
+        guard status?.plan.isPaid != true else { return }
+        appLogger.debug("Background poll: checking for a plan activated outside the app")
+        Task { await checkSubscription(appToken: appToken) }
     }
 
     // MARK: - Offline / cached status
@@ -93,7 +127,7 @@ final class LicensingManager: ObservableObject {
         guard let data = defaults.data(forKey: cachedStatusKey),
               let cached = try? JSONDecoder().decode(LicenseStatus.self, from: data) else { return }
         if cached.plan.isPaid && !isCachedLicenseUsable(cached) { return }
-        status = cached
+        applyStatus(cached)
         appLogger.info("Restored cached license status: \(cached.plan.displayName, privacy: .public)")
     }
 
@@ -126,9 +160,14 @@ final class LicensingManager: ObservableObject {
     /// Does NOT touch the Keychain (app token) — only the in-memory and
     /// UserDefaults-cached status.
     func clearCachedStateForTesting() {
-        status = nil
+        applyStatus(nil)
         cacheStatus(nil)
         lastValidated = nil
+    }
+
+    private func applyStatus(_ newStatus: LicenseStatus?) {
+        status = newStatus
+        onStatusChanged?()
     }
 
     /// Whether the user has an active Power plan license.
@@ -361,7 +400,7 @@ final class LicensingManager: ObservableObject {
             // Clear local state after the deactivation attempt completes (or times out).
             Keychain.delete(key: appTokenKey)
             Keychain.delete(key: userIdKey)
-            status = nil
+            applyStatus(nil)
             cacheStatus(nil)
         }
     }
@@ -399,7 +438,7 @@ final class LicensingManager: ObservableObject {
                 appLogger.info("Session expired — clearing stored token")
                 Keychain.delete(key: appTokenKey)
                 Keychain.delete(key: userIdKey)
-                status = nil
+                applyStatus(nil)
                 cacheStatus(nil)
                 return
             }
@@ -428,7 +467,7 @@ final class LicensingManager: ObservableObject {
                     features: allFeatures,
                     validUntil: validUntil
                 )
-                status = newStatus
+                applyStatus(newStatus)
                 cacheStatus(newStatus)
                 appLogger.info("✅ Subscription active — plan: \(plan.displayName, privacy: .public)")
 
@@ -446,7 +485,7 @@ final class LicensingManager: ObservableObject {
                 }
             } else {
                 let freeStatus = LicenseStatus(licenseId: "", plan: .free, features: [], validUntil: nil)
-                status = freeStatus
+                applyStatus(freeStatus)
                 cacheStatus(freeStatus)
                 appLogger.info("Subscription inactive or free plan")
             }
@@ -455,7 +494,7 @@ final class LicensingManager: ObservableObject {
             appLogger.error("Subscription check failed: \(error.localizedDescription, privacy: .public)")
             if let current = status, current.plan.isPaid, !isCachedLicenseUsable(current) {
                 let freeStatus = LicenseStatus(licenseId: "", plan: .free, features: [], validUntil: nil)
-                status = freeStatus
+                applyStatus(freeStatus)
                 cacheStatus(freeStatus)
                 seatManager.markServerUnreachable()
             } else if status == nil {

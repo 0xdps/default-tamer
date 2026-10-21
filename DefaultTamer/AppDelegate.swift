@@ -281,10 +281,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     }
 
     @objc func openUpgrade() {
-        // Opens the Power plan purchase/activation page in the browser.
-        // startUpgrade re-checks the subscription first; if the user already has
-        // an active plan it activates silently without opening a browser.
-        LicensingManager.shared.startUpgrade()
+        // Stay in the app. Get Power Plan on this page is what opens checkout.
+        appState.pendingTabSelection = .power
+        showPreferencesWindow()
     }
 
     private func showPreferencesWindow() {
@@ -348,6 +347,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             let isUpgraded = components?.queryItems?.contains(where: { $0.name == "upgraded" && $0.value == "true" }) ?? false
             let did = components?.queryItems?.first(where: { $0.name == "did" })?.value
             if !code.isEmpty {
+                appState.pendingTabSelection = .power
+                showPreferencesWindow()
                 LicensingManager.shared.handleActivationCode(code: code, isPaymentCallback: isUpgraded, confirmedDeviceId: did)
             } else if !legacyToken.isEmpty {
                 appLogger.error("Rejected activation URL containing a bearer token")

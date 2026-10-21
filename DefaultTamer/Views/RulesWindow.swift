@@ -175,11 +175,17 @@ struct RuleSidebarRow: View {
 struct RuleDetailView: View {
     let rule: Rule
     @EnvironmentObject var appState: AppState
+    @ObservedObject private var licensing = LicensingManager.shared
     @State private var showDeleteConfirmation = false
     @State private var showEditSheet = false
 
     private var currentRule: Rule? {
         appState.rules.first(where: { $0.id == rule.id })
+    }
+
+    private var isLockedOff: Bool {
+        let live = currentRule ?? rule
+        return !live.enabled && live.requiredPowerFeatures.contains { !licensing.isEnabled($0) }
     }
 
     var body: some View {
@@ -203,6 +209,11 @@ struct RuleDetailView: View {
                     Text(rule.type.rawValue)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
+                    if isLockedOff {
+                        Text("Requires Power")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                    }
                 }
 
                 Spacer()
@@ -213,7 +224,10 @@ struct RuleDetailView: View {
                 ))
                 .toggleStyle(.switch)
                 .labelsHidden()
-                .help(currentRule?.enabled == true ? "Disable rule" : "Enable rule")
+                .disabled(isLockedOff)
+                .help(isLockedOff
+                      ? "Requires Power. Upgrade to turn this rule back on."
+                      : (currentRule?.enabled == true ? "Disable rule" : "Enable rule"))
             }
             .padding(20)
 
@@ -510,7 +524,12 @@ struct RulesWindow: View {
 struct RuleRow: View {
     let rule: Rule
     @EnvironmentObject var appState: AppState
+    @ObservedObject private var licensing = LicensingManager.shared
     @State private var showDeleteConfirmation = false
+
+    private var isLockedOff: Bool {
+        !rule.enabled && rule.requiredPowerFeatures.contains { !licensing.isEnabled($0) }
+    }
     
     var body: some View {
         HStack(spacing: 12) {
@@ -521,6 +540,10 @@ struct RuleRow: View {
             ))
             .toggleStyle(.switch)
             .labelsHidden()
+            .disabled(isLockedOff)
+            .help(isLockedOff
+                  ? "Requires Power. Upgrade to turn this rule back on."
+                  : (rule.enabled ? "Disable rule" : "Enable rule"))
             
             // Rule icon
             Image(systemName: ruleIcon)
@@ -533,9 +556,9 @@ struct RuleRow: View {
                     .font(.body)
                     .foregroundColor(rule.enabled ? .primary : .secondary)
                 
-                Text(rule.type.rawValue)
+                Text(isLockedOff ? "Requires Power" : rule.type.rawValue)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(isLockedOff ? .orange : .secondary)
             }
             
             Spacer()
