@@ -69,7 +69,7 @@ targets:
         DEVELOPMENT_TEAM: BZ2JB93F6F
         CODE_SIGNING_REQUIRED: YES
         CODE_SIGNING_ALLOWED: YES
-        MARKETING_VERSION: "0.0.1"
+        MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
         DT_BASE_URL: "https://www.defaulttamer.app"
         DT_PROMO_URL: "https://www.defaulttamer.app/promo.json"
