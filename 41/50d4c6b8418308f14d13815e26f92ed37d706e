@@ -1,0 +1,19 @@
+DefaultTamerWeb
+  s_e5a1fb969fbfc6::t_2f6dc513b7d06f 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4150d4c6b8418308f14d13815e26f92ed37d706e",
+  "prompts": {},
+  "sessions": {
+    "s_e5a1fb969fbfc6": {
+      "agent_id": {
+        "tool": "github-copilot-cli",
+        "id": "4bde3749-47bc-4939-bf44-cfe440be400a",
+        "model": "unknown"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
