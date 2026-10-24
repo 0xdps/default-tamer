@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+**Website launch offer**
+
+- Home, pricing, and checkout read the live offer from `DefaultTamerWeb/src/data/promo.json`; the build publishes that file to `/promo.json` for the Mac app
+- Active code is `HELLO50`; set `active` to `false` or move `expiresAt` into the past to hide the banner without a page change
+
 ## [0.1.0] - 2026-10-21
 
 > Work targeting v0.1.0. The major theme is the **Power plan** — a paid seat-based license — plus Chrome profile routing, shortcut rules, and in-app feedback/promo surfaces.
