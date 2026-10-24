@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Website launch offer**
 
 - Home, pricing, and checkout read the live offer from `DefaultTamerWeb/src/data/promo.json`; the build publishes that file to `/promo.json` for the Mac app
+- Launch-offer copy and apply clicks send Umami events (`Launch Offer Copied`, `Launch Offer Applied`) with the surface only — the code itself is not tracked
 - Active code is `HELLO50`; set `active` to `false` or move `expiresAt` into the past to hide the banner without a page change
 
 ## [0.1.0] - 2026-10-21
