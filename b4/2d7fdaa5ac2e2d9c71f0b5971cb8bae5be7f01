@@ -1,0 +1,29 @@
+CHANGELOG.md
+  s_176f3060df30db::t_95127538dd864b 15
+DefaultTamerWeb
+  s_464c7d95311d50::t_e1b411c9c47e21 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b42d7fdaa5ac2e2d9c71f0b5971cb8bae5be7f01",
+  "prompts": {},
+  "sessions": {
+    "s_176f3060df30db": {
+      "agent_id": {
+        "tool": "github-copilot-cli",
+        "id": "735c36af-a55a-4854-96e5-740013a41590",
+        "model": "unknown"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    },
+    "s_464c7d95311d50": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "e204cc8f-70c3-4da6-bf26-b6f1734dfff9",
+        "model": "auto-smart"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
