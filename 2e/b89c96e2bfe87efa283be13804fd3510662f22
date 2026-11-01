@@ -1,0 +1,19 @@
+DefaultTamerWeb
+  s_464c7d95311d50::t_3c93e13f17456b 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2eb89c96e2bfe87efa283be13804fd3510662f22",
+  "prompts": {},
+  "sessions": {
+    "s_464c7d95311d50": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "e204cc8f-70c3-4da6-bf26-b6f1734dfff9",
+        "model": "auto-smart"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
