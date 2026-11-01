@@ -60,6 +60,7 @@ final class LicensingManager: ObservableObject {
 
     @Published private(set) var status: LicenseStatus?
     @Published private(set) var isValidating = false
+    @Published var retryExhaustedMessage: String?
 
     /// Called synchronously after `status` changes so rule locking does not wait on a publisher.
     var onStatusChanged: (@MainActor () -> Void)?
@@ -410,6 +411,7 @@ final class LicensingManager: ObservableObject {
     /// Checks the subscription status with retries. Used after payment callbacks
     /// to tolerate async Stripe webhook processing delays.
     private func checkSubscriptionWithRetry(appToken: String, maxAttempts: Int = 5, delaySeconds: UInt64 = 3) async {
+        retryExhaustedMessage = nil
         for attempt in 1...maxAttempts {
             await checkSubscription(appToken: appToken)
             if status?.plan.isPaid == true { return }
@@ -419,6 +421,7 @@ final class LicensingManager: ObservableObject {
             }
         }
         appLogger.warning("Subscription still inactive after \(maxAttempts) attempts")
+        retryExhaustedMessage = "Could not confirm your subscription. If you recently completed payment, please check your email or contact support."
     }
 
     /// Fetches subscription status from GET /api/subscription.

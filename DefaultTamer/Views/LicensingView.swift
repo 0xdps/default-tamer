@@ -246,6 +246,19 @@ struct LicensingTab: View {
     // Signed in but free
     private var freePlanSection: some View {
         VStack(alignment: .leading, spacing: 20) {
+            if let exhaustedMsg = licensing.retryExhaustedMessage {
+                HStack(spacing: 10) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                    Text(exhaustedMsg)
+                        .font(.caption)
+                        .foregroundColor(.primary)
+                }
+                .padding(12)
+                .background(Color.orange.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+
             HStack(alignment: .center, spacing: 14) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 12)
