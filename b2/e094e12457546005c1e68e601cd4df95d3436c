@@ -1,0 +1,14 @@
+DefaultTamer/DefaultTamerApp.swift
+  h_95aea6b4aa8772 32-33,58-59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b2e094e12457546005c1e68e601cd4df95d3436c",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
