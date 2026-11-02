@@ -20,6 +20,7 @@ targets:
       properties:
         CFBundleIdentifier: com.defaulttamer.app
         CFBundleName: $(PRODUCT_NAME)
+        CFBundleDisplayName: Default Tamer
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)

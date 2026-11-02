@@ -36,6 +36,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Setup the standard macOS main menu bar (App Name, File, Edit, View, Window, Help)
+        setupMainMenu()
+
         // Hide from Dock and hide default window
         NSApp.setActivationPolicy(.accessory)
 
@@ -280,13 +283,49 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         showPreferencesWindow()
     }
 
+    @objc func openActivity() {
+        appState.pendingTabSelection = .activity
+        showPreferencesWindow()
+    }
+
+    @objc func openAbout() {
+        appState.pendingTabSelection = .about
+        showPreferencesWindow()
+    }
+
     @objc func openUpgrade() {
         // Stay in the app. Get Power Plan on this page is what opens checkout.
         appState.pendingTabSelection = .power
         showPreferencesWindow()
     }
 
+    @objc func checkForUpdates() {
+        updateManager.checkForUpdates()
+    }
+
+    @objc func openHelp() {
+        if let url = URL(string: ExternalLinks.website) {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    @objc func openWebsite() {
+        if let url = URL(string: ExternalLinks.website) {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    @objc func openReportIssue() {
+        if let url = URL(string: ExternalLinks.issues) {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
     private func showPreferencesWindow() {
+        if NSApp.mainMenu == nil || NSApp.mainMenu?.items.isEmpty == true {
+            setupMainMenu()
+        }
+
         if let existingWindow = preferencesWindow {
             existingWindow.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
@@ -475,6 +514,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     // MARK: - Windows
 
     func showFirstRunWindow() {
+        if NSApp.mainMenu == nil || NSApp.mainMenu?.items.isEmpty == true {
+            setupMainMenu()
+        }
+
         let firstRunView = FirstRunView()
             .environmentObject(appState)
             .toastOverlay(manager: appState.toastManager)
@@ -509,6 +552,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
                 }
             }
 
+        NSApp.setActivationPolicy(.regular)
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
@@ -557,9 +601,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
         if window === firstRunWindow {
             firstRunWindow = nil
+            if preferencesWindow == nil {
+                NSApp.setActivationPolicy(.accessory)
+            }
         } else if window === preferencesWindow {
             preferencesWindow = nil
-            NSApp.setActivationPolicy(.accessory)
+            if firstRunWindow == nil {
+                NSApp.setActivationPolicy(.accessory)
+            }
         } else if window === chooserWindow {
             chooserWindow = nil
             appState.showChooser = false
@@ -570,5 +619,284 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         return true
+    }
+
+    // MARK: - Main Menu Bar
+
+    func setupMainMenu() {
+        let mainMenu = NSMenu()
+
+        // 1. Application Menu (About, Settings, Services, Hide, Quit)
+        let appMenuItem = NSMenuItem()
+        let appMenu = NSMenu()
+        let appName = Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String
+            ?? Bundle.main.infoDictionary?["CFBundleName"] as? String
+            ?? "Default Tamer"
+
+        let aboutItem = NSMenuItem(
+            title: "About \(appName)",
+            action: #selector(openAbout),
+            keyEquivalent: ""
+        )
+        aboutItem.target = self
+        appMenu.addItem(aboutItem)
+
+        let updateItem = NSMenuItem(
+            title: "Check for Updates…",
+            action: #selector(checkForUpdates),
+            keyEquivalent: ""
+        )
+        updateItem.target = self
+        appMenu.addItem(updateItem)
+
+        appMenu.addItem(.separator())
+
+        let settingsItem = NSMenuItem(
+            title: "Settings…",
+            action: #selector(openPreferences),
+            keyEquivalent: ","
+        )
+        settingsItem.target = self
+        appMenu.addItem(settingsItem)
+
+        appMenu.addItem(.separator())
+
+        let servicesItem = NSMenuItem(title: "Services", action: nil, keyEquivalent: "")
+        let servicesMenu = NSMenu(title: "Services")
+        servicesItem.submenu = servicesMenu
+        appMenu.addItem(servicesItem)
+        NSApp.servicesMenu = servicesMenu
+
+        appMenu.addItem(.separator())
+
+        let hideItem = NSMenuItem(
+            title: "Hide \(appName)",
+            action: #selector(NSApplication.hide(_:)),
+            keyEquivalent: "h"
+        )
+        appMenu.addItem(hideItem)
+
+        let hideOthersItem = NSMenuItem(
+            title: "Hide Others",
+            action: #selector(NSApplication.hideOtherApplications(_:)),
+            keyEquivalent: "h"
+        )
+        hideOthersItem.keyEquivalentModifierMask = [.command, .option]
+        appMenu.addItem(hideOthersItem)
+
+        let showAllItem = NSMenuItem(
+            title: "Show All",
+            action: #selector(NSApplication.unhideAllApplications(_:)),
+            keyEquivalent: ""
+        )
+        appMenu.addItem(showAllItem)
+
+        appMenu.addItem(.separator())
+
+        let quitItem = NSMenuItem(
+            title: "Quit \(appName)",
+            action: #selector(quitApp),
+            keyEquivalent: "q"
+        )
+        quitItem.target = self
+        appMenu.addItem(quitItem)
+
+        appMenuItem.submenu = appMenu
+        mainMenu.addItem(appMenuItem)
+
+        // 2. File Menu (Close Window)
+        let fileMenuItem = NSMenuItem()
+        let fileMenu = NSMenu(title: "File")
+
+        let closeItem = NSMenuItem(
+            title: "Close Window",
+            action: #selector(NSWindow.performClose(_:)),
+            keyEquivalent: "w"
+        )
+        fileMenu.addItem(closeItem)
+
+        fileMenuItem.submenu = fileMenu
+        mainMenu.addItem(fileMenuItem)
+
+        // 3. Edit Menu (Undo, Redo, Cut, Copy, Paste, Select All)
+        let editMenuItem = NSMenuItem()
+        let editMenu = NSMenu(title: "Edit")
+
+        let undoItem = NSMenuItem(
+            title: "Undo",
+            action: Selector(("undo:")),
+            keyEquivalent: "z"
+        )
+        editMenu.addItem(undoItem)
+
+        let redoItem = NSMenuItem(
+            title: "Redo",
+            action: Selector(("redo:")),
+            keyEquivalent: "Z"
+        )
+        redoItem.keyEquivalentModifierMask = [.command, .shift]
+        editMenu.addItem(redoItem)
+
+        editMenu.addItem(.separator())
+
+        let cutItem = NSMenuItem(
+            title: "Cut",
+            action: Selector(("cut:")),
+            keyEquivalent: "x"
+        )
+        editMenu.addItem(cutItem)
+
+        let copyItem = NSMenuItem(
+            title: "Copy",
+            action: Selector(("copy:")),
+            keyEquivalent: "c"
+        )
+        editMenu.addItem(copyItem)
+
+        let pasteItem = NSMenuItem(
+            title: "Paste",
+            action: Selector(("paste:")),
+            keyEquivalent: "v"
+        )
+        editMenu.addItem(pasteItem)
+
+        let pasteAndMatchStyleItem = NSMenuItem(
+            title: "Paste and Match Style",
+            action: Selector(("pasteAsPlainText:")),
+            keyEquivalent: "V"
+        )
+        pasteAndMatchStyleItem.keyEquivalentModifierMask = [.command, .option, .shift]
+        editMenu.addItem(pasteAndMatchStyleItem)
+
+        let deleteItem = NSMenuItem(
+            title: "Delete",
+            action: Selector(("delete:")),
+            keyEquivalent: ""
+        )
+        editMenu.addItem(deleteItem)
+
+        let selectAllItem = NSMenuItem(
+            title: "Select All",
+            action: Selector(("selectAll:")),
+            keyEquivalent: "a"
+        )
+        editMenu.addItem(selectAllItem)
+
+        editMenuItem.submenu = editMenu
+        mainMenu.addItem(editMenuItem)
+
+        // 4. View Menu (Navigate tabs in Preferences)
+        let viewMenuItem = NSMenuItem()
+        let viewMenu = NSMenu(title: "View")
+
+        let generalTabItem = NSMenuItem(
+            title: "General Settings",
+            action: #selector(openPreferences),
+            keyEquivalent: "1"
+        )
+        generalTabItem.target = self
+        viewMenu.addItem(generalTabItem)
+
+        let rulesTabItem = NSMenuItem(
+            title: "Rules",
+            action: #selector(openRules),
+            keyEquivalent: "2"
+        )
+        rulesTabItem.target = self
+        viewMenu.addItem(rulesTabItem)
+
+        let activityTabItem = NSMenuItem(
+            title: "Activity",
+            action: #selector(openActivity),
+            keyEquivalent: "3"
+        )
+        activityTabItem.target = self
+        viewMenu.addItem(activityTabItem)
+
+        let aboutTabItem = NSMenuItem(
+            title: "About",
+            action: #selector(openAbout),
+            keyEquivalent: "4"
+        )
+        aboutTabItem.target = self
+        viewMenu.addItem(aboutTabItem)
+
+        let powerTabItem = NSMenuItem(
+            title: "Power Plan",
+            action: #selector(openUpgrade),
+            keyEquivalent: "5"
+        )
+        powerTabItem.target = self
+        viewMenu.addItem(powerTabItem)
+
+        viewMenuItem.submenu = viewMenu
+        mainMenu.addItem(viewMenuItem)
+
+        // 5. Window Menu (Minimize, Zoom, Bring All to Front)
+        let windowMenuItem = NSMenuItem()
+        let windowMenu = NSMenu(title: "Window")
+
+        let minimizeItem = NSMenuItem(
+            title: "Minimize",
+            action: #selector(NSWindow.performMiniaturize(_:)),
+            keyEquivalent: "m"
+        )
+        windowMenu.addItem(minimizeItem)
+
+        let zoomItem = NSMenuItem(
+            title: "Zoom",
+            action: #selector(NSWindow.performZoom(_:)),
+            keyEquivalent: ""
+        )
+        windowMenu.addItem(zoomItem)
+
+        windowMenu.addItem(.separator())
+
+        let bringAllItem = NSMenuItem(
+            title: "Bring All to Front",
+            action: #selector(NSApplication.arrangeInFront(_:)),
+            keyEquivalent: ""
+        )
+        windowMenu.addItem(bringAllItem)
+
+        windowMenuItem.submenu = windowMenu
+        mainMenu.addItem(windowMenuItem)
+        NSApp.windowsMenu = windowMenu
+
+        // 6. Help Menu (Help, Website, Report Issue)
+        let helpMenuItem = NSMenuItem()
+        let helpMenu = NSMenu(title: "Help")
+
+        let helpItem = NSMenuItem(
+            title: "\(appName) Help",
+            action: #selector(openHelp),
+            keyEquivalent: "?"
+        )
+        helpItem.target = self
+        helpMenu.addItem(helpItem)
+
+        helpMenu.addItem(.separator())
+
+        let websiteItem = NSMenuItem(
+            title: "\(appName) Website",
+            action: #selector(openWebsite),
+            keyEquivalent: ""
+        )
+        websiteItem.target = self
+        helpMenu.addItem(websiteItem)
+
+        let reportIssueItem = NSMenuItem(
+            title: "Report an Issue…",
+            action: #selector(openReportIssue),
+            keyEquivalent: ""
+        )
+        reportIssueItem.target = self
+        helpMenu.addItem(reportIssueItem)
+
+        helpMenuItem.submenu = helpMenu
+        mainMenu.addItem(helpMenuItem)
+        NSApp.helpMenu = helpMenu
+
+        NSApp.mainMenu = mainMenu
     }
 }
