@@ -724,14 +724,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
         let undoItem = NSMenuItem(
             title: "Undo",
-            action: Selector(("undo:")),
+            action: #selector(UndoManager.undo),
             keyEquivalent: "z"
         )
         editMenu.addItem(undoItem)
 
         let redoItem = NSMenuItem(
             title: "Redo",
-            action: Selector(("redo:")),
+            action: #selector(UndoManager.redo),
             keyEquivalent: "Z"
         )
         redoItem.keyEquivalentModifierMask = [.command, .shift]
@@ -741,21 +741,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
         let cutItem = NSMenuItem(
             title: "Cut",
-            action: Selector(("cut:")),
+            action: #selector(NSText.cut(_:)),
             keyEquivalent: "x"
         )
         editMenu.addItem(cutItem)
 
         let copyItem = NSMenuItem(
             title: "Copy",
-            action: Selector(("copy:")),
+            action: #selector(NSText.copy(_:)),
             keyEquivalent: "c"
         )
         editMenu.addItem(copyItem)
 
         let pasteItem = NSMenuItem(
             title: "Paste",
-            action: Selector(("paste:")),
+            action: #selector(NSText.paste(_:)),
             keyEquivalent: "v"
         )
         editMenu.addItem(pasteItem)
@@ -770,14 +770,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
         let deleteItem = NSMenuItem(
             title: "Delete",
-            action: Selector(("delete:")),
+            action: #selector(NSText.delete(_:)),
             keyEquivalent: ""
         )
         editMenu.addItem(deleteItem)
 
         let selectAllItem = NSMenuItem(
             title: "Select All",
-            action: Selector(("selectAll:")),
+            action: #selector(NSText.selectAll(_:)),
             keyEquivalent: "a"
         )
         editMenu.addItem(selectAllItem)
