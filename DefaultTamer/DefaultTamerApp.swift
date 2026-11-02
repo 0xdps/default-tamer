@@ -29,8 +29,8 @@ struct DefaultTamerApp: App {
                 }
             }
 
-            // View Menu (Tabs navigation)
-            CommandMenu("View") {
+            // View Menu (Tabs navigation inside the single system View menu)
+            CommandGroup(before: .toolbar) {
                 Button("General Settings") {
                     appDelegate.openPreferences()
                 }
@@ -55,6 +55,8 @@ struct DefaultTamerApp: App {
                     appDelegate.openUpgrade()
                 }
                 .keyboardShortcut("5", modifiers: .command)
+
+                Divider()
             }
 
             // Help Menu

@@ -36,9 +36,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Setup the standard macOS main menu bar (App Name, File, Edit, View, Window, Help)
-        setupMainMenu()
-
         // Hide from Dock and hide default window
         NSApp.setActivationPolicy(.accessory)
 
@@ -322,10 +319,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     }
 
     private func showPreferencesWindow() {
-        if NSApp.mainMenu == nil || NSApp.mainMenu?.items.isEmpty == true {
-            setupMainMenu()
-        }
-
         if let existingWindow = preferencesWindow {
             existingWindow.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
@@ -514,10 +507,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     // MARK: - Windows
 
     func showFirstRunWindow() {
-        if NSApp.mainMenu == nil || NSApp.mainMenu?.items.isEmpty == true {
-            setupMainMenu()
-        }
-
         let firstRunView = FirstRunView()
             .environmentObject(appState)
             .toastOverlay(manager: appState.toastManager)
@@ -619,203 +608,5 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         return true
-    }
-
-    // MARK: - Main Menu Bar
-
-    func setupMainMenu() {
-        let mainMenu = NSMenu()
-
-        // 1. Application Menu (About, Settings, Services, Hide, Quit)
-        let appMenuItem = NSMenuItem()
-        let appMenu = NSMenu()
-        let appName = Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String
-            ?? Bundle.main.infoDictionary?["CFBundleName"] as? String
-            ?? "Default Tamer"
-
-        let aboutItem = NSMenuItem(
-            title: "About \(appName)",
-            action: #selector(openAbout),
-            keyEquivalent: ""
-        )
-        aboutItem.target = self
-        appMenu.addItem(aboutItem)
-
-        let updateItem = NSMenuItem(
-            title: "Check for Updates…",
-            action: #selector(checkForUpdates),
-            keyEquivalent: ""
-        )
-        updateItem.target = self
-        appMenu.addItem(updateItem)
-
-        appMenu.addItem(.separator())
-
-        let settingsItem = NSMenuItem(
-            title: "Settings…",
-            action: #selector(openPreferences),
-            keyEquivalent: ","
-        )
-        settingsItem.target = self
-        appMenu.addItem(settingsItem)
-
-        appMenu.addItem(.separator())
-
-        let servicesItem = NSMenuItem(title: "Services", action: nil, keyEquivalent: "")
-        let servicesMenu = NSMenu(title: "Services")
-        servicesItem.submenu = servicesMenu
-        appMenu.addItem(servicesItem)
-        NSApp.servicesMenu = servicesMenu
-
-        appMenu.addItem(.separator())
-
-        let hideItem = NSMenuItem(
-            title: "Hide \(appName)",
-            action: #selector(NSApplication.hide(_:)),
-            keyEquivalent: "h"
-        )
-        appMenu.addItem(hideItem)
-
-        let hideOthersItem = NSMenuItem(
-            title: "Hide Others",
-            action: #selector(NSApplication.hideOtherApplications(_:)),
-            keyEquivalent: "h"
-        )
-        hideOthersItem.keyEquivalentModifierMask = [.command, .option]
-        appMenu.addItem(hideOthersItem)
-
-        let showAllItem = NSMenuItem(
-            title: "Show All",
-            action: #selector(NSApplication.unhideAllApplications(_:)),
-            keyEquivalent: ""
-        )
-        appMenu.addItem(showAllItem)
-
-        appMenu.addItem(.separator())
-
-        let quitItem = NSMenuItem(
-            title: "Quit \(appName)",
-            action: #selector(quitApp),
-            keyEquivalent: "q"
-        )
-        quitItem.target = self
-        appMenu.addItem(quitItem)
-
-        appMenuItem.submenu = appMenu
-        mainMenu.addItem(appMenuItem)
-
-        // 2. View Menu (Navigate tabs in Preferences)
-        let viewMenuItem = NSMenuItem()
-        let viewMenu = NSMenu(title: "View")
-
-        let generalTabItem = NSMenuItem(
-            title: "General Settings",
-            action: #selector(openPreferences),
-            keyEquivalent: "1"
-        )
-        generalTabItem.target = self
-        viewMenu.addItem(generalTabItem)
-
-        let rulesTabItem = NSMenuItem(
-            title: "Rules",
-            action: #selector(openRules),
-            keyEquivalent: "2"
-        )
-        rulesTabItem.target = self
-        viewMenu.addItem(rulesTabItem)
-
-        let activityTabItem = NSMenuItem(
-            title: "Activity",
-            action: #selector(openActivity),
-            keyEquivalent: "3"
-        )
-        activityTabItem.target = self
-        viewMenu.addItem(activityTabItem)
-
-        let aboutTabItem = NSMenuItem(
-            title: "About",
-            action: #selector(openAbout),
-            keyEquivalent: "4"
-        )
-        aboutTabItem.target = self
-        viewMenu.addItem(aboutTabItem)
-
-        let powerTabItem = NSMenuItem(
-            title: "Power Plan",
-            action: #selector(openUpgrade),
-            keyEquivalent: "5"
-        )
-        powerTabItem.target = self
-        viewMenu.addItem(powerTabItem)
-
-        viewMenuItem.submenu = viewMenu
-        mainMenu.addItem(viewMenuItem)
-
-        // 3. Window Menu (Minimize, Zoom, Bring All to Front)
-        let windowMenuItem = NSMenuItem()
-        let windowMenu = NSMenu(title: "Window")
-
-        let minimizeItem = NSMenuItem(
-            title: "Minimize",
-            action: #selector(NSWindow.performMiniaturize(_:)),
-            keyEquivalent: "m"
-        )
-        windowMenu.addItem(minimizeItem)
-
-        let zoomItem = NSMenuItem(
-            title: "Zoom",
-            action: #selector(NSWindow.performZoom(_:)),
-            keyEquivalent: ""
-        )
-        windowMenu.addItem(zoomItem)
-
-        windowMenu.addItem(.separator())
-
-        let bringAllItem = NSMenuItem(
-            title: "Bring All to Front",
-            action: #selector(NSApplication.arrangeInFront(_:)),
-            keyEquivalent: ""
-        )
-        windowMenu.addItem(bringAllItem)
-
-        windowMenuItem.submenu = windowMenu
-        mainMenu.addItem(windowMenuItem)
-        NSApp.windowsMenu = windowMenu
-
-        // 4. Help Menu (Help, Website, Report Issue)
-        let helpMenuItem = NSMenuItem()
-        let helpMenu = NSMenu(title: "Help")
-
-        let helpItem = NSMenuItem(
-            title: "\(appName) Help",
-            action: #selector(openHelp),
-            keyEquivalent: "?"
-        )
-        helpItem.target = self
-        helpMenu.addItem(helpItem)
-
-        helpMenu.addItem(.separator())
-
-        let websiteItem = NSMenuItem(
-            title: "\(appName) Website",
-            action: #selector(openWebsite),
-            keyEquivalent: ""
-        )
-        websiteItem.target = self
-        helpMenu.addItem(websiteItem)
-
-        let reportIssueItem = NSMenuItem(
-            title: "Report an Issue…",
-            action: #selector(openReportIssue),
-            keyEquivalent: ""
-        )
-        reportIssueItem.target = self
-        helpMenu.addItem(reportIssueItem)
-
-        helpMenuItem.submenu = helpMenu
-        mainMenu.addItem(helpMenuItem)
-        NSApp.helpMenu = helpMenu
-
-        NSApp.mainMenu = mainMenu
     }
 }
