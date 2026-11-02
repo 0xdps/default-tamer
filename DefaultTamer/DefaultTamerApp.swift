@@ -29,17 +29,6 @@ struct DefaultTamerApp: App {
                 }
             }
 
-            // File Menu
-            CommandMenu("File") {
-                Button("Close Window") {
-                    NSApp.keyWindow?.performClose(nil)
-                }
-                .keyboardShortcut("w", modifiers: .command)
-            }
-
-            // Edit Menu (Standard text editing commands: Cut, Copy, Paste, Undo, Redo, Select All)
-            TextEditingCommands()
-
             // View Menu (Tabs navigation)
             CommandMenu("View") {
                 Button("General Settings") {

@@ -704,88 +704,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         appMenuItem.submenu = appMenu
         mainMenu.addItem(appMenuItem)
 
-        // 2. File Menu (Close Window)
-        let fileMenuItem = NSMenuItem()
-        let fileMenu = NSMenu(title: "File")
-
-        let closeItem = NSMenuItem(
-            title: "Close Window",
-            action: #selector(NSWindow.performClose(_:)),
-            keyEquivalent: "w"
-        )
-        fileMenu.addItem(closeItem)
-
-        fileMenuItem.submenu = fileMenu
-        mainMenu.addItem(fileMenuItem)
-
-        // 3. Edit Menu (Undo, Redo, Cut, Copy, Paste, Select All)
-        let editMenuItem = NSMenuItem()
-        let editMenu = NSMenu(title: "Edit")
-
-        let undoItem = NSMenuItem(
-            title: "Undo",
-            action: #selector(UndoManager.undo),
-            keyEquivalent: "z"
-        )
-        editMenu.addItem(undoItem)
-
-        let redoItem = NSMenuItem(
-            title: "Redo",
-            action: #selector(UndoManager.redo),
-            keyEquivalent: "Z"
-        )
-        redoItem.keyEquivalentModifierMask = [.command, .shift]
-        editMenu.addItem(redoItem)
-
-        editMenu.addItem(.separator())
-
-        let cutItem = NSMenuItem(
-            title: "Cut",
-            action: #selector(NSText.cut(_:)),
-            keyEquivalent: "x"
-        )
-        editMenu.addItem(cutItem)
-
-        let copyItem = NSMenuItem(
-            title: "Copy",
-            action: #selector(NSText.copy(_:)),
-            keyEquivalent: "c"
-        )
-        editMenu.addItem(copyItem)
-
-        let pasteItem = NSMenuItem(
-            title: "Paste",
-            action: #selector(NSText.paste(_:)),
-            keyEquivalent: "v"
-        )
-        editMenu.addItem(pasteItem)
-
-        let pasteAndMatchStyleItem = NSMenuItem(
-            title: "Paste and Match Style",
-            action: Selector(("pasteAsPlainText:")),
-            keyEquivalent: "V"
-        )
-        pasteAndMatchStyleItem.keyEquivalentModifierMask = [.command, .option, .shift]
-        editMenu.addItem(pasteAndMatchStyleItem)
-
-        let deleteItem = NSMenuItem(
-            title: "Delete",
-            action: #selector(NSText.delete(_:)),
-            keyEquivalent: ""
-        )
-        editMenu.addItem(deleteItem)
-
-        let selectAllItem = NSMenuItem(
-            title: "Select All",
-            action: #selector(NSText.selectAll(_:)),
-            keyEquivalent: "a"
-        )
-        editMenu.addItem(selectAllItem)
-
-        editMenuItem.submenu = editMenu
-        mainMenu.addItem(editMenuItem)
-
-        // 4. View Menu (Navigate tabs in Preferences)
+        // 2. View Menu (Navigate tabs in Preferences)
         let viewMenuItem = NSMenuItem()
         let viewMenu = NSMenu(title: "View")
 
@@ -832,7 +751,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         viewMenuItem.submenu = viewMenu
         mainMenu.addItem(viewMenuItem)
 
-        // 5. Window Menu (Minimize, Zoom, Bring All to Front)
+        // 3. Window Menu (Minimize, Zoom, Bring All to Front)
         let windowMenuItem = NSMenuItem()
         let windowMenu = NSMenu(title: "Window")
 
@@ -863,7 +782,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         mainMenu.addItem(windowMenuItem)
         NSApp.windowsMenu = windowMenu
 
-        // 6. Help Menu (Help, Website, Report Issue)
+        // 4. Help Menu (Help, Website, Report Issue)
         let helpMenuItem = NSMenuItem()
         let helpMenu = NSMenu(title: "Help")
 
