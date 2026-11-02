@@ -1,0 +1,18 @@
+DefaultTamer/AppDelegate.swift
+  h_95aea6b4aa8772 39-41,286-295,302-323,325-328,517-520,555,604-606,609-611,623-901
+DefaultTamer/Info.plist
+  h_95aea6b4aa8772 33-34
+project.yml
+  h_95aea6b4aa8772 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b235b3ad5a4814406f518d7d94716e49224e9380",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
