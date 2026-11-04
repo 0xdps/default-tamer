@@ -1,0 +1,19 @@
+DefaultTamer/AppDelegate.swift
+  s_223fd6c4728947::t_4c74e619b31ba7 39-41,325-326,515-516,619-902
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fb1b974ea2180959e266509b21eb4202b4665295",
+  "prompts": {},
+  "sessions": {
+    "s_223fd6c4728947": {
+      "agent_id": {
+        "tool": "github-copilot-cli",
+        "id": "c1cad55a-34d9-4b56-b38f-303bb3701bf1",
+        "model": "unknown"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
